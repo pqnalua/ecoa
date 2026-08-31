@@ -1,8 +1,6 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Metas</ion-title>
-    <ion-buttons slot="end">
-    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -30,15 +28,16 @@
         <input type="number" placeholder="Digite o valor de sua meta" [(ngModel)]="novaMeta.valor" />
       </div>
     </div>
+
+    <!-- Botão de confirmação dentro do card -->
+    <div class="btn-container">
+      <button class="btn-confirmar" (click)="adicionarMeta()">
+        Adicionar meta
+      </button>
+    </div>
   </div>
 
-  <!-- Botões de navegação lateral (baseados na imagem) -->
-  <div class="floating-nav">
-    <ion-button size="small" fill="solid" class="nav-btn">Gastos</ion-button>
-    <ion-button size="small" fill="solid" class="nav-btn">Home</ion-button>
-  </div>
-
-  <!-- Lista de Metas Existententes -->
+  <!-- Lista de Metas Existentes -->
   <div class="blob-card goal-card" *ngFor="let meta of metas">
     <h2>{{ meta.valorAtual >= meta.valorMeta ? 'Meta alcançada' : 'Meta ainda não alcançada' }}</h2>
 
