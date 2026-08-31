@@ -1,14 +1,87 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-     Home
-    </ion-title>
+    <ion-title>ECOA</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-<ion-tab-button tab="tab1">
-    </ion-tab-button>
- 
-  <app-explore-container name="Tab 1 page"></app-explore-container>
+<ion-content>
+
+  <ion-item lines="none">
+    <ion-avatar slot="start">
+      <img src="">
+    </ion-avatar>
+    <ion-label>
+      <h1>Olá, nome!</h1>
+      <p>Nao ta pronto nao briguem comigo!!!!</p>
+    </ion-label>
+  </ion-item>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-subtitle>Saldo disponível</ion-card-subtitle>
+      <ion-card-title>R$ 1.500,00</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      Atualizado hoje
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Como você está hoje?</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col>
+            <ion-label>Tristeza</ion-label>
+          </ion-col>
+          <ion-col>
+            <ion-label>Ansiedade</ion-label>
+          </ion-col>
+          <ion-col>
+            <ion-label>Raiva</ion-label>
+          </ion-col>
+          <ion-col>
+            <ion-label>Alegria</ion-label>
+          </ion-col>
+          <ion-col>
+            <ion-label>Tédio</ion-label>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Resumo do mês</ion-card-title>
+    </ion-card-header>
+    <ion-list>
+      <ion-item>
+        <ion-label>Gastos fixos</ion-label>
+        <ion-note slot="end">R$ 900,00</ion-note>
+      </ion-item>
+      <ion-item>
+        <ion-label>Gastos variáveis</ion-label>
+        <ion-note slot="end">R$ 350,00</ion-note>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-label>Gastos extras</ion-label>
+        <ion-note slot="end">R$ 120,00</ion-note>
+      </ion-item>
+    </ion-list>
+  </ion-card>
+
+  <ion-grid>
+    <ion-row>
+      <ion-col>
+        <ion-button expand="block">Gráficos</ion-button>
+      </ion-col>
+      <ion-col>
+        <ion-button expand="block">Falar com IA</ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
 </ion-content>
