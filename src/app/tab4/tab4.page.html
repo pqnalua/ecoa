@@ -1,14 +1,74 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Metas</ion-title>
+    <ion-buttons slot="end">
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">tab4</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="metas-content">
+  <!-- Topo da página -->
+  <div class="header-container">
+    <h1 class="page-title">Metas</h1>
+    <img src="../assets/pig-mascot.png" alt="Mascote porco" class="mascot-head" />
+  </div>
 
+  <!-- Card: Nova meta -->
+  <div class="blob-card new-goal">
+    <h2>Nova meta</h2>
+
+    <div class="form-group">
+      <label>Meta:</label>
+      <div class="custom-input-wrap">
+        <input type="text" placeholder="Digite sua meta" [(ngModel)]="novaMeta.nome" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Valor da meta:</label>
+      <div class="custom-input-wrap">
+        <input type="number" placeholder="Digite o valor de sua meta" [(ngModel)]="novaMeta.valor" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Botões de navegação lateral (baseados na imagem) -->
+  <div class="floating-nav">
+    <ion-button size="small" fill="solid" class="nav-btn">Gastos</ion-button>
+    <ion-button size="small" fill="solid" class="nav-btn">Home</ion-button>
+  </div>
+
+  <!-- Lista de Metas Existententes -->
+  <div class="blob-card goal-card" *ngFor="let meta of metas">
+    <h2>{{ meta.valorAtual >= meta.valorMeta ? 'Meta alcançada' : 'Meta ainda não alcançada' }}</h2>
+
+    <div class="goal-title-row">
+      <div class="custom-input-wrap title-pill">
+        <span>{{ meta.nome }}</span>
+      </div>
+
+      <div class="action-icons">
+        <ion-icon name="heart-outline" (click)="favoritar(meta)"></ion-icon>
+        <ion-icon name="remove-circle-outline" (click)="excluirMeta(meta)"></ion-icon>
+        <ion-icon
+          [name]="meta.valorAtual >= meta.valorMeta ? 'checkbox-outline' : 'square-outline'"
+          (click)="marcarConcluida(meta)">
+        </ion-icon>
+      </div>
+    </div>
+
+    <div class="row-value">
+      <span class="label-text">Valor da meta:</span>
+      <div class="custom-input-wrap value-pill">
+        <span>{{ meta.valorMeta | currency:'BRL':'symbol':'1.0-2' }}</span>
+      </div>
+    </div>
+
+    <div class="row-value">
+      <span class="label-text">Valor atual:</span>
+      <div class="custom-input-wrap value-pill">
+        <span>{{ meta.valorAtual | currency:'BRL':'symbol':'1.0-2' }}</span>
+      </div>
+    </div>
+  </div>
 </ion-content>

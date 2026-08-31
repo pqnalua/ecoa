@@ -1,0 +1,178 @@
+// Variáveis de Cores da UI
+$purple-card: #a394e3;
+$purple-title: #9783e7;
+$bg-mint: #bbf0d8;
+$pink-soft: #f2d2d0;
+$yellow-border: #f2cb55;
+
+.metas-content {
+  --background: #{$bg-mint};
+  position: relative;
+
+  // Fundo com recortes diagonais brancos simulando o design da tela
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 35%;
+    height: 100%;
+    background: #ffffff;
+    clip-path: polygon(100% 0, 0 15%, 100% 40%, 30% 70%, 100% 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+// Topo com Título + Mascote
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px 0 20px;
+  position: relative;
+  z-index: 1;
+
+  .page-title {
+    color: $purple-title;
+    font-size: 42px;
+    font-weight: 300;
+    margin: 0;
+    font-family: sans-serif;
+  }
+
+  .mascot-head {
+    width: 100px;
+    height: auto;
+    margin-top: -10px;
+  }
+}
+
+// Botões laterais flutuantes ("Gastos" e "Home")
+.floating-nav {
+  position: absolute;
+  right: 16px;
+  top: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+
+  .nav-btn {
+    --background: #{$pink-soft};
+    --color: #4a4a4a;
+    --border-radius: 10px;
+    --box-shadow: none;
+    font-size: 13px;
+    text-transform: none;
+    height: 32px;
+    width: 75px;
+  }
+}
+
+// Estilo Base dos Cards Orgânicos (Blobs)
+.blob-card {
+  position: relative;
+  z-index: 1;
+  background: $purple-card;
+  /* Cria os cantos super assimétricos idênticos aos da tela */
+  border-radius: 50px 140px 50px 120px / 120px 50px 140px 50px;
+  padding: 24px 20px;
+  margin: 12px 16px 24px 16px;
+  color: #ffffff;
+
+  h2 {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 10px 4px;
+  }
+}
+
+// Formatação dos Grupos e Inputs
+.form-group {
+  margin-bottom: 8px;
+
+  label {
+    display: block;
+    color: #ffffff;
+    font-size: 13px;
+    margin-bottom: 4px;
+    margin-left: 4px;
+  }
+}
+
+/* Envolvente das cápsulas/pills amarelas */
+.custom-input-wrap {
+  background: #ffffff;
+  border: 2.5px solid $yellow-border;
+  border-radius: 25px;
+  padding: 4px 14px;
+  display: flex;
+  align-items: center;
+
+  input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    color: #555555;
+    font-size: 14px;
+
+    &::placeholder {
+      color: #cccccc;
+    }
+  }
+
+  span {
+    color: #4a4a4a;
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+// Estilos específicos dos Cards de Metas
+.goal-card {
+  .goal-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    .title-pill {
+      min-width: 110px;
+      justify-content: center;
+      padding: 4px 16px;
+    }
+
+    .action-icons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      ion-icon {
+        font-size: 24px;
+        color: #ffffff;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .row-value {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+
+    .label-text {
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .value-pill {
+      width: 140px;
+      justify-content: center;
+      padding: 3px 12px;
+    }
+  }
+}
