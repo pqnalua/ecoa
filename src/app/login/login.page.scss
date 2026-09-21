@@ -1,0 +1,211 @@
+:host {
+  /* Tom das marcas e detalhes no tom de lilás suave da logo */
+  --ecoa-lilas-claro: #a594e0; 
+  /* Tom do botão principal e elementos em destaque */
+  --ecoa-lilas-botao: #544393;
+  --ecoa-lilas-botao-hover: #43337a;
+  
+  --ecoa-tinta: #23222b;
+  --ecoa-papel: #edeae5;
+  --ecoa-erro: #c15c5c;
+  font-family: 'Red Hat Display', sans-serif;
+}
+
+ion-content.login {
+  --background: var(--ecoa-papel);
+}
+
+.login__wrap {
+  min-height: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 40px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+}
+
+.login__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Ajuste e centralização da Imagem da Logo */
+.login__logo-img {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Subtítulo integrado com o design */
+.login__tagline {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 500;
+  font-weight: bold;
+  color: var(--ecoa-lilas-botao);
+  opacity: 0.8;
+  letter-spacing: 0.01em;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ecoa-tinta);
+  }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 50px;
+    padding: 0 16px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--ecoa-tinta);
+    background: #ffffff;
+    border: 1.5px solid rgba(35, 34, 43, 0.15);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      border-color: var(--ecoa-lilas-claro);
+      box-shadow: 0 0 0 3px rgba(165, 148, 224, 0.25);
+    }
+  }
+
+  small {
+    font-size: 13px;
+    color: var(--ecoa-erro);
+    margin-top: 2px;
+  }
+
+  &--error input {
+    border-color: var(--ecoa-erro);
+  }
+}
+
+.field__senha {
+  position: relative;
+
+  input {
+    padding-right: 52px;
+  }
+}
+
+.field__toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 52px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  font-size: 20px;
+  color: var(--ecoa-tinta);
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.login__erro {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ecoa-erro);
+  background: rgba(193, 92, 92, 0.1);
+  border-radius: 10px;
+}
+
+.btn {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &--primario {
+    margin-top: 4px;
+    color: #ffffff;
+    background: var(--ecoa-lilas-claro);
+
+    &:not(:disabled):hover {
+      background: var(--ecoa-lilas-botao-hover);
+    }
+  }
+
+  &--google {
+    color: var(--ecoa-tinta);
+    background: #ffffff;
+    border: 1.5px solid rgba(35, 34, 43, 0.15);
+
+    ion-icon {
+      font-size: 18px;
+    }
+  }
+}
+
+.login__ou {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ecoa-tinta);
+  opacity: 0.5;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: currentColor;
+  }
+}
+
+.login__cadastro {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ecoa-tinta);
+
+  a {
+    font-weight: 700;
+    color: var(--ecoa-lilas-botao);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

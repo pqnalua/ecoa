@@ -1,0 +1,48 @@
+<ion-content [fullscreen]="true" class="login">
+  <main class="login__wrap">
+    <header class="login__brand">
+      <img src="../../assets/ecoabegeclarologin.png" alt="ECOA Logo" class="login__logo-img">
+      <p class="login__tagline">Suas escolhas ecoam no tempo</p>
+    </header>
+
+    <form class="login__form" [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+      <div class="field" [class.field--error]="mostrarErro('email')">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email"
+               autocomplete="email" inputmode="email" placeholder="voce@email.com" />
+        <small *ngIf="mostrarErro('email')">Digite um email válido.</small>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('senha')">
+        <label for="senha">Senha</label>
+        <div class="field__senha">
+          <input id="senha" [type]="verSenha ? 'text' : 'password'" formControlName="senha"
+                 autocomplete="current-password" placeholder="Sua senha" />
+          <button type="button" class="field__toggle" (click)="verSenha = !verSenha"
+                  [attr.aria-label]="verSenha ? 'Ocultar senha' : 'Mostrar senha'">
+            <ion-icon [name]="verSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+        <small *ngIf="mostrarErro('senha')">A senha precisa ter pelo menos 6 caracteres.</small>
+      </div>
+
+      <p class="login__erro" *ngIf="erro" role="alert">{{ erro }}</p>
+
+      <button type="submit" class="btn btn--primario" [disabled]="carregando">
+        {{ carregando ? 'Entrando...' : 'Entrar' }}
+      </button>
+
+      <div class="login__ou"><span>ou</span></div>
+
+      <button type="button" class="btn btn--google" (click)="entrarComGoogle()" [disabled]="carregando">
+        <ion-icon name="logo-google"></ion-icon>
+        Entrar com Google
+      </button>
+    </form>
+
+    <p class="login__cadastro">
+      Ainda não tem conta?
+      <a routerLink="/cadastro">Criar conta</a>
+    </p>
+  </main>
+</ion-content>
