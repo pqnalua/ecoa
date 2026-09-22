@@ -1,14 +1,12 @@
 // Variáveis de Cores da UI
-$purple-card: #8A75D1;       // Roxo mantido, levemente ajustado para contraste sóbrio
-$purple-title: #4A329A;      // Roxo mais escuro para o título
-$bg-white: #FFFFFF;          // Fundo principal branco
-$yellow-border: #F2CB55;     // Borda dos campos
+$purple-card: #8A75D1;
+$purple-title: #4A329A;
+$bg-white: #FFFFFF;
+$yellow-border: #F2CB55;
 
 .metas-content {
   --background: #{$bg-white};
   position: relative;
-
-  // Removido o detalhe poligonal anterior para manter o fundo limpo e sério
 }
 
 // Topo com Título + Mascote
@@ -23,7 +21,7 @@ $yellow-border: #F2CB55;     // Borda dos campos
   .page-title {
     color: $purple-title;
     font-size: 32px;
-    font-weight: 700; // Fonte mais encorpada e séria
+    font-weight: 700;
     letter-spacing: -0.5px;
     margin: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -35,16 +33,16 @@ $yellow-border: #F2CB55;     // Borda dos campos
   }
 }
 
-// Estilo dos Cartões (Formato Retangular/Sério)
+// Estilo dos Cartões Retangulares
 .blob-card {
   position: relative;
   z-index: 1;
   background: $purple-card;
-  border-radius: 16px; // Formato quadrado com cantos suavizados
+  border-radius: 16px;
   padding: 20px;
   margin: 0 16px 16px 16px;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); // Sombra suave e elegante
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   h2 {
     color: #ffffff;
@@ -71,7 +69,7 @@ $yellow-border: #F2CB55;     // Borda dos campos
 .custom-input-wrap {
   background: #ffffff;
   border: 2px solid $yellow-border;
-  border-radius: 10px; // Acompanha o estilo mais quadrado/sério
+  border-radius: 10px;
   padding: 6px 14px;
   display: flex;
   align-items: center;
@@ -96,7 +94,7 @@ $yellow-border: #F2CB55;     // Borda dos campos
   }
 }
 
-// Estilo do Botão de Confirmação da Nova Meta
+// Botão de Confirmação
 .btn-container {
   display: flex;
   justify-content: flex-end;
@@ -108,10 +106,10 @@ $yellow-border: #F2CB55;     // Borda dos campos
     font-weight: 700;
     font-size: 13px;
     border: 2px solid $yellow-border;
-    border-radius: 10px; // Formato ajustado ao padrão
+    border-radius: 10px;
     padding: 10px 20px;
     cursor: pointer;
-    transition: transform 0.1s ease, background-color 0.2s, box-shadow 0.2s;
+    transition: transform 0.1s ease, background-color 0.2s;
 
     &:active {
       transform: scale(0.97);
@@ -120,7 +118,7 @@ $yellow-border: #F2CB55;     // Borda dos campos
   }
 }
 
-// Estilos específicos dos Cards de Metas
+// Estilos dos Cards de Metas
 .goal-card {
   .goal-title-row {
     display: flex;
@@ -165,7 +163,7 @@ $yellow-border: #F2CB55;     // Borda dos campos
     }
 
     .value-pill {
-      width: 140px;
+      min-width: 140px;
       justify-content: center;
       padding: 5px 12px;
     }

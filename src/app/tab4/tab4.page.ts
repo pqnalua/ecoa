@@ -31,12 +31,20 @@ export class Tab4Page implements OnInit {
   ngOnInit() {
   }
 
-  // Getter para retornar as metas ordenadas com as favoritadas no topo
   get metasOrdenadas(): Meta[] {
     return [...this.metas].sort((a, b) => {
       if (a.favorita && !b.favorita) return -1;
       if (!a.favorita && b.favorita) return 1;
       return 0;
+    });
+  }
+
+  // Função para formatar os valores no padrão brasileiro (ex: 3.500,00)
+  formatarMoeda(valor: number): string {
+    if (valor === null || valor === undefined) return '0,00';
+    return valor.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
   }
 
