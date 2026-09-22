@@ -1,13 +1,7 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>Minhas Metas</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true" class="metas-content">
   <!-- Topo da página -->
   <div class="header-container">
-    <h1 class="page-title">Minhas Metas</h1>
+    <h1 class="page-title">Metas</h1>
     <img src="../assets/pig-mascot.png" alt="Mascote porco" class="mascot-head" />
   </div>
 
@@ -37,8 +31,8 @@
     </div>
   </div>
 
-  <!-- Lista de Metas Existentes -->
-  <div class="blob-card goal-card" *ngFor="let meta of metas">
+  <!-- Lista de Metas Existentes Ordenadas -->
+  <div class="blob-card goal-card" *ngFor="let meta of metasOrdenadas">
     <h2>{{ meta.valorAtual >= meta.valorMeta ? 'Meta alcançada' : 'Meta ainda não alcançada' }}</h2>
 
     <div class="goal-title-row">
@@ -47,7 +41,11 @@
       </div>
 
       <div class="action-icons">
-        <ion-icon name="heart-outline" (click)="favoritar(meta)"></ion-icon>
+        <ion-icon 
+          [name]="meta.favorita ? 'heart' : 'heart-outline'" 
+          [style.color]="meta.favorita ? '#ff4d4d' : '#ffffff'"
+          (click)="favoritar(meta)">
+        </ion-icon>
         <ion-icon name="remove-circle-outline" (click)="excluirMeta(meta)"></ion-icon>
         <ion-icon
           [name]="meta.valorAtual >= meta.valorMeta ? 'checkbox-outline' : 'square-outline'"
@@ -59,14 +57,14 @@
     <div class="row-value">
       <span class="label-text">Valor da meta:</span>
       <div class="custom-input-wrap value-pill">
-        <span>{{ meta.valorMeta | currency:'BRL':'symbol':'1.0-2' }}</span>
+        <span>R$ {{ formatarMoeda(meta.valorMeta) }}</span>
       </div>
     </div>
 
     <div class="row-value">
       <span class="label-text">Valor atual:</span>
       <div class="custom-input-wrap value-pill">
-        <span>{{ meta.valorAtual | currency:'BRL':'symbol':'1.0-2' }}</span>
+        <span>R$ {{ formatarMoeda(meta.valorAtual) }}</span>
       </div>
     </div>
   </div>

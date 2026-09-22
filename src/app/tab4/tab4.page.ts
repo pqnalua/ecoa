@@ -21,14 +21,23 @@ export class Tab4Page implements OnInit {
   };
 
   metas: Meta[] = [
-    { nome: 'Viagem', valorMeta: 3500, valorAtual: 1400 },
-    { nome: 'Carro', valorMeta: 73000, valorAtual: 2100 },
-    { nome: 'Perfume', valorMeta: 475, valorAtual: 475 }
+    { nome: 'Viagem', valorMeta: 3500, valorAtual: 1400, favorita: false },
+    { nome: 'Carro', valorMeta: 73000, valorAtual: 2100, favorita: false },
+    { nome: 'Perfume', valorMeta: 475, valorAtual: 475, favorita: false }
   ];
 
   constructor() { }
 
   ngOnInit() {
+  }
+
+  // Getter para retornar as metas ordenadas com as favoritadas no topo
+  get metasOrdenadas(): Meta[] {
+    return [...this.metas].sort((a, b) => {
+      if (a.favorita && !b.favorita) return -1;
+      if (!a.favorita && b.favorita) return 1;
+      return 0;
+    });
   }
 
   adicionarMeta() {
@@ -39,7 +48,8 @@ export class Tab4Page implements OnInit {
     this.metas.push({
       nome: this.novaMeta.nome,
       valorMeta: this.novaMeta.valor,
-      valorAtual: 0
+      valorAtual: 0,
+      favorita: false
     });
 
     this.novaMeta = { nome: '', valor: null };
