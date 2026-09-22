@@ -1,91 +1,91 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>ECOA</ion-title>
+<ion-header class="home__header" class="ion-no-border">
+  <ion-toolbar class="home__toolbar">
+    <ion-title class="home__logo">ECOA</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content class="home">
+  <div class="home__wrap">
 
-  <ion-item lines="none">
-    <ion-avatar slot="start">
-      <img src="">
-    </ion-avatar>
-    <ion-label>
+    <!-- Saudação -->
+    <div class="home__saudacao">
+      <ion-avatar class="home__avatar">
+        <img src="../../assets/icon/avatar.jpg" alt="avatar" class="usuario.foto">
+      </ion-avatar>
+      <div class="home__saudacao-texto">
+        <h1>Olá, {{ usuario.nome }}!</h1>
+        <p>O que você deseja fazer hoje?</p>
+      </div>
+    </div>
+
+    <!-- Saldo Disponível -->
+    <div class="home__card home__card--saldo">
+      <div class="home__card-header">
+        <span class="home__card-subtitle">Saldo disponível</span>
+        <h2 class="home__saldo-valor">{{ saldo | currency:'BRL' }}</h2>
+      </div>
+      <div class="home__card-footer">
+        <span class="home__atualizacao">Atualizado hoje às {{ atualizadoEm | date:'HH:mm' }}</span>
+        <button type="button" class="home__link-btn" (click)="irParaGastos()">Ver detalhes</button>
+      </div>
+    </div>
+
+    <!-- Como está hoje (Humor) -->
+    <div class="home__card">
+      <h3 class="home__card-title">Como você está hoje?</h3>
+      <div class="home__humor-lista">
+        <button
+          type="button"
+          class="home__humor-item"
+          *ngFor="let humor of humores"
+          [class.home__humor-item--ativo]="humorSelecionado === humor.id"
+          (click)="selecionarHumor(humor.id)"
+        >
+          <span class="home__humor-label">{{ humor.label }}</span>
+        </button>
+      </div>
+      <p class="home__humor-confirmacao" *ngIf="humorSelecionado">
+        Humor registrado!
+      </p>
+    </div>
+
+    <!-- Resumo do mês -->
+    <div class="home__card">
+      <h3 class="home__card-title">Resumo do mês</h3>
+      <div class="home__resumo-lista">
+        <div class="home__resumo-item">
+          <span>Gastos fixos</span>
+          <strong>{{ resumoMes.fixos | currency:'BRL' }}</strong>
+        </div>
+        <div class="home__resumo-item">
+          <span>Gastos variáveis</span>
+          <strong>{{ resumoMes.variaveis | currency:'BRL' }}</strong>
+        </div>
+        <div class="home__resumo-item home__resumo-item--ultimo">
+          <span>Gastos extras</span>
+          <strong>{{ resumoMes.extras | currency:'BRL' }}</strong>
+        </div>
+      </div>
+      <button type="button" class="home__link-btn home__link-btn--full" (click)="irParaGastos()">
+        Ver todos os gastos
+      </button>
+    </div>
+
+    <!-- Ações / Botões -->
+    <div class="home__acoes">
+      <div class="home__acoes-grid">
+        <button type="button" class="home__btn home__btn--outline" (click)="irParaGraficos()">
+          Gráficos
+        </button>
+        <button type="button" class="home__btn home__btn--primary" (click)="irParaChat()">
+          Falar com IA
+        </button>
+      </div>
       
-      <h1>Olá, nome!</h1> <!-- fazer com que o nome da conta apareça aqui-->
-      <p>O que você deseja fazer hoje?</p>
-    </ion-label>
-  </ion-item>
+      <button type="button" class="home__btn home__btn--subtle" (click)="irParaQuestionario()">
+        Fazer questionário diagnóstico
+      </button>
+    </div>
 
-  <ion-card>
-    <ion-card-header>
-      <ion-card-subtitle>Saldo disponível</ion-card-subtitle>
-      <ion-card-title>R$ 1.500,00</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      Atualizado hoje ás 12:34  <!-- fazer com que o horário e data apareçam aqui-->
-    </ion-card-content>
-  <ion-button fill="clear">Ver</ion-button>
-  </ion-card>
-
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Como você está hoje?</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-grid><!-- fazer com que as labels se tornem botões e a resposta seja registrada no banco e adicionada no relatório-->
-        <ion-row>
-          <ion-col>
-            <ion-label>Tristeza</ion-label> <!-- adicionar porquinhos-->
-          </ion-col>
-          <ion-col>
-            <ion-label>Ansiedade</ion-label>
-          </ion-col>
-          <ion-col>
-            <ion-label>Raiva</ion-label>
-          </ion-col>
-          <ion-col>
-            <ion-label>Alegria</ion-label>
-          </ion-col>
-          <ion-col>
-            <ion-label>Tédio</ion-label>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-card-content>
-  </ion-card>
-
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Resumo do mês</ion-card-title>
-    </ion-card-header>
-    <ion-list>
-      <ion-item>
-        <ion-label>Gastos fixos</ion-label>
-        <ion-note slot="end">R$ 900,00</ion-note>
-      </ion-item>
-      <ion-item>
-        <ion-label>Gastos variáveis</ion-label>
-        <ion-note slot="end">R$ 350,00</ion-note>
-      </ion-item>
-      <ion-item lines="none">
-        <ion-label>Gastos extras</ion-label>
-        <ion-note slot="end">R$ 120,00</ion-note>
-      </ion-item>
-    </ion-list>
-      <ion-button fill="clear">Ver todos os gastos</ion-button>
-
-  </ion-card>
-
-  <ion-grid>
-    <ion-row>
-      <ion-col>
-        <ion-button expand="block">Gráficos</ion-button>
-      </ion-col>
-      <ion-col>
-        <ion-button expand="block">Falar com IA</ion-button>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
-
+  </div>
 </ion-content>

@@ -1,0 +1,261 @@
+:host {
+  /* Identidade extraída dos prints de Login/Cadastro */
+  --ecoa-primary: #9d8bc9;
+  --ecoa-primary-dark: #816eb3;
+  --ecoa-primary-light: #ece7f6;
+  --ecoa-text: #2f2c38;
+  --ecoa-text-muted: #736f7d;
+  --ecoa-bg: #f2efea;
+  --ecoa-card-bg: #ffffff;
+  --ecoa-border: #e3dfd8;
+  --ecoa-success: #52a47a;
+
+  font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.home__header {
+  --background: var(--ecoa-bg);
+  background: var(--ecoa-bg);
+}
+
+.home__toolbar {
+  --background: var(--ecoa-bg);
+  --border-width: 0;
+  text-align: center;
+}
+
+.home__logo {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--ecoa-primary);
+}
+
+ion-content.home {
+  --background: var(--ecoa-bg);
+}
+
+.home__wrap {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 12px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Saudação */
+.home__saudacao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+
+  .home__avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .home__saudacao-texto {
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ecoa-text);
+    }
+
+    p {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--ecoa-text-muted);
+    }
+  }
+}
+
+/* Base de Cards */
+.home__card {
+  background: var(--ecoa-card-bg);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+
+  .home__card-title {
+    margin: 0 0 14px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ecoa-text);
+  }
+}
+
+/* Card Saldo */
+.home__card--saldo {
+  background: linear-gradient(135deg, #ffffff 0%, #f9f8fc 100%);
+
+  .home__card-subtitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ecoa-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .home__saldo-valor {
+    margin: 6px 0 12px;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--ecoa-primary-dark);
+  }
+
+  .home__card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid #f0ede8;
+  }
+
+  .home__atualizacao {
+    font-size: 12px;
+    color: var(--ecoa-text-muted);
+  }
+}
+
+/* Botões de Link Internos */
+.home__link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ecoa-primary);
+  cursor: pointer;
+
+  &--full {
+    width: 100%;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f0ede8;
+    text-align: center;
+  }
+}
+
+/* Humor */
+.home__humor-lista {
+  display: flex;
+  gap: 8px;
+}
+
+.home__humor-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px;
+  background: #fcfbf9;
+  border: 1.5px solid var(--ecoa-border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &--ativo {
+    border-color: var(--ecoa-primary);
+    background: var(--ecoa-primary-light);
+  }
+
+  .home__humor-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ecoa-text);
+  }
+}
+
+.home__humor-confirmacao {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ecoa-success);
+  text-align: center;
+}
+
+/* Resumo */
+.home__resumo-lista {
+  display: flex;
+  flex-direction: column;
+}
+
+.home__resumo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e8e4de;
+  font-size: 14px;
+  color: var(--ecoa-text);
+
+  strong {
+    font-weight: 700;
+  }
+
+  &--ultimo {
+    border-bottom: none;
+  }
+}
+
+/* Ações Gerais */
+.home__acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.home__acoes-grid {
+  display: flex;
+  gap: 12px;
+
+  .home__btn {
+    flex: 1;
+  }
+}
+
+.home__btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:active {
+    opacity: 0.85;
+  }
+
+  &--primary {
+    background: var(--ecoa-primary);
+    color: #ffffff;
+  }
+
+  &--outline {
+    background: transparent;
+    border: 2px solid var(--ecoa-primary);
+    color: var(--ecoa-primary);
+  }
+
+  &--subtle {
+    background: rgba(157, 139, 201, 0.12);
+    color: var(--ecoa-primary-dark);
+  }
+}
