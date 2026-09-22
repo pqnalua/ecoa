@@ -1,0 +1,67 @@
+<ion-content [fullscreen]="true" class="cadastro">
+  <main class="cadastro__wrap">
+    <header class="cadastro__brand">
+      <img src="../../assets/ecoabegeclaroquadrado.png" alt="ECOA" class="cadastro__logo" />
+      <p class="cadastro__tagline">Crie sua conta</p>
+    </header>
+
+    <form class="cadastro__form" [formGroup]="form" (ngSubmit)="cadastrar()" novalidate>
+      <div class="field" [class.field--error]="mostrarErro('email')">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email"
+               autocomplete="email" inputmode="email" placeholder="voce@email.com" />
+        <small *ngIf="mostrarErro('email')">Digite um email válido.</small>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('cpf')">
+        <label for="cpf">CPF</label>
+        <input id="cpf" type="text" formControlName="cpf"
+               inputmode="numeric" maxlength="14" placeholder="000.000.000-00"
+               (input)="formatarCpf($event)" />
+        <small *ngIf="mostrarErro('cpf')">Digite um CPF válido, com 11 números.</small>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('idade')">
+        <label for="idade">Idade</label>
+        <input id="idade" type="number" formControlName="idade"
+               inputmode="numeric" placeholder="Sua idade" min="18" max="100" />
+        <small *ngIf="mostrarErro('idade')">Você precisa ter pelo menos 18 anos.</small>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('senha')">
+        <label for="senha">Senha</label>
+        <div class="field__senha">
+          <input id="senha" [type]="verSenha ? 'text' : 'password'" formControlName="senha"
+                 autocomplete="new-password" placeholder="Crie uma senha" />
+          <button type="button" class="field__toggle" (click)="verSenha = !verSenha"
+                  [attr.aria-label]="verSenha ? 'Ocultar senha' : 'Mostrar senha'">
+            <ion-icon [name]="verSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+        <small *ngIf="mostrarErro('senha')">A senha precisa ter pelo menos 6 caracteres.</small>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('confirmarSenha')">
+        <label for="confirmarSenha">Confirmar senha</label>
+        <input id="confirmarSenha" [type]="verSenha ? 'text' : 'password'" formControlName="confirmarSenha"
+               autocomplete="new-password" placeholder="Repita a senha" />
+        <small *ngIf="mostrarErro('confirmarSenha')">As senhas não são iguais.</small>
+      </div>
+
+      <p class="cadastro__erro" *ngIf="erro" role="alert">{{ erro }}</p>
+
+      <p class="cadastro__aviso">
+        Depois de criar sua conta, você poderá conectar sua conta bancária para começar a acompanhar seus gastos.
+      </p>
+
+      <button type="submit" class="btn btn--primario" [disabled]="carregando">
+        {{ carregando ? 'Criando conta...' : 'Criar conta' }}
+      </button>
+    </form>
+
+    <p class="cadastro__login">
+      Já tem conta?
+      <a routerLink="/login">Entrar</a>
+    </p>
+  </main>
+</ion-content>
