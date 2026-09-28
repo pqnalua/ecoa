@@ -25,6 +25,10 @@ const routes: Routes = [
   },  {
     path: 'questionario',
     loadChildren: () => import('./questionario/questionario.module').then( m => m.QuestionarioPageModule)
+  },
+  {
+    path: 'chateco',
+    loadChildren: () => import('./chateco/chateco.module').then( m => m.ChatecoPageModule)
   }
 
 
