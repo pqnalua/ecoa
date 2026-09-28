@@ -22,13 +22,14 @@ const routes: Routes = [
   {
     path: 'cadastro',
     loadChildren: () => import('./cadastro/cadastro.module').then( m => m.CadastroPageModule)
-  },  {
+  },
+  {
     path: 'questionario',
     loadChildren: () => import('./questionario/questionario.module').then( m => m.QuestionarioPageModule)
   },
   {
-    path: 'chateco',
-    loadChildren: () => import('./chateco/chateco.module').then( m => m.ChatecoPageModule)
+    path: 'iaecoa',
+    loadChildren: () => import('./iaecoa/iaecoa.module').then( m => m.IaecoaPageModule)
   }
 
 

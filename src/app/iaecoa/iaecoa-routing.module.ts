@@ -1,12 +1,11 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-
-import { ChatecoPage } from './chateco.page';
+import { IaecoaPage } from './iaecoa.page';
 
 const routes: Routes = [
   {
     path: '',
-    component: ChatecoPage
+    component: IaecoaPage
   }
 ];
 
@@ -14,4 +13,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class ChatecoPageRoutingModule {}
+export class IaecoaPageRoutingModule {}

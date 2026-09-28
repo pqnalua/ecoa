@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 
 <head>
   <meta charset="utf-8" />
-  <title>Ionic App</title>
+  <title>ECOA</title>
 
   <base href="/" />
 
@@ -12,25 +12,17 @@
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />
 
+  <!-- Permite a execução dos scripts do Angular e scripts inline -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline' http://localhost:3000; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vlibras.gov.br; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content: https://vlibras.gov.br;">
+
   <link rel="icon" type="image/png" href="assets/icon/favicon.png" />
 
-  <!-- add to homescreen for ios -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 </head>
 
 <body>
   <app-root></app-root>
-  <div vw class="enabled">
-  <div vw-access-button class="active"></div>
-  <div vw-plugin-wrapper>
-    <div class="vw-plugin-top-wrapper"></div>
-  </div>
-</div>
-<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-<script>
-  new window.VLibras.Widget('https://vlibras.gov.br/app');
-</script>
 </body>
 
 </html>

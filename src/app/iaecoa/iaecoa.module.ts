@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular/lazy';
 import { HttpClientModule } from '@angular/common/http';
 
-import { ChatecoPageRoutingModule } from './chateco-routing.module';
-import { ChatecoPage } from './chateco.page';
+import { IaecoaPageRoutingModule } from './iaecoa-routing.module';
+import { IaecoaPage } from './iaecoa.page';
 
 @NgModule({
   imports: [
@@ -13,8 +13,8 @@ import { ChatecoPage } from './chateco.page';
     FormsModule,
     IonicModule,
     HttpClientModule,
-    ChatecoPageRoutingModule
+    IaecoaPageRoutingModule
   ],
-  declarations: [ChatecoPage]
+  declarations: [IaecoaPage]
 })
-export class ChatecoPageModule {}
+export class IaecoaPageModule {}
