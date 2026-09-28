@@ -30,24 +30,24 @@
       </div>
     </div>
 
-    <!-- Como está hoje (Humor) -->
-    <div class="home__card">
-      <h3 class="home__card-title">Como você está hoje?</h3>
-      <div class="home__humor-lista">
-        <button
-          type="button"
-          class="home__humor-item"
-          *ngFor="let humor of humores"
-          [class.home__humor-item--ativo]="humorSelecionado === humor.id"
-          (click)="selecionarHumor(humor.id)"
-        >
-          <span class="home__humor-label">{{ humor.label }}</span>
-        </button>
-      </div>
-      <p class="home__humor-confirmacao" *ngIf="humorSelecionado">
-        Humor registrado!
-      </p>
-    </div>
+  <!-- Como está hoje (Humor) -->
+<div class="home__card">
+  <h3 class="home__card-title">Como você está hoje?</h3>
+  <div class="home__humor-lista">
+    <button
+      type="button"
+      class="home__humor-item"
+      *ngFor="let humor of humores"
+      [class.home__humor-item--ativo]="humorSelecionado === humor.id"
+      (click)="selecionarHumor(humor.id)"
+    >
+      <img [src]="humor.imagem" [alt]="humor.id" class="home__humor-img" />
+    </button>
+  </div>
+  <p class="home__humor-confirmacao" *ngIf="humorSelecionado">
+    Humor registrado!
+  </p>
+</div>
 
     <!-- Resumo do mês -->
     <div class="home__card">

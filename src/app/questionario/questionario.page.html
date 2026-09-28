@@ -1,0 +1,91 @@
+<ion-header class="questionario__header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab1"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Questionário</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="questionario">
+  <div class="questionario__wrap">
+
+    <!-- Etapa: perguntas -->
+    <ng-container *ngIf="!resultado">
+      <div class="questionario__progresso">
+        <div class="questionario__barra">
+          <div class="questionario__barra-preenchida" [style.width.%]="progresso"></div>
+        </div>
+        <div class="questionario__progresso-info">
+          <span class="questionario__secao">{{ passoAtual.secao }}</span>
+          <span class="questionario__contador">{{ indiceAtual + 1 }} de {{ passos.length }}</span>
+        </div>
+      </div>
+
+      <h1 class="questionario__pergunta">{{ passoAtual.texto }}</h1>
+      <p class="questionario__dica" *ngIf="passoAtual.dica">{{ passoAtual.dica }}</p>
+
+      <!-- Pergunta de múltipla escolha -->
+      <div class="questionario__opcoes" *ngIf="passoAtual.tipo === 'opcoes'">
+        <button
+          type="button"
+          class="questionario__opcao"
+          *ngFor="let opcao of passoAtual.opcoes"
+          [class.questionario__opcao--ativa]="respostas[passoAtual.id] === opcao.valor"
+          (click)="responderOpcao(opcao.valor)"
+        >
+          {{ opcao.texto }}
+        </button>
+      </div>
+
+      <!-- Pergunta do dia do pagamento -->
+      <div class="questionario__dia" *ngIf="passoAtual.tipo === 'dia'">
+        <input
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max="31"
+          placeholder="Dia (1 a 31)"
+          [(ngModel)]="diaDigitado"
+          class="questionario__input"
+        />
+        <small class="questionario__erro" *ngIf="diaDigitado !== null && !diaValido">
+          Digite um dia entre 1 e 31.
+        </small>
+        <button type="button" class="btn btn--primario" [disabled]="!diaValido" (click)="confirmarDia()">
+          Continuar
+        </button>
+        <button type="button" class="questionario__secundario" (click)="semDiaFixo()">
+          Não tenho dia fixo
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="questionario__voltar"
+        *ngIf="indiceAtual > 0"
+        (click)="voltarPergunta()"
+      >
+        Voltar
+      </button>
+    </ng-container>
+
+    <!-- Etapa: resultado -->
+    <ng-container *ngIf="resultado">
+      <div class="questionario__resultado">
+        <span class="questionario__resultado-emoji">{{ resultado.emoji }}</span>
+        <p class="questionario__resultado-label">Seu perfil é</p>
+        <h1 class="questionario__resultado-titulo">{{ resultado.titulo }}</h1>
+        <p class="questionario__resultado-descricao">{{ resultado.descricao }}</p>
+
+        <button type="button" class="btn btn--primario" (click)="concluir()">
+          Ir para o início
+        </button>
+        <button type="button" class="questionario__secundario" (click)="refazer()">
+          Refazer questionário
+        </button>
+      </div>
+    </ng-container>
+
+  </div>
+</ion-content>

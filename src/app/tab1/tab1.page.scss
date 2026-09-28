@@ -212,6 +212,37 @@ ion-content.home {
   }
 }
 
+/* Humor */
+.home__humor-lista {
+  display: flex;
+  gap: 8px;
+}
+
+.home__humor-item {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2px 1px;
+  background: #fcfbf9;
+  border: 1.5px solid var(--ecoa-border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  .home__humor-img {
+    width: 100px;
+    height: 70px;
+    object-fit: contain;
+  }
+
+  &--ativo {
+    border-color: var(--ecoa-primary);
+    background: var(--ecoa-primary-light);
+    transform: scale(1.05);
+  }
+}
+
 /* Ações Gerais */
 .home__acoes {
   display: flex;

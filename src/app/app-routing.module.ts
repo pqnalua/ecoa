@@ -22,7 +22,11 @@ const routes: Routes = [
   {
     path: 'cadastro',
     loadChildren: () => import('./cadastro/cadastro.module').then( m => m.CadastroPageModule)
+  },  {
+    path: 'questionario',
+    loadChildren: () => import('./questionario/questionario.module').then( m => m.QuestionarioPageModule)
   }
+
 
 ];
 @NgModule({

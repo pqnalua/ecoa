@@ -36,13 +36,13 @@ export class Tab1Page implements OnInit {
     extras: 120,
   };
 
-  humores: Humor[] = [
-    { id: 'tristeza', label: 'Tristeza'},
-    { id: 'ansiedade', label: 'Ansiedade'},
-    { id: 'raiva', label: 'Raiva'},
-    { id: 'alegria', label: 'Alegria'},
-    { id: 'tedio', label: 'Tédio'},
-  ];
+humores = [
+  { id: 'alegria', imagem: 'assets/alegria.png' },
+  { id: 'tristeza', imagem: 'assets/tristeza.png' },
+  { id: 'ansiedade', imagem: 'assets/ansiedade.png' },
+  { id: 'tedio', imagem: 'assets/tedio.png' },
+  { id: 'raiva', imagem: 'assets/raiva.png' },
+];
 
   humorSelecionado: string | null = null;
 
