@@ -67,7 +67,7 @@ irParaGraficos() {
 }
 
 irParaChat() {
-  this.router.navigateByUrl('/chat');
+  this.router.navigateByUrl('/iaecoa');
 }
   
 

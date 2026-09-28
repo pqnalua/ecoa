@@ -1,13 +1,81 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>iaecoa</ion-title>
+<ion-header class="chat__header" class="ion-no-border">
+  <ion-toolbar class="chat__toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab1" text="" color="primary"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="chat__logo">ECOA IA</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">iaecoa</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="chat" #content>
+  <div class="chat__wrap">
+    
+    <!-- Mensagem de Boas-Vindas Inicial -->
+    <div class="chat__intro">
+      <ion-avatar class="chat__avatar-ia">
+        <img src="assets/icon/favicon.png" alt="ECOA IA" />
+      </ion-avatar>
+      <h2>Assistente Financeiro</h2>
+      <p>Estou aqui para te ajudar a economizar, organizar tuas contas e responder tuas dúvidas!</p>
+    </div>
+
+    <!-- Lista de Mensagens -->
+    <div class="chat__mensagens">
+      <div 
+        *ngFor="let msg of mensagens" 
+        class="chat__bolha-wrap" 
+        [class.chat__bolha-wrap--usuario]="msg.remetente === 'usuario'"
+        [class.chat__bolha-wrap--ia]="msg.remetente === 'ia'"
+      >
+        <div class="chat__bolha">
+          <p>{{ msg.texto }}</p>
+          <span class="chat__hora">{{ msg.data | date:'HH:mm' }}</span>
+        </div>
+      </div>
+
+      <!-- Indicador de Carregamento/Digitação -->
+      <div *ngIf="carregando" class="chat__bolha-wrap chat__bolha-wrap--ia">
+        <div class="chat__bolha chat__bolha--typing">
+          <ion-spinner name="dots" color="primary"></ion-spinner>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sugestões de Dicas Rápidas -->
+    <div class="chat__sugestoes" *ngIf="mensagens.length <= 1">
+      <span class="chat__sugestoes-titulo">Perguntas frequentes:</span>
+      <div class="chat__sugestoes-chips">
+        <button 
+          type="button" 
+          class="chat__chip" 
+          *ngFor="let sugestao of sugestoes"
+          (click)="enviarSugestao(sugestao)"
+        >
+          {{ sugestao }}
+        </button>
+      </div>
+    </div>
+
+  </div>
 </ion-content>
+
+<!-- Campo de Envio de Mensagem Fixo no Rodapé -->
+<ion-footer class="chat__footer" class="ion-no-border">
+  <div class="chat__input-container">
+    <input 
+      type="text" 
+      class="chat__input" 
+      placeholder="Digite sua dúvida financeira..." 
+      [(ngModel)]="novaMensagem"
+      (keyup.enter)="enviarMensagem()"
+    />
+    <button 
+      type="button" 
+      class="chat__send-btn" 
+      (click)="enviarMensagem()"
+      [disabled]="!novaMensagem.trim()"
+    >
+      <ion-icon name="send"></ion-icon>
+    </button>
+  </div>
+</ion-footer>

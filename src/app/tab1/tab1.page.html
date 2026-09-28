@@ -1,91 +1,81 @@
-<ion-header class="home__header" class="ion-no-border">
-  <ion-toolbar class="home__toolbar">
-    <ion-title class="home__logo">ECOA</ion-title>
+<ion-header class="chat__header" class="ion-no-border">
+  <ion-toolbar class="chat__toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab1" text="" color="primary"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="chat__logo">ECOA IA</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="home">
-  <div class="home__wrap">
-
-    <!-- Saudação -->
-    <div class="home__saudacao">
-      <ion-avatar class="home__avatar">
-        <img src="../../assets/icon/avatar.jpg" alt="avatar" class="usuario.foto">
+<ion-content class="chat" #content>
+  <div class="chat__wrap">
+    
+    <!-- Mensagem de Boas-Vindas Inicial -->
+    <div class="chat__intro">
+      <ion-avatar class="chat__avatar-ia">
+        <img src="assets/icon/favicon.png" alt="ECOA IA" />
       </ion-avatar>
-      <div class="home__saudacao-texto">
-        <h1>Olá, {{ usuario.nome }}!</h1>
-        <p>O que você deseja fazer hoje?</p>
+      <h2>Assistente Financeiro</h2>
+      <p>Estou aqui para te ajudar a economizar, organizar tuas contas e responder tuas dúvidas!</p>
+    </div>
+
+    <!-- Lista de Mensagens -->
+    <div class="chat__mensagens">
+      <div 
+        *ngFor="let msg of mensagens" 
+        class="chat__bolha-wrap" 
+        [class.chat__bolha-wrap--usuario]="msg.remetente === 'usuario'"
+        [class.chat__bolha-wrap--ia]="msg.remetente === 'ia'"
+      >
+        <div class="chat__bolha">
+          <p>{{ msg.texto }}</p>
+          <span class="chat__hora">{{ msg.data | date:'HH:mm' }}</span>
+        </div>
+      </div>
+
+      <!-- Indicador de Carregamento/Digitação -->
+      <div *ngIf="carregando" class="chat__bolha-wrap chat__bolha-wrap--ia">
+        <div class="chat__bolha chat__bolha--typing">
+          <ion-spinner name="dots" color="primary"></ion-spinner>
+        </div>
       </div>
     </div>
 
-    <!-- Saldo Disponível -->
-    <div class="home__card home__card--saldo">
-      <div class="home__card-header">
-        <span class="home__card-subtitle">Saldo disponível</span>
-        <h2 class="home__saldo-valor">{{ saldo | currency:'BRL' }}</h2>
-      </div>
-      <div class="home__card-footer">
-        <span class="home__atualizacao">Atualizado hoje às {{ atualizadoEm | date:'HH:mm' }}</span>
-        <button type="button" class="home__link-btn" (click)="irParaGastos()">Ver detalhes</button>
-      </div>
-    </div>
-
-  <!-- Como está hoje (Humor) -->
-<div class="home__card">
-  <h3 class="home__card-title">Como você está hoje?</h3>
-  <div class="home__humor-lista">
-    <button
-      type="button"
-      class="home__humor-item"
-      *ngFor="let humor of humores"
-      [class.home__humor-item--ativo]="humorSelecionado === humor.id"
-      (click)="selecionarHumor(humor.id)"
-    >
-      <img [src]="humor.imagem" [alt]="humor.id" class="home__humor-img" />
-    </button>
-  </div>
-  <p class="home__humor-confirmacao" *ngIf="humorSelecionado">
-    Humor registrado!
-  </p>
-</div>
-
-    <!-- Resumo do mês -->
-    <div class="home__card">
-      <h3 class="home__card-title">Resumo do mês</h3>
-      <div class="home__resumo-lista">
-        <div class="home__resumo-item">
-          <span>Gastos fixos</span>
-          <strong>{{ resumoMes.fixos | currency:'BRL' }}</strong>
-        </div>
-        <div class="home__resumo-item">
-          <span>Gastos variáveis</span>
-          <strong>{{ resumoMes.variaveis | currency:'BRL' }}</strong>
-        </div>
-        <div class="home__resumo-item home__resumo-item--ultimo">
-          <span>Gastos extras</span>
-          <strong>{{ resumoMes.extras | currency:'BRL' }}</strong>
-        </div>
-      </div>
-      <button type="button" class="home__link-btn home__link-btn--full" (click)="irParaGastos()">
-        Ver todos os gastos
-      </button>
-    </div>
-
-    <!-- Ações / Botões -->
-    <div class="home__acoes">
-      <div class="home__acoes-grid">
-        <button type="button" class="home__btn home__btn--outline" (click)="irParaGraficos()">
-          Gráficos
-        </button>
-        <button type="button" class="home__btn home__btn--primary" (click)="irParaChat()">
-          Falar com IA
+    <!-- Sugestões de Dicas Rápidas -->
+    <div class="chat__sugestoes" *ngIf="mensagens.length <= 1">
+      <span class="chat__sugestoes-titulo">Perguntas frequentes:</span>
+      <div class="chat__sugestoes-chips">
+        <button 
+          type="button" 
+          class="chat__chip" 
+          *ngFor="let sugestao of sugestoes"
+          (click)="enviarSugestao(sugestao)"
+        >
+          {{ sugestao }}
         </button>
       </div>
-      
-      <button type="button" class="home__btn home__btn--subtle" (click)="irParaQuestionario()">
-        Fazer questionário diagnóstico
-      </button>
     </div>
 
   </div>
 </ion-content>
+
+<!-- Campo de Envio de Mensagem Fixo no Rodapé -->
+<ion-footer class="chat__footer" class="ion-no-border">
+  <div class="chat__input-container">
+    <input 
+      type="text" 
+      class="chat__input" 
+      placeholder="Digite sua dúvida financeira..." 
+      [(ngModel)]="novaMensagem"
+      (keyup.enter)="enviarMensagem()"
+    />
+    <button 
+      type="button" 
+      class="chat__send-btn" 
+      (click)="enviarMensagem()"
+      [disabled]="!novaMensagem.trim()"
+    >
+      <ion-icon name="send"></ion-icon>
+    </button>
+  </div>
+</ion-footer>

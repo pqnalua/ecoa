@@ -1,0 +1,243 @@
+:host {
+  /* Identidade extraída dos prints do teu projeto */
+  --ecoa-primary: #9d8bc9;
+  --ecoa-primary-dark: #816eb3;
+  --ecoa-primary-light: #ece7f6;
+  --ecoa-text: #2f2c38;
+  --ecoa-text-muted: #736f7d;
+  --ecoa-bg: #f2efea;
+  --ecoa-card-bg: #ffffff;
+  --ecoa-border: #e3dfd8;
+  --ecoa-success: #52a47a;
+
+  font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.chat__header {
+  --background: var(--ecoa-bg);
+  background: var(--ecoa-bg);
+}
+
+.chat__toolbar {
+  --background: var(--ecoa-bg);
+  --border-width: 0;
+  text-align: center;
+}
+
+.chat__logo {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--ecoa-primary);
+}
+
+ion-content.chat {
+  --background: var(--ecoa-bg);
+}
+
+.chat__wrap {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 12px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Apresentação Inicial */
+.chat__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px 0;
+
+  .chat__avatar-ia {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 8px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ecoa-text);
+  }
+
+  p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--ecoa-text-muted);
+    max-width: 280px;
+  }
+}
+
+/* Bolhas de Conversa */
+.chat__mensagens {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat__bolha-wrap {
+  display: flex;
+  width: 100%;
+
+  &--usuario {
+    justify-content: flex-end;
+
+    .chat__bolha {
+      background: var(--ecoa-primary);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+
+      .chat__hora {
+        color: rgba(255, 255, 255, 0.75);
+      }
+    }
+  }
+
+  &--ia {
+    justify-content: flex-start;
+
+    .chat__bolha {
+      background: var(--ecoa-card-bg);
+      color: var(--ecoa-text);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.03);
+
+      .chat__hora {
+        color: var(--ecoa-text-muted);
+      }
+    }
+  }
+}
+
+.chat__bolha {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+
+  p {
+    margin: 0;
+  }
+
+  .chat__hora {
+    display: block;
+    font-size: 10px;
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  &--typing {
+    padding: 8px 16px;
+  }
+}
+
+/* Chips de Dicas */
+.chat__sugestoes {
+  margin-top: 8px;
+
+  .chat__sugestoes-titulo {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ecoa-text-muted);
+  }
+
+  .chat__sugestoes-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .chat__chip {
+    background: #fcfbf9;
+    border: 1.5px solid var(--ecoa-border);
+    color: var(--ecoa-primary-dark);
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:active {
+      background: var(--ecoa-primary-light);
+      border-color: var(--ecoa-primary);
+    }
+  }
+}
+
+/* Footer / Entrada de Texto */
+.chat__footer {
+  --background: var(--ecoa-bg);
+  background: var(--ecoa-bg);
+  padding: 8px 16px 16px;
+}
+
+.chat__input-container {
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ecoa-card-bg);
+  padding: 6px 6px 6px 16px;
+  border-radius: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--ecoa-border);
+}
+
+.chat__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--ecoa-text);
+
+  &::placeholder {
+    color: var(--ecoa-text-muted);
+  }
+}
+
+.chat__send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ecoa-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  ion-icon {
+    font-size: 18px;
+  }
+
+  &:disabled {
+    background: var(--ecoa-border);
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.85;
+  }
+}
