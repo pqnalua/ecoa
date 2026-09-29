@@ -61,6 +61,11 @@ irParaGastos() {
   this.router.navigateByUrl('/tabs/tab3');
 }
 
+registrarPorVoz() {
+  // TODO: iniciar o reconhecimento de voz e registrar a compra ditada
+  console.log('Comando por voz ainda não implementado');
+}
+
 irParaGraficos() {
   // gráficos ficam dentro de Gastos
   this.router.navigateByUrl('/tabs/tab3');

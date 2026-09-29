@@ -1,17 +1,263 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Meu Controle
-    </ion-title>
+<ion-header class="ion-no-border ctrl__header">
+  <ion-toolbar class="ctrl__toolbar">
+    <ion-title class="ctrl__titulo">Meu Controle</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 3</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ctrl">
+  <div class="ctrl__wrap">
 
-  <app-explore-container name="Tab 3 page"></app-explore-container>
+    <!-- Navegação de mês -->
+    <div class="ctrl__mes">
+      <button type="button" class="ctrl__mes-btn" (click)="mesAnterior()" aria-label="Mês anterior">
+        <ion-icon name="chevron-back"></ion-icon>
+      </button>
+      <span class="ctrl__mes-label">{{ mesLabel }}</span>
+      <button type="button" class="ctrl__mes-btn" (click)="proximoMes()" aria-label="Próximo mês">
+        <ion-icon name="chevron-forward"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Total do mês -->
+    <div class="ctrl__card ctrl__card--total">
+      <span class="ctrl__subtitulo">Total gasto no mês</span>
+      <h2 class="ctrl__total">{{ total | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</h2>
+      <div class="ctrl__chips">
+        <div class="ctrl__chip" *ngFor="let t of tipos">
+          <span class="ctrl__bolinha" [style.background]="t.cor"></span>
+          <span>{{ t.label }}</span>
+          <strong>{{ totalTipo(t.id) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Abas -->
+    <ion-segment [(ngModel)]="aba" class="ctrl__abas">
+      <ion-segment-button value="registrar">
+        <ion-label>Registrar</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="planilha">
+        <ion-label>Planilha</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="graficos">
+        <ion-label>Gráficos</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <!-- ========== REGISTRAR COMPRA ========== -->
+    <div class="ctrl__card" *ngIf="aba === 'registrar'">
+      <h3 class="ctrl__card-titulo">Registrar compra</h3>
+
+      <div class="ctrl__form">
+        <ion-input
+          class="ctrl__input"
+          label="Descrição"
+          labelPlacement="floating"
+          fill="outline"
+          placeholder="Ex.: Mercado"
+          [(ngModel)]="novo.descricao"
+        ></ion-input>
+
+        <div class="ctrl__linha">
+          <ion-input
+            class="ctrl__input"
+            label="Valor (R$)"
+            labelPlacement="floating"
+            fill="outline"
+            type="number"
+            inputmode="decimal"
+            placeholder="0,00"
+            [(ngModel)]="novo.valor"
+          ></ion-input>
+
+          <ion-input
+            class="ctrl__input"
+            label="Data"
+            labelPlacement="floating"
+            fill="outline"
+            type="date"
+            [(ngModel)]="novo.data"
+          ></ion-input>
+        </div>
+
+        <ion-select
+          class="ctrl__input"
+          label="Categoria"
+          labelPlacement="floating"
+          fill="outline"
+          interface="popover"
+          [(ngModel)]="novo.categoria"
+        >
+          <ion-select-option *ngFor="let c of categorias" [value]="c">{{ c }}</ion-select-option>
+        </ion-select>
+
+        <div>
+          <span class="ctrl__rotulo">Tipo de gasto</span>
+          <div class="ctrl__tipos">
+            <button
+              type="button"
+              class="ctrl__tipo"
+              *ngFor="let t of tipos"
+              [class.ctrl__tipo--ativo]="novo.tipo === t.id"
+              (click)="novo.tipo = t.id"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <span class="ctrl__rotulo">Como você estava? (opcional)</span>
+          <div class="ctrl__humores">
+            <button
+              type="button"
+              class="ctrl__humor"
+              *ngFor="let h of humores"
+              [class.ctrl__humor--ativo]="novo.humor === h.id"
+              (click)="selecionarHumor(h.id)"
+              [attr.aria-label]="h.label"
+            >
+              <img [src]="h.imagem" [alt]="h.label" />
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="ctrl__btn ctrl__btn--primary" [disabled]="!formValido" (click)="salvar()">
+          Salvar compra
+        </button>
+
+        <p class="ctrl__sucesso" *ngIf="mensagemSucesso">Compra registrada!</p>
+      </div>
+    </div>
+
+    <!-- ========== PLANILHA ========== -->
+    <div class="ctrl__card" *ngIf="aba === 'planilha'">
+      <div class="ctrl__card-topo">
+        <h3 class="ctrl__card-titulo">Planilha de {{ meses[mesRef.getMonth()] }}</h3>
+        <button type="button" class="ctrl__link-btn" (click)="exportarCsv()" [disabled]="!gastosDoMes.length">
+          <ion-icon name="download-outline"></ion-icon> Exportar CSV
+        </button>
+      </div>
+
+      <p class="ctrl__vazio" *ngIf="!gastosDoMes.length">Nenhuma compra registrada neste mês.</p>
+
+      <div class="ctrl__tabela-wrap" *ngIf="gastosDoMes.length">
+        <table class="ctrl__tabela">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th>Humor</th>
+              <th class="ctrl__num">Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let g of gastosDoMes">
+              <td>{{ formatarData(g.data) }}</td>
+              <td>{{ g.descricao }}</td>
+              <td>{{ g.categoria }}</td>
+              <td>
+                <span class="ctrl__tag" [style.background]="corTipo(g.tipo)">{{ nomeTipo(g.tipo) }}</span>
+              </td>
+              <td>
+                <img *ngIf="g.humor" class="ctrl__humor-mini" [src]="imagemHumor(g.humor)" [alt]="nomeHumor(g.humor)" />
+                <span *ngIf="!g.humor">—</span>
+              </td>
+              <td class="ctrl__num">{{ g.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              <td>
+                <button type="button" class="ctrl__lixeira" (click)="excluir(g.id)" aria-label="Excluir compra">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5">Total</td>
+              <td class="ctrl__num">{{ total | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ========== GRÁFICOS ========== -->
+    <ng-container *ngIf="aba === 'graficos'">
+
+      <p class="ctrl__vazio ctrl__card" *ngIf="!gastosDoMes.length">
+        Registre compras neste mês para ver os gráficos.
+      </p>
+
+      <ng-container *ngIf="gastosDoMes.length">
+
+        <!-- Por tipo -->
+        <div class="ctrl__card">
+          <h3 class="ctrl__card-titulo">Gastos por tipo</h3>
+          <div class="ctrl__donut-area">
+            <svg viewBox="0 0 42 42" class="ctrl__donut" role="img" aria-label="Gastos por tipo">
+              <circle cx="21" cy="21" r="15.915" fill="none" stroke="#f0ede8" stroke-width="6"></circle>
+              <circle
+                *ngFor="let f of fatiasDonut"
+                cx="21"
+                cy="21"
+                r="15.915"
+                fill="none"
+                stroke-width="6"
+                [attr.stroke]="f.cor"
+                [attr.stroke-dasharray]="f.pct + ' ' + (100 - f.pct)"
+                [attr.stroke-dashoffset]="f.offset"
+              ></circle>
+            </svg>
+            <ul class="ctrl__legenda">
+              <li *ngFor="let f of fatiasDonut">
+                <span class="ctrl__bolinha" [style.background]="f.cor"></span>
+                <span>{{ f.label }}</span>
+                <strong>{{ f.pct | number:'1.0-0':'pt-BR' }}%</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Por categoria -->
+        <div class="ctrl__card">
+          <h3 class="ctrl__card-titulo">Gastos por categoria</h3>
+          <div class="ctrl__barra-item" *ngFor="let c of porCategoria">
+            <div class="ctrl__barra-info">
+              <span>{{ c.nome }}</span>
+              <strong>{{ c.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+            </div>
+            <div class="ctrl__barra-fundo">
+              <div class="ctrl__barra" [style.width.%]="c.pct"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Por humor -->
+        <div class="ctrl__card">
+          <h3 class="ctrl__card-titulo">Gastos por humor</h3>
+          <p class="ctrl__vazio" *ngIf="!porHumor.length">
+            Registre o humor nas compras para ver a relação entre emoções e gastos.
+          </p>
+          <div class="ctrl__barra-item" *ngFor="let h of porHumor">
+            <div class="ctrl__barra-info">
+              <span class="ctrl__barra-humor">
+                <img [src]="h.imagem" [alt]="h.nome" class="ctrl__humor-mini" /> {{ h.nome }}
+              </span>
+              <strong>{{ h.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+            </div>
+            <div class="ctrl__barra-fundo">
+              <div class="ctrl__barra ctrl__barra--humor" [style.width.%]="h.pct"></div>
+            </div>
+          </div>
+          <p class="ctrl__insight" *ngIf="insightHumor">{{ insightHumor }}</p>
+        </div>
+
+      </ng-container>
+    </ng-container>
+
+  </div>
 </ion-content>

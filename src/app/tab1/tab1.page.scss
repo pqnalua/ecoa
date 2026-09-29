@@ -290,3 +290,16 @@ ion-content.home {
     color: var(--ecoa-primary-dark);
   }
 }
+
+/* Botão flutuante de voz */
+.home__fab {
+  --background: var(--ecoa-primary);
+  --background-activated: var(--ecoa-primary-dark);
+  --color: #ffffff;
+  --box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* espaço extra no fim da tela pro botão flutuante não cobrir o último botão */
+.home__wrap {
+  padding-bottom: 88px;
+}

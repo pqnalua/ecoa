@@ -22,7 +22,7 @@
     <div class="home__card home__card--saldo">
       <div class="home__card-header">
         <span class="home__card-subtitle">Saldo disponível</span>
-        <h2 class="home__saldo-valor">{{ saldo | currency:'BRL' }}</h2>
+        <h2 class="home__saldo-valor">{{ saldo | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</h2>
       </div>
       <div class="home__card-footer">
         <span class="home__atualizacao">Atualizado hoje às {{ atualizadoEm | date:'HH:mm' }}</span>
@@ -55,15 +55,15 @@
       <div class="home__resumo-lista">
         <div class="home__resumo-item">
           <span>Gastos fixos</span>
-          <strong>{{ resumoMes.fixos | currency:'BRL' }}</strong>
+          <strong>{{ resumoMes.fixos | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
         </div>
         <div class="home__resumo-item">
           <span>Gastos variáveis</span>
-          <strong>{{ resumoMes.variaveis | currency:'BRL' }}</strong>
+          <strong>{{ resumoMes.variaveis | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
         </div>
         <div class="home__resumo-item home__resumo-item--ultimo">
           <span>Gastos extras</span>
-          <strong>{{ resumoMes.extras | currency:'BRL' }}</strong>
+          <strong>{{ resumoMes.extras | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
         </div>
       </div>
       <button type="button" class="home__link-btn home__link-btn--full" (click)="irParaGastos()">
@@ -73,19 +73,21 @@
 
     <!-- Ações / Botões -->
     <div class="home__acoes">
-      <div class="home__acoes-grid">
-        <button type="button" class="home__btn home__btn--outline" (click)="irParaGraficos()">
-          Gráficos
-        </button>
-        <button type="button" class="home__btn home__btn--primary" (click)="irParaChat()">
-          Falar com IA
-        </button>
-      </div>
-      
+      <button type="button" class="home__btn home__btn--outline" (click)="irParaChat()">
+        Falar com ECO
+      </button>
+
       <button type="button" class="home__btn home__btn--subtle" (click)="irParaQuestionario()">
         Fazer questionário diagnóstico
       </button>
     </div>
 
   </div>
+
+  <!-- Botão flutuante de voz -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button class="home__fab" (click)="registrarPorVoz()" aria-label="Registrar compra por voz">
+      <ion-icon name="mic"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>
