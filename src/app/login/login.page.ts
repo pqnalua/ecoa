@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { SupabaseService } from '../services/supabase.service';
 
 @Component({
   selector: 'app-login',
@@ -18,7 +19,11 @@ export class LoginPage {
     senha: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  constructor(private fb: FormBuilder, private router: Router) {}
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private supabaseService: SupabaseService
+  ) {}
 
   mostrarErro(campo: 'email' | 'senha'): boolean {
     const c = this.form.get(campo);
@@ -34,10 +39,18 @@ export class LoginPage {
 
     this.carregando = true;
     try {
-      const { email, senha } = this.form.value;
-      // TODO: trocar pelo login real (ex.: Supabase Auth)
-      // const { error } = await this.auth.signInWithPassword({ email, password: senha });
-      // if (error) throw error;
+      const email = this.form.value.email || '';
+      const password = this.form.value.senha || '';
+
+      const { error } = await this.supabaseService.client.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
       await this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
     } catch {
       this.erro = 'Email ou senha incorretos. Confira e tente de novo.';
@@ -50,8 +63,13 @@ export class LoginPage {
     this.erro = '';
     this.carregando = true;
     try {
-      // TODO: login com Google (ex.: Supabase Auth com provider 'google')
-      await this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+      const { error } = await this.supabaseService.client.auth.signInWithOAuth({
+        provider: 'google',
+      });
+
+      if (error) {
+        throw error;
+      }
     } catch {
       this.erro = 'Não foi possível entrar com o Google. Tente novamente.';
     } finally {
