@@ -11,7 +11,11 @@ export class SupabaseService {
   private supabase: SupabaseClient;
 
   constructor() {
-    this.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    this.supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        lock: (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => fn(),
+      },
+    });
   }
 
   get client(): SupabaseClient {

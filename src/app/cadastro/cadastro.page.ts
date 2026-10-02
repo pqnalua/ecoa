@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
+import { SupabaseService } from '../services/supabase.service';
 
 function senhasIguaisValidator(grupo: AbstractControl): ValidationErrors | null {
   const senha = grupo.get('senha')?.value;
@@ -35,7 +36,11 @@ export class CadastroPage {
     { validators: senhasIguaisValidator }
   );
 
-  constructor(private fb: FormBuilder, private router: Router) {}
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private supabaseService: SupabaseService
+  ) {}
 
   mostrarErro(campo: 'email' | 'cpf' | 'idade' | 'senha' | 'confirmarSenha'): boolean {
     const c = this.form.get(campo);
@@ -72,11 +77,29 @@ export class CadastroPage {
 
     this.carregando = true;
     try {
-      const { email, cpf, idade, senha } = this.form.value;
-      // trocar pelo cadastro real 
+      const email = this.form.value.email || '';
+      const senha = this.form.value.senha || '';
+      const cpf = this.form.value.cpf || '';
+      const idade = this.form.value.idade || '';
+
+      const { error } = await this.supabaseService.client.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          data: {
+            cpf,
+            idade,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
       await this.router.navigateByUrl('/login', { replaceUrl: true });
-    } catch {
-      this.erro = 'Não foi possível criar sua conta. Confira os dados e tente de novo.';
+    } catch (e: any) {
+      this.erro = e?.message || 'Não foi possível criar sua conta. Confira os dados e tente de novo.';
     } finally {
       this.carregando = false;
     }

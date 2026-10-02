@@ -52,8 +52,8 @@ export class LoginPage {
       }
 
       await this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
-    } catch {
-      this.erro = 'Email ou senha incorretos. Confira e tente de novo.';
+    } catch (e: any) {
+      this.erro = e?.message || 'Email ou senha incorretos. Confira e tente de novo.';
     } finally {
       this.carregando = false;
     }
@@ -73,8 +73,8 @@ export class LoginPage {
       if (error) {
         throw error;
       }
-    } catch {
-      this.erro = 'Não foi possível entrar com o Google. Tente novamente.';
+    } catch (e: any) {
+      this.erro = e?.message || 'Não foi possível entrar com o Google. Tente novamente.';
     } finally {
       this.carregando = false;
     }
