@@ -65,6 +65,9 @@ export class LoginPage {
     try {
       const { error } = await this.supabaseService.client.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
       });
 
       if (error) {
