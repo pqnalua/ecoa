@@ -22,9 +22,12 @@
 }
 
 .ctrl__titulo {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--ecoa-text);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ecoa-primary);
 }
 
 ion-content.ctrl {
