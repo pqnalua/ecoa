@@ -18,6 +18,15 @@
   ion-back-button {
     --color: var(--ecoa-roxo);
   }
+
+  ion-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--ecoa-roxo-claro);
+  }
 }
 
 ion-content.editar {

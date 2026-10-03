@@ -1,13 +1,90 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>integracao</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar class="integracao__toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab2" text="" icon="arrow-back-outline"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Integração Bancária</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">integracao</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="integracao">
+  <main class="integracao__wrap">
+
+    <div class="card-seguranca">
+      <div class="card-seguranca__header">
+        <ion-icon name="shield-checkmark" class="card-seguranca__icone"></ion-icon>
+        <div>
+          <h3>Open Finance Brasil</h3>
+          <span class="card-seguranca__badge">Acesso em Modo Leitura</span>
+        </div>
+      </div>
+      <p class="card-seguranca__texto">
+        Por meio da tecnologia da <strong>Pluggy</strong>, o ECOA apenas visualiza extratos e saldos para organizar seus gastos. Nenhuma transação, PIX ou transferência pode ser feita pelo aplicativo.
+      </p>
+    </div>
+
+    <section class="secao" *ngIf="bancosConectados.length > 0">
+      <h2 class="secao__titulo">Contas conectadas</h2>
+      
+      <div class="banco-conectado" *ngFor="let banco of bancosConectados">
+        <div class="banco-conectado__topo">
+          <div class="banco-conectado__identificacao">
+            <div class="banco-conectado__badge" [style.background-color]="banco.cor">
+              <ion-icon [name]="banco.icone"></ion-icon>
+            </div>
+            <div>
+              <h4>{{ banco.nome }}</h4>
+              <small>{{ banco.atualizadoEm }}</small>
+            </div>
+          </div>
+          <span class="banco-conectado__status">Ativo</span>
+        </div>
+
+        <div class="banco-conectado__saldo">
+          <span>Saldo sincronizado</span>
+          <strong>{{ banco.saldo | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        </div>
+
+        <div class="banco-conectado__acoes">
+          <button type="button" class="btn-acao btn-acao--outline" (click)="sincronizar(banco)" [disabled]="carregando">
+            <ion-icon name="sync-outline"></ion-icon>
+            Sincronizar
+          </button>
+          <button type="button" class="btn-acao btn-acao--perigo" (click)="desconectar(banco)" [disabled]="carregando">
+            Desconectar
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2 class="secao__titulo">Conectar nova instituição</h2>
+      <p class="secao__subtitulo">Selecione o seu banco para autorizar a leitura automática de gastos:</p>
+
+      <div class="busca-wrap">
+        <ion-searchbar [(ngModel)]="busca" (ionInput)="filtrar()" placeholder="Buscar instituição financeira..."
+                       class="busca-custom"></ion-searchbar>
+      </div>
+
+      <div class="bancos-grid">
+        <div class="banco-card" *ngFor="let banco of filtroBancos" (click)="conectar(banco)"
+             [class.banco-card--conectado]="banco.conectado">
+          <div class="banco-card__icone" [style.background-color]="banco.cor">
+            <ion-icon [name]="banco.icone"></ion-icon>
+          </div>
+          <span class="banco-card__nome">{{ banco.nome }}</span>
+          <span class="banco-card__status" *ngIf="banco.conectado">Conectado</span>
+          <ion-icon name="add-circle-outline" class="banco-card__add" *ngIf="!banco.conectado"></ion-icon>
+        </div>
+      </div>
+    </section>
+
+    <div class="loading-overlay" *ngIf="carregando">
+      <div class="loading-box">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <p>Conectando com segurança via Pluggy...</p>
+      </div>
+    </div>
+
+  </main>
 </ion-content>
