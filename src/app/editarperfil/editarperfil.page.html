@@ -1,13 +1,81 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>editarperfil</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar class="editar__toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab2" text="" icon="arrow-back-outline"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Editar Perfil</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">editarperfil</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="editar">
+  <main class="editar__wrap">
+
+    <div class="editar__avatar-container">
+      <div class="editar__avatar-wrap">
+        <img [src]="foto" alt="Foto de perfil" class="editar__avatar-img" />
+        <label for="fotoInput" class="editar__avatar-btn" aria-label="Alterar foto">
+          <ion-icon name="camera-outline"></ion-icon>
+        </label>
+        <input id="fotoInput" type="file" accept="image/*" (change)="onFotoSelecionada($event)" class="editar__file-input" />
+      </div>
+      <p class="editar__avatar-legenda">Toque no ícone para trocar a foto</p>
+    </div>
+
+    <form class="editar__form" [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+      <div class="field" [class.field--error]="mostrarErro('nome')">
+        <label for="nome">Nome completo</label>
+        <input id="nome" type="text" formControlName="nome" placeholder="Seu nome" />
+        <small *ngIf="mostrarErro('nome')">O nome precisa ter pelo menos 3 letras.</small>
+      </div>
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" formControlName="email" class="field__readonly" readonly />
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('cpf')">
+        <label for="cpf">CPF</label>
+        <input id="cpf" type="text" formControlName="cpf" inputmode="numeric" maxlength="14"
+               placeholder="000.000.000-00" (input)="formatarCpf($event)" />
+        <small *ngIf="mostrarErro('cpf')">Digite um CPF válido com 11 números.</small>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('idade')">
+        <label for="idade">Idade</label>
+        <input id="idade" type="number" formControlName="idade" inputmode="numeric" placeholder="Sua idade" min="13" max="120" />
+        <small *ngIf="mostrarErro('idade')">Digite uma idade válida.</small>
+      </div>
+
+      <div class="editar__divisor">
+        <span>Alterar Senha (opcional)</span>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('novaSenha')">
+        <label for="novaSenha">Nova senha</label>
+        <div class="field__senha">
+          <input id="novaSenha" [type]="verSenha ? 'text' : 'password'" formControlName="novaSenha"
+                 placeholder="Deixe em branco para não mudar" autocomplete="new-password" />
+          <button type="button" class="field__toggle" (click)="verSenha = !verSenha">
+            <ion-icon [name]="verSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+        <small *ngIf="mostrarErro('novaSenha')">A nova senha precisa ter pelo menos 6 caracteres.</small>
+      </div>
+
+      <div class="field" [class.field--error]="mostrarErro('confirmarSenha')">
+        <label for="confirmarSenha">Confirmar nova senha</label>
+        <input id="confirmarSenha" [type]="verSenha ? 'text' : 'password'" formControlName="confirmarSenha"
+               placeholder="Repita a nova senha" autocomplete="new-password" />
+        <small *ngIf="mostrarErro('confirmarSenha')">As senhas não coincidem.</small>
+      </div>
+
+      <p class="editar__erro" *ngIf="erro" role="alert">{{ erro }}</p>
+      <p class="editar__sucesso" *ngIf="sucesso" role="alert">{{ sucesso }}</p>
+
+      <button type="submit" class="btn btn--primario" [disabled]="carregando">
+        {{ carregando ? 'Salvando alterações...' : 'Salvar alterações' }}
+      </button>
+    </form>
+
+  </main>
 </ion-content>
