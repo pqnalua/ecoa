@@ -30,7 +30,15 @@ const routes: Routes = [
   {
     path: 'iaecoa',
     loadChildren: () => import('./iaecoa/iaecoa.module').then( m => m.IaecoaPageModule)
+  },  {
+    path: 'editarperfil',
+    loadChildren: () => import('./editarperfil/editarperfil.module').then( m => m.EditarperfilPageModule)
+  },
+  {
+    path: 'integracao',
+    loadChildren: () => import('./integracao/integracao.module').then( m => m.IntegracaoPageModule)
   }
+
 
 
 ];

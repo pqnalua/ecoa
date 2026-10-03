@@ -68,9 +68,6 @@ export class LoginPage {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/tabs/tab1`,
-          queryParams: {
-            prompt: 'select_account',
-          },
         },
       });
 
