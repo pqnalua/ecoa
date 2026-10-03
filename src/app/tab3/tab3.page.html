@@ -18,6 +18,9 @@
       </button>
     </div>
 
+    <!-- Mensagem de erro -->
+    <p class="ctrl__erro" *ngIf="erro">{{ erro }}</p>
+
     <!-- Total do mês -->
     <div class="ctrl__card ctrl__card--total">
       <span class="ctrl__subtitulo">Total gasto no mês</span>
@@ -122,8 +125,13 @@
           </div>
         </div>
 
-        <button type="button" class="ctrl__btn ctrl__btn--primary" [disabled]="!formValido" (click)="salvar()">
-          Salvar compra
+        <button
+          type="button"
+          class="ctrl__btn ctrl__btn--primary"
+          [disabled]="!formValido || salvando"
+          (click)="salvar()"
+        >
+          {{ salvando ? 'Salvando...' : 'Salvar compra' }}
         </button>
 
         <p class="ctrl__sucesso" *ngIf="mensagemSucesso">Compra registrada!</p>
@@ -139,7 +147,9 @@
         </button>
       </div>
 
-      <p class="ctrl__vazio" *ngIf="!gastosDoMes.length">Nenhuma compra registrada neste mês.</p>
+      <p class="ctrl__vazio" *ngIf="carregando && !gastosDoMes.length">Carregando...</p>
+
+      <p class="ctrl__vazio" *ngIf="!carregando && !gastosDoMes.length">Nenhuma compra registrada neste mês.</p>
 
       <div class="ctrl__tabela-wrap" *ngIf="gastosDoMes.length">
         <table class="ctrl__tabela">
@@ -168,7 +178,7 @@
               </td>
               <td class="ctrl__num">{{ g.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
               <td>
-                <button type="button" class="ctrl__lixeira" (click)="excluir(g.id)" aria-label="Excluir compra">
+                <button type="button" class="ctrl__lixeira" (click)="pedirExclusao(g)" aria-label="Excluir compra">
                   <ion-icon name="trash-outline"></ion-icon>
                 </button>
               </td>
@@ -260,4 +270,13 @@
     </ng-container>
 
   </div>
+
+  <!-- Confirmação de exclusão -->
+  <ion-alert
+    [isOpen]="!!gastoParaExcluir"
+    header="Excluir compra?"
+    [message]="mensagemExclusao"
+    [buttons]="botoesExcluir"
+    (didDismiss)="gastoParaExcluir = null"
+  ></ion-alert>
 </ion-content>

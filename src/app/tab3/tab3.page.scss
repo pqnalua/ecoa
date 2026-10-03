@@ -72,6 +72,18 @@ ion-content.ctrl {
   cursor: pointer;
 }
 
+/* Mensagem de erro */
+.ctrl__erro {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fbeaea;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ecoa-danger);
+}
+
 /* Cards */
 .ctrl__card {
   background: var(--ecoa-card-bg);
@@ -216,32 +228,34 @@ ion-content.ctrl {
   }
 }
 
+/* Humor na Tab 3 (alinhado com o padrão da Tab 1) */
 .ctrl__humores {
   display: flex;
-  justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
 }
 
 .ctrl__humor {
   flex: 1;
-  max-width: 56px;
-  aspect-ratio: 1;
-  padding: 4px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  background: transparent;
-  opacity: 0.6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  height: 70px;
+  background: #fcfbf9;
+  border: 1.5px solid var(--ecoa-border);
+  border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
+  overflow: hidden;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    transform: scale(1.25);
   }
 
   &--ativo {
-    opacity: 1;
     border-color: var(--ecoa-primary);
     background: var(--ecoa-primary-light);
     transform: scale(1.05);
@@ -350,6 +364,19 @@ ion-content.ctrl {
     text-align: right;
     font-weight: 700;
   }
+
+  /* Última coluna (lixeira) sempre visível, mesmo com a tabela rolando */
+  th:last-child,
+  td:last-child {
+    position: sticky;
+    right: 0;
+    background: #ffffff;
+    box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.15);
+  }
+
+  tbody tr:nth-child(even) td:last-child {
+    background: #faf9f7;
+  }
 }
 
 .ctrl__tag {
@@ -371,10 +398,15 @@ ion-content.ctrl {
 .ctrl__lixeira {
   background: none;
   border: none;
-  padding: 4px;
-  font-size: 18px;
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 20px;
   color: var(--ecoa-danger);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Gráficos */
