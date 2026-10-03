@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
 
@@ -46,7 +46,8 @@ export class Tab1Page implements OnInit {
 
   constructor(
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -58,13 +59,19 @@ export class Tab1Page implements OnInit {
   }
 
   async carregarUsuario() {
-    const user = await this.supabaseService.getCurrentUser();
+    const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+    let user: any = sessionData?.session?.user;
+
+    if (!user) {
+      user = await this.supabaseService.getCurrentUser();
+    }
+
     if (!user) {
       return;
     }
 
     const metadata = user.user_metadata || {};
-    const nomeCompleto = metadata['full_name'] || metadata['name'] || '';
+    const nomeCompleto = metadata['full_name'] || metadata['name'] || metadata['nome'] || '';
 
     let primeiroNome = '';
     if (nomeCompleto) {
@@ -81,6 +88,8 @@ export class Tab1Page implements OnInit {
     if (metadata['avatar_url'] || metadata['picture']) {
       this.usuario.foto = metadata['avatar_url'] || metadata['picture'];
     }
+
+    this.cdr.detectChanges();
   }
 
   selecionarHumor(id: string) {
