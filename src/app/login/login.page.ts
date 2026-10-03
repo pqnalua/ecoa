@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
 
@@ -13,17 +13,18 @@ export class LoginPage {
   verSenha = false;
   carregando = false;
   erro = '';
-
-  form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    senha: ['', [Validators.required, Validators.minLength(6)]],
-  });
+  form: FormGroup;
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private supabaseService: SupabaseService
-  ) {}
+  ) {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      senha: ['', [Validators.required, Validators.minLength(6)]],
+    });
+  }
 
   mostrarErro(campo: 'email' | 'senha'): boolean {
     const c = this.form.get(campo);
@@ -66,7 +67,10 @@ export class LoginPage {
       const { error } = await this.supabaseService.client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/tabs/tab1`,
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
 

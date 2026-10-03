@@ -1,4 +1,4 @@
-<ion-header class="home__header" class="ion-no-border">
+<ion-header class="home__header ion-no-border">
   <ion-toolbar class="home__toolbar">
     <ion-title class="home__logo">ECOA</ion-title>
   </ion-toolbar>
@@ -7,10 +7,9 @@
 <ion-content class="home">
   <div class="home__wrap">
 
-    <!-- Saudação -->
     <div class="home__saudacao">
       <ion-avatar class="home__avatar">
-        <img src="../../assets/icon/avatar.jpg" alt="avatar" class="usuario.foto">
+        <img [src]="usuario.foto" alt="avatar" class="usuario.foto">
       </ion-avatar>
       <div class="home__saudacao-texto">
         <h1>Olá, {{ usuario.nome }}!</h1>
@@ -18,7 +17,6 @@
       </div>
     </div>
 
-    <!-- Saldo Disponível -->
     <div class="home__card home__card--saldo">
       <div class="home__card-header">
         <span class="home__card-subtitle">Saldo disponível</span>
@@ -30,26 +28,24 @@
       </div>
     </div>
 
-  <!-- Como está hoje (Humor) -->
-<div class="home__card">
-  <h3 class="home__card-title">Como você está hoje?</h3>
-  <div class="home__humor-lista">
-    <button
-      type="button"
-      class="home__humor-item"
-      *ngFor="let humor of humores"
-      [class.home__humor-item--ativo]="humorSelecionado === humor.id"
-      (click)="selecionarHumor(humor.id)"
-    >
-      <img [src]="humor.imagem" [alt]="humor.id" class="home__humor-img" />
-    </button>
-  </div>
-  <p class="home__humor-confirmacao" *ngIf="humorSelecionado">
-    Humor registrado!
-  </p>
-</div>
+    <div class="home__card">
+      <h3 class="home__card-title">Como você está hoje?</h3>
+      <div class="home__humor-lista">
+        <button
+          type="button"
+          class="home__humor-item"
+          *ngFor="let humor of humores"
+          [class.home__humor-item--ativo]="humorSelecionado === humor.id"
+          (click)="selecionarHumor(humor.id)"
+        >
+          <img [src]="humor.imagem" [alt]="humor.id" class="home__humor-img" />
+        </button>
+      </div>
+      <p class="home__humor-confirmacao" *ngIf="humorSelecionado">
+        Humor registrado!
+      </p>
+    </div>
 
-    <!-- Resumo do mês -->
     <div class="home__card">
       <h3 class="home__card-title">Resumo do mês</h3>
       <div class="home__resumo-lista">
@@ -71,7 +67,6 @@
       </button>
     </div>
 
-    <!-- Ações / Botões -->
     <div class="home__acoes">
       <button type="button" class="home__btn home__btn--outline" (click)="irParaChat()">
         Falar com ECO
@@ -84,7 +79,6 @@
 
   </div>
 
-  <!-- Botão flutuante de voz -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
     <ion-fab-button class="home__fab" (click)="registrarPorVoz()" aria-label="Registrar compra por voz">
       <ion-icon name="mic"></ion-icon>
