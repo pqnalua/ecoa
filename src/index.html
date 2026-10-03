@@ -7,6 +7,12 @@
 
   <base href="/" />
 
+  <!-- Permissões de Segurança para desenvolvimento local, Supabase e VLibras -->
+  <meta 
+    http-equiv="Content-Security-Policy" 
+    content="default-src * 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; style-src * 'unsafe-inline';" 
+  />
+
   <meta name="color-scheme" content="light dark" />
   <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="format-detection" content="telephone=no" />

@@ -19,6 +19,8 @@ export interface Meta {
 })
 export class Tab4Page implements OnInit {
 
+  private readonly DEFAULT_USER_ID = 'c1ecc597-13c5-4739-963e-15f85adb16ab';
+
   novaMeta = {
     nome: '',
     valor: null as number | null,
@@ -34,22 +36,38 @@ export class Tab4Page implements OnInit {
     this.carregarMetas();
   }
 
-  // 1. Procurar metas do utilizador no Supabase
+  ionViewWillEnter() {
+    this.carregarMetas();
+  }
+
+  private async getActiveUserId(): Promise<string> {
+    try {
+      const user = await this.supabaseService.getCurrentUser();
+      return user?.id || this.DEFAULT_USER_ID;
+    } catch {
+      return this.DEFAULT_USER_ID;
+    }
+  }
+
+  // Busca na tabela 'metas'
   async carregarMetas() {
     this.carregando = true;
+    const userId = await this.getActiveUserId();
+
     const { data, error } = await this.supabaseService.client
       .from('metas')
-      .select('*');
+      .select('*')
+      .eq('user_id', userId);
 
     if (error) {
       console.error('Erro ao carregar metas:', error.message);
     } else {
+      console.log('Metas carregadas com sucesso:', data);
       this.metas = data || [];
     }
     this.carregando = false;
   }
 
-  // Ordenação por data limite
   private ordenarPorData(a: Meta, b: Meta): number {
     if (a.data_alvo && b.data_alvo) {
       return new Date(a.data_alvo).getTime() - new Date(b.data_alvo).getTime();
@@ -75,20 +93,15 @@ export class Tab4Page implements OnInit {
     return this.metas.filter(m => m.concluida);
   }
 
-  // 2. Adicionar nova meta
   async adicionarMeta() {
     if (!this.novaMeta.nome || !this.novaMeta.valor) return;
 
-    const user = await this.supabaseService.getCurrentUser();
-    if (!user) {
-      console.error('Utilizador não autenticado');
-      return;
-    }
+    const userId = await this.getActiveUserId();
 
     const { data, error } = await this.supabaseService.client
       .from('metas')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         nome: this.novaMeta.nome,
         valor_meta: this.novaMeta.valor,
         data_alvo: this.novaMeta.dataAlvo || null,
@@ -106,7 +119,6 @@ export class Tab4Page implements OnInit {
     }
   }
 
-  // 3. Favoritar / Desfavoritar
   async favoritar(meta: Meta) {
     if (!meta.id) return;
 
@@ -123,7 +135,6 @@ export class Tab4Page implements OnInit {
     }
   }
 
-  // 4. Concluir / Reabrir
   async marcarConcluida(meta: Meta) {
     if (!meta.id) return;
 
@@ -140,7 +151,6 @@ export class Tab4Page implements OnInit {
     }
   }
 
-  // 5. Apagar meta
   async excluirMeta(meta: Meta) {
     if (!meta.id) return;
 
@@ -166,28 +176,39 @@ export class Tab4Page implements OnInit {
 
   formatarData(dataString?: string): string {
     if (!dataString) return '';
-    const [ano, mes, dia] = dataString.split('-');
-    return `${dia}/${mes}/${ano}`;
+    try {
+      const parts = dataString.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dataString;
+    } catch {
+      return dataString;
+    }
   }
 
   calcularDiasRestantes(dataString?: string): { texto: string; expirado: boolean } {
     if (!dataString) return { texto: '', expirado: false };
 
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    try {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
 
-    const [ano, mes, dia] = dataString.split('-').map(Number);
-    const dataAlvo = new Date(ano, mes - 1, dia);
+      const parts = dataString.split('-').map(Number);
+      const dataAlvo = new Date(parts[0], parts[1] - 1, parts[2]);
 
-    const diferencaTempo = dataAlvo.getTime() - hoje.getTime();
-    const diferencaDias = Math.ceil(diferencaTempo / (1000 * 3600 * 24));
+      const diferencaTempo = dataAlvo.getTime() - hoje.getTime();
+      const diferencaDias = Math.ceil(diferencaTempo / (1000 * 3600 * 24));
 
-    if (diferencaDias < 0) {
-      return { texto: `Atrasado ${Math.abs(diferencaDias)}d`, expirado: true };
-    } else if (diferencaDias === 0) {
-      return { texto: 'Vence hoje', expirado: false };
-    } else {
-      return { texto: `${diferencaDias} dias`, expirado: false };
+      if (diferencaDias < 0) {
+        return { texto: `Atrasado ${Math.abs(diferencaDias)}d`, expirado: true };
+      } else if (diferencaDias === 0) {
+        return { texto: 'Vence hoje', expirado: false };
+      } else {
+        return { texto: `${diferencaDias} dias`, expirado: false };
+      }
+    } catch {
+      return { texto: '', expirado: false };
     }
   }
 }
