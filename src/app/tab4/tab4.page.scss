@@ -38,6 +38,20 @@
   }
 }
 
+// Divisores de Seção (Favoritas, Pendentes e Concluídas)
+.section-divider {
+  padding: 20px 20px 8px 20px;
+
+  h3 {
+    color: var(--ecoa-primary-dark);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+}
+
 // Cartões em Lilás com sombras suaves
 .blob-card {
   background: var(--ecoa-primary);
@@ -54,6 +68,11 @@
   }
 }
 
+// Cartões de metas concluídas
+.completed-card {
+  opacity: 0.85;
+}
+
 // Rótulos e Grupos
 .form-group {
   margin-bottom: 14px;
@@ -67,7 +86,7 @@
   }
 }
 
-// Inputs e Cápusas Internas Brancas
+// Inputs e Cápsulas Internas Brancas
 .custom-input-wrap {
   background: #ffffff;
   border-radius: 12px;
@@ -86,6 +105,11 @@
     &::placeholder {
       color: var(--ecoa-text-muted);
     }
+
+    &[type="date"] {
+      color: var(--ecoa-text);
+      font-family: inherit;
+    }
   }
 
   span {
@@ -95,7 +119,7 @@
   }
 }
 
-// Botão Adicionar Meta (Fundo Branco com Texto Lilás)
+// Botão Adicionar Meta
 .btn-container {
   display: flex;
   justify-content: flex-end;
@@ -171,6 +195,43 @@
 
       span {
         color: var(--ecoa-text);
+      }
+    }
+
+    .date-pill-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+
+      span {
+        font-size: 13px;
+      }
+
+      .days-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--ecoa-primary-light);
+        color: var(--ecoa-primary-dark);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 20px;
+
+        ion-icon {
+          font-size: 13px;
+          color: var(--ecoa-primary-dark);
+        }
+
+        &.expired {
+          background: #ffe5e5;
+          color: #d93838;
+
+          ion-icon {
+            color: #d93838;
+          }
+        }
       }
     }
   }
