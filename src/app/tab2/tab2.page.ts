@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
 
@@ -13,7 +13,8 @@ export class Tab2Page implements OnInit {
 
   constructor(
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -25,21 +26,36 @@ export class Tab2Page implements OnInit {
   }
 
   async carregarPerfil() {
-    const user = await this.supabaseService.getCurrentUser();
+    const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+    let user: any = sessionData?.session?.user;
+
+    if (!user) {
+      user = await this.supabaseService.getCurrentUser();
+    }
+
     if (user?.user_metadata) {
       const meta = user.user_metadata;
       if (meta['avatar_url'] || meta['picture']) {
         this.foto = meta['avatar_url'] || meta['picture'];
+        this.cdr.detectChanges();
       }
     }
   }
 
   goTo(route: string) {
-    this.router.navigate([`/${route}`]);
+    if (route === 'editar-perfil' || route === 'editarperfil') {
+      this.router.navigateByUrl('/editarperfil');
+      return;
+    }
+    if (route === 'pagamentos' || route === 'integracao') {
+      this.router.navigateByUrl('/integracao');
+      return;
+    }
+    this.router.navigateByUrl(`/${route}`);
   }
 
   async logout() {
     await this.supabaseService.signOut();
-    await this.router.navigate(['/login'], { replaceUrl: true });
+    await this.router.navigateByUrl('/login', { replaceUrl: true });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
@@ -39,7 +39,8 @@ export class EditarperfilPage implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group(
       {
@@ -58,15 +59,24 @@ export class EditarperfilPage implements OnInit {
     await this.carregarDados();
   }
 
+  async ionViewWillEnter() {
+    await this.carregarDados();
+  }
+
   async carregarDados() {
-    const user = await this.supabaseService.getCurrentUser();
+    const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+    let user: any = sessionData?.session?.user;
+
     if (!user) {
-      this.router.navigateByUrl('/login', { replaceUrl: true });
+      user = await this.supabaseService.getCurrentUser();
+    }
+
+    if (!user) {
       return;
     }
 
     const metadata = user.user_metadata || {};
-    const nome = metadata['full_name'] || metadata['name'] || (user.email ? user.email.split('@')[0] : '');
+    const nome = metadata['full_name'] || metadata['name'] || metadata['nome'] || (user.email ? user.email.split('@')[0] : '');
 
     this.form.patchValue({
       nome: nome,
@@ -78,6 +88,8 @@ export class EditarperfilPage implements OnInit {
     if (metadata['avatar_url'] || metadata['picture']) {
       this.foto = metadata['avatar_url'] || metadata['picture'];
     }
+
+    this.cdr.detectChanges();
   }
 
   mostrarErro(campo: string): boolean {
@@ -111,11 +123,42 @@ export class EditarperfilPage implements OnInit {
   onFotoSelecionada(evento: Event) {
     const input = evento.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      const leitor = new FileReader();
-      leitor.onload = (e: any) => {
-        this.foto = e.target.result;
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e: any) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const maxDim = 256;
+
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          this.foto = canvas.toDataURL('image/jpeg', 0.75);
+          this.cdr.detectChanges();
+        };
+        img.src = e.target.result;
       };
-      leitor.readAsDataURL(input.files[0]);
+
+      reader.readAsDataURL(file);
     }
   }
 
@@ -153,14 +196,16 @@ export class EditarperfilPage implements OnInit {
       }
 
       this.sucesso = 'Perfil atualizado com sucesso!';
+      this.cdr.detectChanges();
 
       setTimeout(() => {
         this.router.navigateByUrl('/tabs/tab2');
-      }, 1200);
+      }, 400);
     } catch (e: any) {
       this.erro = e?.message || 'Não foi possível atualizar o perfil. Tente novamente.';
     } finally {
       this.carregando = false;
+      this.cdr.detectChanges();
     }
   }
 }
