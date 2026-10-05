@@ -1,20 +1,18 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
-
-import { IonicModule } from '@ionic/angular/lazy';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { LoginPageRoutingModule } from './login-routing.module';
-
 import { LoginPage } from './login.page';
 
 @NgModule({
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
-    IonicModule,
-    LoginPageRoutingModule
+    LoginPageRoutingModule,
+    LoginPage // Mantém o LoginPage aqui pois ele é Standalone
   ],
-  declarations: [LoginPage]
+  declarations: []
 })
 export class LoginPageModule {}

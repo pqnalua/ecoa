@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { SupabaseService } from '../services/supabase.service';
 
 type TipoConsumidor = 'consumista' | 'endividado' | 'controlado';
 
@@ -203,7 +204,10 @@ export class QuestionarioPage {
   resultado: Resultado | null = null;
   diaDigitado: number | null = null;
 
-  constructor(private router: Router) {}
+constructor(
+  private router: Router,
+  private supabaseService: SupabaseService
+) {}
 
   // Só os passos que devem aparecer (respeita mostrarSe)
   get passos(): Passo[] {
@@ -262,7 +266,7 @@ export class QuestionarioPage {
       this.passoAtual.tipo === 'dia' && resposta && resposta !== 'variavel' ? Number(resposta) : null;
   }
 
-  private finalizar() {
+    private async finalizar() {
     // Classificação: conta só as perguntas de diagnóstico
     const contagem: Record<TipoConsumidor, number> = {
       consumista: 0,
@@ -286,11 +290,39 @@ export class QuestionarioPage {
       perfilBasico[passo.id] = this.respostas[passo.id];
     }
 
-    // TODO: salvar no perfil do usuário (ex.: Supabase)
-    // - this.resultado.tipo  -> tipo de consumidor
-    // - perfilBasico         -> diaPagamento, renda, sustentaAlguem, qtdDependentes, moradia, objetivo
-  }
+    // Salva automaticamente no Supabase
+    try {
+      const user = await this.supabaseService.getCurrentUser();
+      if (user) {
+        // 1. Atualiza o tipo_consumidor na tabela usuario
+        await this.supabaseService.client
+          .from('usuario')
+          .update({
+            tipo_consumidor: this.resultado.tipo,
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq('id_usuario', user.id);
 
+        // 2. Atualiza os dados de hábitos em perfil_financeiro
+        await this.supabaseService.client
+          .from('perfil_financeiro')
+          .upsert({
+            id_usuario: user.id,
+            dia_pagamento: perfilBasico['diaPagamento'] || null,
+            faixa_renda: perfilBasico['renda'] || null,
+            sustenta_alguem: perfilBasico['sustentaAlguem'] === 'sim',
+            qtd_dependentes: perfilBasico['qtdDependentes'] || null,
+            moradia: perfilBasico['moradia'] || null,
+            objetivo_principal: perfilBasico['objetivo'] || null,
+            atualizado_em: new Date().toISOString(),
+          }, { onConflict: 'id_usuario' });
+
+        console.log('Diagnóstico e perfil financeiro salvos com sucesso!');
+      }
+    } catch (e) {
+      console.error('Erro ao salvar questionário no Supabase:', e);
+    }
+  }
   refazer() {
     this.respostas = {};
     this.indiceAtual = 0;
