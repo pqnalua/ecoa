@@ -26,11 +26,7 @@
     <div class="form-group">
       <label>Data limite (opcional):</label>
       <div class="custom-input-wrap">
-<<<<<<< Updated upstream
-        <input type="date" [(ngModel)]="novaMeta.dataAlvo" />
-=======
         <input type="date" [(ngModel)]="novaMeta.dataFim" />
->>>>>>> Stashed changes
       </div>
     </div>
 
@@ -72,21 +68,6 @@
     <div class="row-value">
       <span class="label-text">Valor da meta:</span>
       <div class="custom-input-wrap value-pill">
-<<<<<<< Updated upstream
-        <span>R$ {{ formatarMoeda(meta.valor_meta) }}</span>
-      </div>
-    </div>
-
-    <div class="row-value" *ngIf="meta.data_alvo">
-      <span class="label-text">Data limite:</span>
-      <div class="custom-input-wrap value-pill date-pill-container">
-        <span>{{ formatarData(meta.data_alvo) }}</span>
-        <span 
-          class="days-badge" 
-          [class.expired]="calcularDiasRestantes(meta.data_alvo).expirado">
-          <ion-icon name="time-outline"></ion-icon>
-          {{ calcularDiasRestantes(meta.data_alvo).texto }}
-=======
         <span>R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
       </div>
     </div>
@@ -100,7 +81,6 @@
           [class.expired]="calcularDiasRestantes(meta.data_fim).expirado">
           <ion-icon name="time-outline"></ion-icon>
           {{ calcularDiasRestantes(meta.data_fim).texto }}
->>>>>>> Stashed changes
         </span>
       </div>
     </div>
@@ -136,21 +116,6 @@
     <div class="row-value">
       <span class="label-text">Valor da meta:</span>
       <div class="custom-input-wrap value-pill">
-<<<<<<< Updated upstream
-        <span>R$ {{ formatarMoeda(meta.valor_meta) }}</span>
-      </div>
-    </div>
-
-    <div class="row-value" *ngIf="meta.data_alvo">
-      <span class="label-text">Data limite:</span>
-      <div class="custom-input-wrap value-pill date-pill-container">
-        <span>{{ formatarData(meta.data_alvo) }}</span>
-        <span 
-          class="days-badge" 
-          [class.expired]="calcularDiasRestantes(meta.data_alvo).expirado">
-          <ion-icon name="time-outline"></ion-icon>
-          {{ calcularDiasRestantes(meta.data_alvo).texto }}
-=======
         <span>R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
       </div>
     </div>
@@ -164,7 +129,6 @@
           [class.expired]="calcularDiasRestantes(meta.data_fim).expirado">
           <ion-icon name="time-outline"></ion-icon>
           {{ calcularDiasRestantes(meta.data_fim).texto }}
->>>>>>> Stashed changes
         </span>
       </div>
     </div>
@@ -200,16 +164,6 @@
     <div class="row-value">
       <span class="label-text">Valor da meta:</span>
       <div class="custom-input-wrap value-pill">
-<<<<<<< Updated upstream
-        <span>R$ {{ formatarMoeda(meta.valor_meta) }}</span>
-      </div>
-    </div>
-
-    <div class="row-value" *ngIf="meta.data_alvo">
-      <span class="label-text">Data limite:</span>
-      <div class="custom-input-wrap value-pill">
-        <span>{{ formatarData(meta.data_alvo) }}</span>
-=======
         <span>R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
       </div>
     </div>
@@ -218,7 +172,6 @@
       <span class="label-text">Data limite:</span>
       <div class="custom-input-wrap value-pill">
         <span>{{ formatarData(meta.data_fim) }}</span>
->>>>>>> Stashed changes
       </div>
     </div>
   </div>

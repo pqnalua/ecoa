@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
 
@@ -24,23 +24,24 @@ export class CadastroPage {
   verSenha = false;
   carregando = false;
   erro = '';
-
-  form = this.fb.group(
-    {
-      email: ['', [Validators.required, Validators.email]],
-      cpf: ['', [Validators.required, cpfValidator]],
-      idade: ['', [Validators.required, Validators.min(13), Validators.max(120)]],
-      senha: ['', [Validators.required, Validators.minLength(6)]],
-      confirmarSenha: ['', [Validators.required]],
-    },
-    { validators: senhasIguaisValidator }
-  );
+  form: FormGroup;
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private supabaseService: SupabaseService
-  ) {}
+  ) {
+    this.form = this.fb.group(
+      {
+        email: ['', [Validators.required, Validators.email]],
+        cpf: ['', [Validators.required, cpfValidator]],
+        idade: ['', [Validators.required, Validators.min(13), Validators.max(120)]],
+        senha: ['', [Validators.required, Validators.minLength(6)]],
+        confirmarSenha: ['', [Validators.required]],
+      },
+      { validators: senhasIguaisValidator }
+    );
+  }
 
   mostrarErro(campo: 'email' | 'cpf' | 'idade' | 'senha' | 'confirmarSenha'): boolean {
     const c = this.form.get(campo);
