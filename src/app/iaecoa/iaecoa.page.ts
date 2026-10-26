@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { IonContent } from '@ionic/angular';
 
 interface Mensagem {
@@ -19,9 +19,11 @@ export class IaecoaPage implements OnInit {
   novaMensagem: string = '';
   carregando: boolean = false;
 
+  private readonly OPENROUTER_API_KEY = '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';
+
   mensagens: Mensagem[] = [
     {
-      texto: 'Olá! Sou a sua IA financeira do ECOA. Como posso te ajudar hoje?',
+      texto: 'Olá! Sou a sua IA especialista em finanças pessoais do ECOA. Como posso te ajudar a organizar seu dinheiro hoje?',
       remetente: 'ia',
       data: new Date()
     }
@@ -33,16 +35,16 @@ export class IaecoaPage implements OnInit {
     'Como montar uma reserva de emergência?'
   ];
 
-  constructor() {}
+  // Injetamos o ChangeDetectorRef para corrigir o problema de clique na tela
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {}
 
-  enviarMensagem() {
-    if (!this.novaMensagem.trim()) return;
+  async enviarMensagem() {
+    if (!this.novaMensagem.trim() || this.carregando) return;
 
     const textoUsuario = this.novaMensagem;
-    
-    // Adiciona mensagem do usuário
+
     this.mensagens.push({
       texto: textoUsuario,
       remetente: 'usuario',
@@ -50,15 +52,30 @@ export class IaecoaPage implements OnInit {
     });
 
     this.novaMensagem = '';
+    this.cdr.detectChanges(); // Atualiza a tela imediatamente
     this.rolarParaFim();
     this.carregando = true;
 
-    // Simulação da resposta da IA (substituir pela tua API/Backend)
-    setTimeout(() => {
-      this.gerarRespostaIA(textoUsuario);
+    try {
+      const respostaIA = await this.chamarOpenRouter();
+      
+      this.mensagens.push({
+        texto: respostaIA,
+        remetente: 'ia',
+        data: new Date()
+      });
+    } catch (error) {
+      console.error('Erro na API:', error);
+      this.mensagens.push({
+        texto: 'Desculpe, tive um problema ao processar sua dúvida. Tente novamente em alguns instantes.',
+        remetente: 'ia',
+        data: new Date()
+      });
+    } finally {
       this.carregando = false;
+      this.cdr.detectChanges(); // Garante que o indicador de carregamento soma e a resposta apareça sem clicar na tela
       this.rolarParaFim();
-    }, 1200);
+    }
   }
 
   enviarSugestao(texto: string) {
@@ -66,23 +83,40 @@ export class IaecoaPage implements OnInit {
     this.enviarMensagem();
   }
 
-  private gerarRespostaIA(pergunta: string) {
-    let resposta = 'Para essa dúvida, recomendo categorizar seus gastos no aplicativo para identificar onde é possível cortar exageros!';
+  private async chamarOpenRouter(): Promise<string> {
+    const history = this.mensagens.map(msg => ({
+      role: msg.remetente === 'usuario' ? 'user' : 'assistant',
+      content: msg.texto
+    }));
 
-    const p = pergunta.toLowerCase();
-    if (p.includes('mercado')) {
-      resposta = 'Dica para o mercado: faça sempre uma lista antes de sair de casa e nunca vá às compras com fome!';
-    } else if (p.includes('fixo') || p.includes('resumo')) {
-      resposta = 'Seus gastos fixos não devem ultrapassar 50% da sua renda total. Revise assinaturas e serviços que pouco utiliza.';
-    } else if (p.includes('reserva')) {
-      resposta = 'Uma boa reserva de emergência deve cobrir de 3 a 6 meses do seu custo de vida básico.';
+    const systemMessage = {
+      role: 'system',
+      content: `Você é o assistente virtual do aplicativo ECOA IA, um especialista em finanças pessoais. Responda de forma curta, amigável, prática e sem termos excessivamente técnicos.`
+    };
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://ecoa.app',
+        'X-Title': 'ECOA IA'
+      },
+      body: JSON.stringify({
+        // 'openrouter/free' escolhe automaticamente um modelo 100% gratuito disponível no momento
+        model: 'openrouter/free', 
+        messages: [systemMessage, ...history]
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      console.error('Detalhes do erro do OpenRouter:', errData);
+      throw new Error(errData.error?.message || 'Falha ao comunicar com a API');
     }
 
-    this.mensagens.push({
-      texto: resposta,
-      remetente: 'ia',
-      data: new Date()
-    });
+    const data = await response.json();
+    return data.choices[0]?.message?.content || 'Não consegui gerar uma resposta.';
   }
 
   private rolarParaFim() {
