@@ -17,6 +17,7 @@
       </div>
     </div>
 
+    <!-- Saldo Disponível -->
     <div class="home__card home__card--saldo">
       <div class="home__card-header">
         <span class="home__card-subtitle">Saldo disponível</span>
@@ -28,6 +29,21 @@
       </div>
     </div>
 
+    <!-- Perfil Financeiro Ativo (quando já fez o questionário) -->
+    <div class="home__card home__card--perfil" *ngIf="temQuestionario">
+      <div class="home__perfil-row">
+        <div>
+          <span class="home__card-subtitle">Perfil Comportamental</span>
+          <h3 class="home__perfil-titulo">{{ getTituloPerfil(tipoConsumidor) }}</h3>
+          <p class="home__perfil-sub">Diagnóstico mapeado no sistema.</p>
+        </div>
+        <button type="button" class="home__link-btn" (click)="irParaQuestionario()">
+          Editar dados
+        </button>
+      </div>
+    </div>
+
+    <!-- Registro de Humor -->
     <div class="home__card">
       <h3 class="home__card-title">Como você está hoje?</h3>
       <div class="home__humor-lista">
@@ -46,9 +62,14 @@
       </p>
     </div>
 
+    <!-- Resumo do Mês (Despesas e Receitas) -->
     <div class="home__card">
       <h3 class="home__card-title">Resumo do mês</h3>
       <div class="home__resumo-lista">
+        <div class="home__resumo-item home__resumo-item--receita" *ngIf="resumoMes.receitas > 0">
+          <span>Receitas / Entradas</span>
+          <strong class="texto-receita">+ {{ resumoMes.receitas | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        </div>
         <div class="home__resumo-item">
           <span>Gastos fixos</span>
           <strong>{{ resumoMes.fixos | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
@@ -63,16 +84,23 @@
         </div>
       </div>
       <button type="button" class="home__link-btn home__link-btn--full" (click)="irParaGastos()">
-        Ver todos os gastos
+        Ver todas as movimentações
       </button>
     </div>
 
+    <!-- Ações Gerais -->
     <div class="home__acoes">
       <button type="button" class="home__btn home__btn--outline" (click)="irParaChat()">
         Falar com ECO
       </button>
 
-      <button type="button" class="home__btn home__btn--subtle" (click)="irParaQuestionario()">
+      <!-- Só aparece o botão de fazer diagnóstico se a pessoa ainda NÃO fez -->
+      <button
+        *ngIf="!temQuestionario"
+        type="button"
+        class="home__btn home__btn--subtle"
+        (click)="irParaQuestionario()"
+      >
         Fazer questionário diagnóstico
       </button>
     </div>

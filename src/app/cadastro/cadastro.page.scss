@@ -33,7 +33,6 @@ ion-content.cadastro {
   display: block;
   max-width: 240px;
   object-fit: contain;
-  display: block;
 }
 
 .cadastro__tagline {
@@ -61,7 +60,10 @@ ion-content.cadastro {
     color: var(--ecoa-tinta);
   }
 
-  input {
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="password"] {
     width: 100%;
     box-sizing: border-box;
     height: 52px;
@@ -87,6 +89,38 @@ ion-content.cadastro {
 
   &--error input {
     border-color: var(--ecoa-erro);
+  }
+}
+
+.field--checkbox {
+  margin-top: 4px;
+
+  .checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--ecoa-roxo);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checkbox-text {
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--ecoa-tinta);
+
+      a {
+        color: var(--ecoa-roxo);
+        font-weight: 700;
+        text-decoration: underline;
+      }
+    }
   }
 }
 

@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ModalController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
+import { TermosModalComponent } from '../components/termos-modal/termos-modal.component';
 
 function senhasIguaisValidator(grupo: AbstractControl): ValidationErrors | null {
   const senha = grupo.get('senha')?.value;
@@ -29,21 +31,23 @@ export class CadastroPage {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private modalCtrl: ModalController
   ) {
     this.form = this.fb.group(
       {
         email: ['', [Validators.required, Validators.email]],
         cpf: ['', [Validators.required, cpfValidator]],
-        idade: ['', [Validators.required, Validators.min(13), Validators.max(120)]],
+        idade: ['', [Validators.required, Validators.min(18), Validators.max(120)]],
         senha: ['', [Validators.required, Validators.minLength(6)]],
         confirmarSenha: ['', [Validators.required]],
+        aceitouTermos: [false, [Validators.requiredTrue]],
       },
       { validators: senhasIguaisValidator }
     );
   }
 
-  mostrarErro(campo: 'email' | 'cpf' | 'idade' | 'senha' | 'confirmarSenha'): boolean {
+  mostrarErro(campo: 'email' | 'cpf' | 'idade' | 'senha' | 'confirmarSenha' | 'aceitouTermos'): boolean {
     const c = this.form.get(campo);
     if (!c || !(c.dirty || c.touched)) return false;
 
@@ -69,6 +73,19 @@ export class CadastroPage {
     this.form.get('cpf')?.setValue(formatado, { emitEvent: false });
   }
 
+  async abrirTermos(evento?: Event) {
+    if (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+    }
+    const modal = await this.modalCtrl.create({
+      component: TermosModalComponent,
+      breakpoints: [0, 0.7, 1],
+      initialBreakpoint: 1,
+    });
+    await modal.present();
+  }
+
   async cadastrar() {
     this.erro = '';
     if (this.form.invalid) {
@@ -83,19 +100,36 @@ export class CadastroPage {
       const cpf = this.form.value.cpf || '';
       const idade = this.form.value.idade || '';
 
-      const { error } = await this.supabaseService.client.auth.signUp({
+      const { data, error } = await this.supabaseService.client.auth.signUp({
         email,
         password: senha,
         options: {
           data: {
             cpf,
-            idade,
+            idade: Number(idade),
+            aceitou_termos_em: new Date().toISOString(),
           },
         },
       });
 
       if (error) {
         throw error;
+      }
+
+      // Sincroniza também na tabela public.usuario se o usuário foi retornado
+      if (data?.user) {
+        try {
+          await this.supabaseService.client.from('usuario').upsert({
+            id_usuario: data.user.id,
+            nome: email.split('@')[0],
+            email: email,
+            cpf: cpf.replace(/\D/g, ''),
+            idade: Number(idade),
+            atualizado_em: new Date().toISOString(),
+          });
+        } catch (dbErr) {
+          console.warn('Registro na tabela usuario será concluído posteriormente:', dbErr);
+        }
       }
 
       await this.router.navigateByUrl('/login', { replaceUrl: true });

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
 
@@ -66,9 +66,9 @@ const RESULTADOS: Record<TipoConsumidor, Resultado> = {
   styleUrls: ['./questionario.page.scss'],
   standalone: false,
 })
-export class QuestionarioPage {
+export class QuestionarioPage implements OnInit {
   private todosPassos: Passo[] = [
-    // ---------- Sobre você (não classificam) ----------
+    // ---------- Sobre você (dados que podem mudar com o tempo) ----------
     {
       id: 'diaPagamento',
       secao: 'Sobre você',
@@ -136,7 +136,7 @@ export class QuestionarioPage {
       ],
     },
 
-    // ---------- Diagnóstico (classificam) ----------
+    // ---------- Diagnóstico (classificam o perfil emocional) ----------
     {
       id: 'd1',
       secao: 'Diagnóstico',
@@ -203,11 +203,49 @@ export class QuestionarioPage {
   indiceAtual = 0;
   resultado: Resultado | null = null;
   diaDigitado: number | null = null;
+  jaTemPerfil = false;
+  salvando = false;
 
-constructor(
-  private router: Router,
-  private supabaseService: SupabaseService
-) {}
+  constructor(
+    private router: Router,
+    private supabaseService: SupabaseService
+  ) {}
+
+  async ngOnInit() {
+    await this.carregarPerfilExistente();
+  }
+
+  async carregarPerfilExistente() {
+    try {
+      const user = await this.supabaseService.getCurrentUser();
+      if (!user) return;
+
+      const { data } = await this.supabaseService.client
+        .from('perfil_financeiro')
+        .select('*')
+        .eq('id_usuario', user.id)
+        .maybeSingle();
+
+      if (data) {
+        this.jaTemPerfil = true;
+        if (data.dia_pagamento) {
+          this.respostas['diaPagamento'] = String(data.dia_pagamento);
+          if (data.dia_pagamento !== 'variavel') {
+            this.diaDigitado = Number(data.dia_pagamento);
+          }
+        }
+        if (data.faixa_renda) this.respostas['renda'] = data.faixa_renda;
+        if (data.sustenta_alguem !== null && data.sustenta_alguem !== undefined) {
+          this.respostas['sustentaAlguem'] = data.sustenta_alguem ? 'sim' : 'nao';
+        }
+        if (data.qtd_dependentes) this.respostas['qtdDependentes'] = data.qtd_dependentes;
+        if (data.moradia) this.respostas['moradia'] = data.moradia;
+        if (data.objetivo_principal) this.respostas['objetivo'] = data.objetivo_principal;
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar perfil financeiro existente:', e);
+    }
+  }
 
   // Só os passos que devem aparecer (respeita mostrarSe)
   get passos(): Passo[] {
@@ -259,14 +297,48 @@ constructor(
     }
   }
 
-  // Preenche o campo de dia se a pessoa voltar para essa pergunta
   private prepararPasso() {
     const resposta = this.respostas[this.passoAtual.id];
     this.diaDigitado =
       this.passoAtual.tipo === 'dia' && resposta && resposta !== 'variavel' ? Number(resposta) : null;
   }
 
-    private async finalizar() {
+  // Permite salvar apenas os dados cadastrais (dia pagamento, renda, dependentes) sem refazer as perguntas de diagnóstico
+  async salvarApenasDadosBasicos() {
+    this.salvando = true;
+    try {
+      const user = await this.supabaseService.getCurrentUser();
+      if (user) {
+        const perfilBasico: Record<string, string> = {};
+        for (const passo of this.passos.filter((p) => p.secao === 'Sobre você')) {
+          if (this.respostas[passo.id]) {
+            perfilBasico[passo.id] = this.respostas[passo.id];
+          }
+        }
+
+        await this.supabaseService.client
+          .from('perfil_financeiro')
+          .upsert({
+            id_usuario: user.id,
+            dia_pagamento: perfilBasico['diaPagamento'] || null,
+            faixa_renda: perfilBasico['renda'] || null,
+            sustenta_alguem: perfilBasico['sustentaAlguem'] === 'sim',
+            qtd_dependentes: perfilBasico['qtdDependentes'] || null,
+            moradia: perfilBasico['moradia'] || null,
+            objetivo_principal: perfilBasico['objetivo'] || null,
+            atualizado_em: new Date().toISOString(),
+          }, { onConflict: 'id_usuario' });
+
+        this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+      }
+    } catch (e) {
+      console.error('Erro ao salvar alterações no perfil financeiro:', e);
+    } finally {
+      this.salvando = false;
+    }
+  }
+
+  private async finalizar() {
     // Classificação: conta só as perguntas de diagnóstico
     const contagem: Record<TipoConsumidor, number> = {
       consumista: 0,
@@ -316,13 +388,12 @@ constructor(
             objetivo_principal: perfilBasico['objetivo'] || null,
             atualizado_em: new Date().toISOString(),
           }, { onConflict: 'id_usuario' });
-
-        console.log('Diagnóstico e perfil financeiro salvos com sucesso!');
       }
     } catch (e) {
       console.error('Erro ao salvar questionário no Supabase:', e);
     }
   }
+
   refazer() {
     this.respostas = {};
     this.indiceAtual = 0;

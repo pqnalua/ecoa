@@ -47,7 +47,7 @@ export class EditarperfilPage implements OnInit {
         nome: ['', [Validators.required, Validators.minLength(3)]],
         email: [''],
         cpf: ['', [cpfOpcionalValidator]],
-        idade: ['', [Validators.min(13), Validators.max(120)]],
+        idade: ['', [Validators.min(18), Validators.max(120)]],
         novaSenha: ['', [Validators.minLength(6)]],
         confirmarSenha: [''],
       },
@@ -175,6 +175,8 @@ export class EditarperfilPage implements OnInit {
     try {
       const { nome, cpf, idade, novaSenha } = this.form.value;
 
+      const user = await this.supabaseService.getCurrentUser();
+
       const atualizacoes: any = {
         data: {
           full_name: nome,
@@ -193,6 +195,23 @@ export class EditarperfilPage implements OnInit {
 
       if (error) {
         throw error;
+      }
+
+      // Sincroniza também na tabela pública usuario
+      if (user?.id) {
+        try {
+          await this.supabaseService.client.from('usuario').upsert({
+            id_usuario: user.id,
+            nome: nome,
+            email: user.email || '',
+            fotoavatar_url: this.foto,
+            cpf: cpf ? cpf.replace(/\D/g, '') : null,
+            idade: idade ? Number(idade) : null,
+            atualizado_em: new Date().toISOString(),
+          }, { onConflict: 'id_usuario' });
+        } catch (dbErr) {
+          console.warn('Erro ao sincronizar tabela usuario:', dbErr);
+        }
       }
 
       this.sucesso = 'Perfil atualizado com sucesso!';

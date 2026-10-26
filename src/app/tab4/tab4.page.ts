@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 
 export interface Meta {
@@ -12,6 +13,7 @@ export interface Meta {
   data_fim?: string;
   concluida?: boolean;
   favorita?: boolean;
+  status?: string;
 }
 
 @Component({
@@ -32,7 +34,8 @@ export class Tab4Page implements OnInit {
 
   constructor(
     private supabaseService: SupabaseService,
-    private router: Router
+    private router: Router,
+    private alertCtrl: AlertController
   ) {}
 
   ngOnInit() {
@@ -57,7 +60,6 @@ export class Tab4Page implements OnInit {
     }
   }
 
-  // Busca na tabela oficial 'meta'
   async carregarMetas() {
     this.carregando = true;
     const userId = await this.getActiveUserId();
@@ -75,7 +77,14 @@ export class Tab4Page implements OnInit {
     if (error) {
       console.error('Erro ao carregar metas:', error.message);
     } else {
-      this.metas = data || [];
+      this.metas = (data || []).map((m: any) => ({
+        ...m,
+        valor_alvo: Number(m.valor_alvo) || 0,
+        valor_atual: Number(m.valor_atual) || 0,
+        progresso: m.progresso !== undefined && m.progresso !== null 
+          ? Number(m.progresso) 
+          : Math.min(100, Math.round(((Number(m.valor_atual) || 0) / (Number(m.valor_alvo) || 1)) * 100)),
+      }));
     }
     this.carregando = false;
   }
@@ -122,6 +131,7 @@ export class Tab4Page implements OnInit {
         concluida: false,
         valor_atual: 0,
         progresso: 0,
+        status: 'ativa',
       })
       .select()
       .single();
@@ -129,8 +139,78 @@ export class Tab4Page implements OnInit {
     if (error) {
       console.error('Erro ao adicionar meta:', error.message);
     } else if (data) {
-      this.metas.push(data);
+      this.metas.push({
+        ...data,
+        valor_alvo: Number(data.valor_alvo) || 0,
+        valor_atual: 0,
+        progresso: 0,
+      });
       this.novaMeta = { nome: '', valor: null, dataFim: '' };
+    }
+  }
+
+  async solicitarAporte(meta: Meta) {
+    if (!meta.id_meta) return;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Guardar Dinheiro',
+      subHeader: meta.nome,
+      message: `Meta alvo: R$ ${this.formatarMoeda(meta.valor_alvo)} | Já guardado: R$ ${this.formatarMoeda(meta.valor_atual || 0)}`,
+      inputs: [
+        {
+          name: 'valor',
+          type: 'number',
+          placeholder: 'Quanto deseja guardar? (R$)',
+          min: 1,
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          handler: (data) => {
+            const valor = parseFloat(data.valor);
+            if (!isNaN(valor) && valor > 0) {
+              this.adicionarAporte(meta, valor);
+            }
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  async adicionarAporte(meta: Meta, valorAporte: number) {
+    if (!meta.id_meta) return;
+
+    const novoValorAtual = Number(meta.valor_atual || 0) + Number(valorAporte);
+    const progresso = Math.min(100, Math.round((novoValorAtual / meta.valor_alvo) * 100));
+    const alcancada = novoValorAtual >= meta.valor_alvo;
+
+    const { error } = await this.supabaseService.client
+      .from('meta')
+      .update({
+        valor_atual: novoValorAtual,
+        progresso: progresso,
+        concluida: alcancada || meta.concluida,
+        status: alcancada ? 'concluida' : (meta.status || 'ativa'),
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq('id_meta', meta.id_meta);
+
+    if (error) {
+      console.error('Erro ao adicionar valor à meta:', error.message);
+    } else {
+      meta.valor_atual = novoValorAtual;
+      meta.progresso = progresso;
+      if (alcancada) {
+        meta.concluida = true;
+        meta.status = 'concluida';
+      }
     }
   }
 
@@ -172,7 +252,6 @@ export class Tab4Page implements OnInit {
   async excluirMeta(meta: Meta) {
     if (!meta.id_meta) return;
 
-    // Exclusão lógica com deletado_em
     const { error } = await this.supabaseService.client
       .from('meta')
       .update({ deletado_em: new Date().toISOString() })

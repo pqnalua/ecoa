@@ -5,6 +5,7 @@
   --page-bg: #f5f2ee;
   --card-bg: #ffffff;
   --texto: #2b2b2b;
+  --perigo: #c15c5c;
   --ion-font-family: 'Red Hat Display', sans-serif;
   font-family: 'Red Hat Display', sans-serif;
 }
@@ -98,6 +99,23 @@ ion-header ion-title {
   font: inherit;
   font-size: 16px;
   font-weight: 500;
+}
+
+
+.delete-item {
+  --background: rgba(193, 92, 92, 0.08);
+  --background-hover: rgba(193, 92, 92, 0.16);
+  --color: var(--perigo);
+  box-shadow: none;
+  border: 1px dashed rgba(193, 92, 92, 0.35);
+
+  ion-icon {
+    color: var(--perigo);
+  }
+
+  ion-label {
+    font-weight: 600;
+  }
 }
 
 .logout-item {

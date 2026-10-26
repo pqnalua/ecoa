@@ -1,18 +1,18 @@
 import { Component } from '@angular/core';
 import { SupabaseService } from '../services/supabase.service';
 
-
-
 type Aba = 'registrar' | 'planilha' | 'graficos';
-type Tipo = 'fixo' | 'variavel' | 'extra';
+type Natureza = 'fixo' | 'variavel' | 'extra';
+type TipoTransacao = 'despesa' | 'receita';
 
-interface Gasto {
+interface MovimentacaoItem {
   id: string;
   descricao: string;
   valor: number;
   data: string; // AAAA-MM-DD
   categoria: string;
-  tipo: Tipo;
+  tipoTransacao: TipoTransacao;
+  natureza: Natureza;
   humor: string | null;
 }
 
@@ -30,20 +30,24 @@ export class Tab3Page {
     'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
   ];
 
-  // Lista inicial; é substituída pelas categorias do banco ao abrir a tela
-  categorias: string[] = [
+  readonly categoriasDespesa: string[] = [
     'Alimentação', 'Moradia', 'Transporte', 'Lazer',
     'Saúde', 'Educação', 'Compras', 'Outros',
   ];
+
+  readonly categoriasReceita: string[] = [
+    'Salário', 'Freelance', 'Investimentos', 'Presente',
+    'Vendas', 'Outros',
+  ];
+
   private categoriaIds = new Map<string, string>();
 
-  readonly tipos: { id: Tipo; label: string; cor: string }[] = [
+  readonly tipos: { id: Natureza; label: string; cor: string }[] = [
     { id: 'fixo', label: 'Fixo', cor: '#816eb3' },
     { id: 'variavel', label: 'Variável', cor: '#c9a44c' },
     { id: 'extra', label: 'Extra', cor: '#c15c5c' },
   ];
 
-  // mesmas imagens da home
   readonly humores = [
     { id: 'alegria', label: 'Alegria', imagem: 'assets/alegria.png' },
     { id: 'tristeza', label: 'Tristeza', imagem: 'assets/tristeza.png' },
@@ -53,15 +57,14 @@ export class Tab3Page {
   ];
 
   mesRef = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  gastos: Gasto[] = [];
+  movimentacoes: MovimentacaoItem[] = [];
 
   carregando = false;
   salvando = false;
   erro: string | null = null;
   mensagemSucesso = false;
 
-  // Exclusão (controla o <ion-alert> do template)
-  gastoParaExcluir: Gasto | null = null;
+  movimentacaoParaExcluir: MovimentacaoItem | null = null;
   readonly botoesExcluir = [
     { text: 'Cancelar', role: 'cancel' },
     {
@@ -74,48 +77,47 @@ export class Tab3Page {
   ];
 
   novo = this.formVazio();
-
-  // evita que uma resposta antiga sobrescreva a de um mês mais novo
   private requisicao = 0;
 
   constructor(private supabase: SupabaseService) {}
 
-  /* ---------- Ciclo de vida ---------- */
-
-  // Roda toda vez que a aba é aberta (inclusive na primeira)
   async ionViewWillEnter() {
     await this.carregarCategorias();
-    await this.carregarGastos();
+    await this.carregarMovimentacoes();
   }
 
-  /* ---------- Banco (Supabase) ---------- */
+  get categoriasAtuais(): string[] {
+    return this.novo.tipoTransacao === 'receita'
+      ? this.categoriasReceita
+      : this.categoriasDespesa;
+  }
+
+  selecionarTipoTransacao(tipo: TipoTransacao) {
+    this.novo.tipoTransacao = tipo;
+    this.novo.categoria = tipo === 'receita' ? this.categoriasReceita[0] : this.categoriasDespesa[0];
+  }
 
   private async carregarCategorias() {
-    const { data, error } = await this.supabase.client
-      .from('categoria')
-      .select('id_categoria, nome')
-      .eq('tipo', 'despesa');
+    try {
+      const { data } = await this.supabase.client
+        .from('categoria')
+        .select('id_categoria, nome, tipo');
 
-    if (error || !data?.length) {
-      console.error('Categorias não carregadas', error);
-      return;
+      if (data && data.length > 0) {
+        this.categoriaIds = new Map(
+          data.map((c: any): [string, string] => [c.nome, c.id_categoria])
+        );
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar categorias do banco:', e);
     }
 
-    const lista = (data as any[]).sort((a, b) =>
-      a.nome === 'Outros' ? 1 : b.nome === 'Outros' ? -1 : a.nome.localeCompare(b.nome, 'pt-BR')
-    );
-
-    this.categoriaIds = new Map(
-      lista.map((c): [string, string] => [c.nome, c.id_categoria])
-    );
-    this.categorias = lista.map((c) => c.nome);
-
-    if (!this.categorias.includes(this.novo.categoria)) {
-      this.novo.categoria = this.categorias[0];
+    if (!this.categoriasAtuais.includes(this.novo.categoria)) {
+      this.novo.categoria = this.categoriasAtuais[0];
     }
   }
 
-  async carregarGastos() {
+  async carregarMovimentacoes() {
     const req = ++this.requisicao;
     this.carregando = true;
     this.erro = null;
@@ -126,36 +128,34 @@ export class Tab3Page {
 
     const { data, error } = await this.supabase.client
       .from('movimentacao')
-      .select('id_movimentacao, descricao, valor, data_transacao, natureza, humor, categoria:id_categoria(nome)')
-      .eq('tipo', 'despesa')
+      .select('id_movimentacao, descricao, valor, data_transacao, tipo, natureza, humor, categoria:id_categoria(nome)')
       .is('deletado_em', null)
       .gte('data_transacao', inicio)
       .lt('data_transacao', fim)
       .order('data_transacao', { ascending: false });
 
     if (req !== this.requisicao) {
-      return; // chegou uma resposta mais nova, descarta esta
+      return;
     }
     this.carregando = false;
 
     if (error) {
-      console.error('Erro ao carregar gastos', error);
-      this.erro = 'Não foi possível carregar seus gastos.';
+      console.error('Erro ao carregar movimentações:', error);
+      this.erro = 'Não foi possível carregar as movimentações.';
       return;
     }
 
-    this.gastos = ((data ?? []) as any[]).map((r) => ({
+    this.movimentacoes = ((data ?? []) as any[]).map((r) => ({
       id: r.id_movimentacao,
       descricao: r.descricao ?? '',
       valor: Number(r.valor),
       data: r.data_transacao,
-      categoria: r.categoria?.nome ?? 'Outros',
-      tipo: (r.natureza ?? 'variavel') as Tipo,
+      categoria: r.categoria?.nome ?? (r.tipo === 'receita' ? 'Receita' : 'Outros'),
+      tipoTransacao: (r.tipo ?? 'despesa') as TipoTransacao,
+      natureza: (r.natureza ?? 'variavel') as Natureza,
       humor: r.humor ?? null,
     }));
   }
-
-  /* ---------- Mês ---------- */
 
   get mesLabel(): string {
     return `${this.meses[this.mesRef.getMonth()]} de ${this.mesRef.getFullYear()}`;
@@ -163,30 +163,44 @@ export class Tab3Page {
 
   mesAnterior() {
     this.mesRef = new Date(this.mesRef.getFullYear(), this.mesRef.getMonth() - 1, 1);
-    this.carregarGastos();
+    this.carregarMovimentacoes();
   }
 
   proximoMes() {
     this.mesRef = new Date(this.mesRef.getFullYear(), this.mesRef.getMonth() + 1, 1);
-    this.carregarGastos();
+    this.carregarMovimentacoes();
   }
 
-  get gastosDoMes(): Gasto[] {
+  get movimentacoesDoMes(): MovimentacaoItem[] {
     const chave = this.chaveMes(this.mesRef);
-    return this.gastos
-      .filter((g) => g.data.slice(0, 7) === chave)
+    return this.movimentacoes
+      .filter((m) => m.data.slice(0, 7) === chave)
       .sort((a, b) => b.data.localeCompare(a.data));
   }
 
-  get total(): number {
-    return this.somar(this.gastosDoMes);
+  get despesasDoMes(): MovimentacaoItem[] {
+    return this.movimentacoesDoMes.filter((m) => m.tipoTransacao === 'despesa');
   }
 
-  totalTipo(tipo: Tipo): number {
-    return this.somar(this.gastosDoMes.filter((g) => g.tipo === tipo));
+  get receitasDoMes(): MovimentacaoItem[] {
+    return this.movimentacoesDoMes.filter((m) => m.tipoTransacao === 'receita');
   }
 
-  /* ---------- Registrar ---------- */
+  get totalDespesas(): number {
+    return this.somar(this.despesasDoMes);
+  }
+
+  get totalReceitas(): number {
+    return this.somar(this.receitasDoMes);
+  }
+
+  get saldoMes(): number {
+    return this.totalReceitas - this.totalDespesas;
+  }
+
+  totalNatureza(tipo: Natureza): number {
+    return this.somar(this.despesasDoMes.filter((g) => g.natureza === tipo));
+  }
 
   get formValido(): boolean {
     return (
@@ -197,7 +211,6 @@ export class Tab3Page {
   }
 
   selecionarHumor(id: string) {
-    // clicar de novo desmarca
     this.novo.humor = this.novo.humor === id ? null : id;
   }
 
@@ -209,27 +222,27 @@ export class Tab3Page {
     this.salvando = true;
     this.erro = null;
 
-    // id_usuario é preenchido pelo banco (default auth.uid())
-    const { error } = await this.supabase.client.from('movimentacao').insert({
+    const payload: any = {
       descricao: this.novo.descricao.trim(),
       valor: Number(this.novo.valor),
       data_transacao: this.novo.data,
-      tipo: 'despesa',
-      natureza: this.novo.tipo,
-      humor: this.novo.humor,
+      tipo: this.novo.tipoTransacao,
+      natureza: this.novo.tipoTransacao === 'receita' ? (this.novo.natureza || 'fixo') : this.novo.tipo,
+      humor: this.novo.tipoTransacao === 'despesa' ? this.novo.humor : null,
       id_categoria: this.categoriaIds.get(this.novo.categoria) ?? null,
       origem: 'manual',
-    });
+    };
+
+    const { error } = await this.supabase.client.from('movimentacao').insert(payload);
 
     this.salvando = false;
 
     if (error) {
-      console.error('Erro ao salvar gasto', error);
-      this.erro = 'Não foi possível salvar a compra. Tente novamente.';
+      console.error('Erro ao salvar movimentação:', error);
+      this.erro = 'Não foi possível salvar a movimentação. Tente novamente.';
       return;
     }
 
-    // mostra o mês da compra que acabou de ser registrada
     const [ano, mes] = this.novo.data.split('-').map(Number);
     this.mesRef = new Date(ano, mes - 1, 1);
 
@@ -237,55 +250,49 @@ export class Tab3Page {
     this.mensagemSucesso = true;
     setTimeout(() => (this.mensagemSucesso = false), 2500);
 
-    await this.carregarGastos();
+    await this.carregarMovimentacoes();
   }
 
-  /* ---------- Planilha ---------- */
-
-  pedirExclusao(gasto: Gasto) {
-    this.gastoParaExcluir = gasto;
+  pedirExclusao(item: MovimentacaoItem) {
+    this.movimentacaoParaExcluir = item;
   }
 
   get mensagemExclusao(): string {
-    const g = this.gastoParaExcluir;
-    if (!g) {
-      return '';
-    }
-    const valor = g.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    return `${g.descricao} — ${valor}`;
+    const m = this.movimentacaoParaExcluir;
+    if (!m) return '';
+    const valor = m.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return `${m.descricao} — ${valor}`;
   }
 
   async excluir() {
-    const gasto = this.gastoParaExcluir;
-    if (!gasto) {
-      return;
-    }
+    const item = this.movimentacaoParaExcluir;
+    if (!item) return;
 
-    // exclusão lógica: mantém o registro (e o id_externo do Pluggy) no banco
     const { error } = await this.supabase.client
       .from('movimentacao')
       .update({ deletado_em: new Date().toISOString() })
-      .eq('id_movimentacao', gasto.id);
+      .eq('id_movimentacao', item.id);
 
     if (error) {
-      console.error('Erro ao excluir gasto', error);
-      this.erro = 'Não foi possível excluir a compra.';
+      console.error('Erro ao excluir:', error);
+      this.erro = 'Não foi possível excluir o item.';
       return;
     }
 
-    this.gastos = this.gastos.filter((g) => g.id !== gasto.id);
+    this.movimentacoes = this.movimentacoes.filter((m) => m.id !== item.id);
   }
 
   exportarCsv() {
     const linhas = [
-      ['Data', 'Descrição', 'Categoria', 'Tipo', 'Humor', 'Valor'],
-      ...this.gastosDoMes.map((g) => [
-        this.formatarData(g.data, true),
-        g.descricao,
-        g.categoria,
-        this.nomeTipo(g.tipo),
-        g.humor ? this.nomeHumor(g.humor) : '',
-        g.valor.toFixed(2).replace('.', ','),
+      ['Data', 'Tipo', 'Descrição', 'Categoria', 'Natureza', 'Humor', 'Valor (R$)'],
+      ...this.movimentacoesDoMes.map((m) => [
+        this.formatarData(m.data, true),
+        m.tipoTransacao === 'receita' ? 'Receita' : 'Despesa',
+        m.descricao,
+        m.categoria,
+        m.tipoTransacao === 'despesa' ? this.nomeTipo(m.natureza) : 'Entrada',
+        m.humor ? this.nomeHumor(m.humor) : '',
+        (m.tipoTransacao === 'receita' ? '+' : '-') + m.valor.toFixed(2).replace('.', ','),
       ]),
     ];
     const csv = linhas.map((l) => l.map((c) => `"${c}"`).join(';')).join('\n');
@@ -293,19 +300,17 @@ export class Tab3Page {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gastos-${this.chaveMes(this.mesRef)}.csv`;
+    a.download = `movimentacoes-${this.chaveMes(this.mesRef)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  /* ---------- Gráficos ---------- */
-
-  // Rosca por tipo de gasto (círculo de circunferência 100 pra facilitar a conta)
   get fatiasDonut() {
-    const soma = this.total;
+    const soma = this.totalDespesas;
+    if (soma <= 0) return [];
     let acumulado = 0;
     return this.tipos
-      .map((t) => ({ ...t, valor: this.totalTipo(t.id) }))
+      .map((t) => ({ ...t, valor: this.totalNatureza(t.id) }))
       .filter((t) => t.valor > 0)
       .map((t) => {
         const pct = (t.valor / soma) * 100;
@@ -317,7 +322,7 @@ export class Tab3Page {
 
   get porCategoria() {
     const mapa = new Map<string, number>();
-    this.gastosDoMes.forEach((g) =>
+    this.despesasDoMes.forEach((g) =>
       mapa.set(g.categoria, (mapa.get(g.categoria) ?? 0) + g.valor)
     );
     return this.comPercentual(
@@ -327,7 +332,7 @@ export class Tab3Page {
 
   get porHumor() {
     const mapa = new Map<string, number>();
-    this.gastosDoMes
+    this.despesasDoMes
       .filter((g) => g.humor)
       .forEach((g) => mapa.set(g.humor!, (mapa.get(g.humor!) ?? 0) + g.valor));
     return this.comPercentual(
@@ -342,19 +347,15 @@ export class Tab3Page {
 
   get insightHumor(): string | null {
     const maior = this.porHumor[0];
-    if (!maior) {
-      return null;
-    }
+    if (!maior) return null;
     return `Este mês você gastou mais quando estava com ${maior.nome.toLowerCase()}.`;
   }
 
-  /* ---------- Auxiliares ---------- */
-
-  nomeTipo(id: Tipo): string {
+  nomeTipo(id: Natureza): string {
     return this.tipos.find((t) => t.id === id)?.label ?? id;
   }
 
-  corTipo(id: Tipo): string {
+  corTipo(id: Natureza): string {
     return this.tipos.find((t) => t.id === id)?.cor ?? '#999';
   }
 
@@ -378,7 +379,7 @@ export class Tab3Page {
       .map((i) => ({ ...i, pct: max ? (i.valor / max) * 100 : 0 }));
   }
 
-  private somar(lista: Gasto[]): number {
+  private somar(lista: MovimentacaoItem[]): number {
     return lista.reduce((s, g) => s + g.valor, 0);
   }
 
@@ -392,8 +393,10 @@ export class Tab3Page {
       descricao: '',
       valor: null as number | null,
       data: `${this.chaveMes(hoje)}-${String(hoje.getDate()).padStart(2, '0')}`,
-      categoria: this.categorias?.[0] ?? 'Alimentação',
-      tipo: 'variavel' as Tipo,
+      categoria: this.categoriasDespesa[0],
+      tipoTransacao: 'despesa' as TipoTransacao,
+      tipo: 'variavel' as Natureza,
+      natureza: 'fixo' as Natureza,
       humor: null as string | null,
     };
   }

@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/tab1"></ion-back-button>
     </ion-buttons>
-    <ion-title>Questionário</ion-title>
+    <ion-title>{{ jaTemPerfil ? 'Editar Dados' : 'Questionário' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -60,14 +60,26 @@
         </button>
       </div>
 
-      <button
-        type="button"
-        class="questionario__voltar"
-        *ngIf="indiceAtual > 0"
-        (click)="voltarPergunta()"
-      >
-        Voltar
-      </button>
+      <div class="questionario__acoes-rodape">
+        <button
+          type="button"
+          class="questionario__voltar"
+          *ngIf="indiceAtual > 0"
+          (click)="voltarPergunta()"
+        >
+          Voltar
+        </button>
+
+        <button
+          type="button"
+          class="btn-salvar-rapido"
+          *ngIf="jaTemPerfil && passoAtual.secao === 'Sobre você'"
+          (click)="salvarApenasDadosBasicos()"
+          [disabled]="salvando"
+        >
+          {{ salvando ? 'Salvando...' : 'Salvar dados e sair' }}
+        </button>
+      </div>
     </ng-container>
 
     <!-- Etapa: resultado -->

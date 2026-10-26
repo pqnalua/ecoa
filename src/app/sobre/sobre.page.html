@@ -1,0 +1,95 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="voltar()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Sobre o ECOA</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="sobre-content ion-padding">
+  <div class="sobre-wrap">
+
+    <div class="sobre-hero">
+      <img src="../../assets/ecoabegeclaroquadrado.png" alt="Logo ECOA" class="sobre-logo" />
+      <h1 class="sobre-titulo">ECOA</h1>
+      <p class="sobre-slogan">"Suas escolhas ecoam no tempo."</p>
+      <span class="sobre-tag">Trabalho de Conclusão de Curso (TCC)</span>
+    </div>
+
+    <!-- O que é o app -->
+    <div class="sobre-card">
+      <h2>O Projeto</h2>
+      <p>
+        O <strong>ECOA</strong> é uma plataforma de gestão financeira comportamental concebida para auxiliar no combate às compras por impulso e no desenvolvimento de uma relação mais consciente e equilibrada com o dinheiro.
+      </p>
+      <p>
+        Diferente de gerenciadores tradicionais, o ECOA cruza o <strong>estado emocional diário</strong> com as movimentações financeiras, permitindo ao usuário mapear gatilhos como ansiedade, tédio e euforia antes que eles afetem seu orçamento.
+      </p>
+    </div>
+
+    <!-- Desenvolvedoras -->
+    <div class="sobre-card sobre-card--autoras">
+      <h2>Equipe de Desenvolvimento</h2>
+      <p class="subtitulo-autoras">Pesquisa, Engenharia e Design:</p>
+
+      <div class="autora-item" *ngFor="let a of autoras">
+        <div class="autora-icone">
+          <ion-icon name="person-circle-outline"></ion-icon>
+        </div>
+        <div class="autora-dados">
+          <strong>{{ a.nome }}</strong>
+          <span>{{ a.papel }}</span>
+        </div>
+      </div>
+
+      <div class="instituicao-info">
+        <p>Projeto acadêmico orientado para Trabalho de Conclusão de Curso.</p>
+      </div>,
+    </div>
+
+    <!-- Pilares -->
+    <div class="sobre-card">
+      <h2>Pilares do Sistema</h2>
+      <div class="pilar-item">
+        <ion-icon name="sparkles-outline"></ion-icon>
+        <div>
+          <strong>Diagnóstico Comportamental</strong>
+          <p>Mapeamento de perfil (Consumista, Endividado ou Controlado) com recomendações sob medida.</p>
+        </div>
+      </div>
+
+      <div class="pilar-item">
+        <ion-icon name="heart-circle-outline"></ion-icon>
+        <div>
+          <strong>Rastreamento de Humor</strong>
+          <p>Registro diário de humor para entender o impacto psicológico nos hábitos de consumo.</p>
+        </div>
+      </div>
+
+      <div class="pilar-item">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <div>
+          <strong>Privacidade & LGPD</strong>
+          <p>Compromisso com o tratamento ético de dados e total soberania do titular sobre suas informações.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão Termos e Condições -->
+    <div class="termos-action">
+      <button type="button" class="btn-termos" (click)="abrirTermos()">
+        <ion-icon name="document-text-outline"></ion-icon>
+        Consultar Termos de Uso e Política de Privacidade
+      </button>
+    </div>
+
+    <div class="sobre-footer">
+      <p>Versão {{ versao }} • 2026</p>
+      <p>Todos os direitos reservados à equipe ECOA.</p>
+    </div>
+
+  </div>
+</ion-content>

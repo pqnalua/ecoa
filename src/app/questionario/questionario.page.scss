@@ -214,3 +214,27 @@ ion-content.questionario {
   font-weight: 600;
   color: var(--ecoa-roxo);
 }
+
+
+.questionario__acoes-rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn-salvar-rapido {
+  padding: 12px 16px;
+  background: var(--ecoa-roxo);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}

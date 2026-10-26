@@ -34,11 +34,25 @@
       <ion-label>Metas</ion-label>
     </ion-item>
 
+    <!-- Termos e LGPD Modal -->
+    <ion-item button detail="true" class="menu-item" (click)="abrirTermos()">
+      <ion-icon slot="start" name="shield-checkmark-outline"></ion-icon>
+      <ion-label>Termos e Privacidade (LGPD)</ion-label>
+    </ion-item>
+
+    <!-- Sobre o App -->
     <ion-item button detail="true" class="menu-item" (click)="goTo('sobre')">
       <ion-icon slot="start" name="sparkles-outline"></ion-icon>
       <ion-label>Sobre o app</ion-label>
     </ion-item>
 
+    <!-- Excluir Conta (LGPD Art. 18) -->
+    <ion-item button detail="false" class="menu-item delete-item" (click)="confirmarExclusaoConta()">
+      <ion-icon slot="start" name="trash-outline"></ion-icon>
+      <ion-label>Excluir minha conta</ion-label>
+    </ion-item>
+
+    <!-- Logout -->
     <ion-item button detail="true" class="menu-item logout-item" (click)="logout()">
       <ion-icon slot="start" name="log-out-outline"></ion-icon>
       <ion-label>Sair</ion-label>

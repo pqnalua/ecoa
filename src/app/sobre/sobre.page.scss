@@ -1,0 +1,217 @@
+:host {
+  --ecoa-primary: #9d8bc9;
+  --ecoa-primary-dark: #816eb3;
+  --ecoa-primary-light: #ece7f6;
+  --ecoa-text: #2f2c38;
+  --ecoa-text-muted: #736f7d;
+  --ecoa-bg: #f2efea;
+  --ecoa-card-bg: #ffffff;
+  --ecoa-border: #e3dfd8;
+  font-family: 'Red Hat Display', sans-serif;
+}
+
+ion-toolbar {
+  --background: var(--ecoa-bg);
+  --color: var(--ecoa-primary);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sobre-content {
+  --background: var(--ecoa-bg);
+  color: var(--ecoa-text);
+}
+
+.sobre-wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+.sobre-hero {
+  text-align: center;
+  padding: 16px 0 8px;
+
+  .sobre-logo {
+    width: 110px;
+    height: auto;
+    border-radius: 24px;
+    box-shadow: 0 4px 16px rgba(129, 110, 179, 0.18);
+  }
+
+  .sobre-titulo {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 5px;
+    color: var(--ecoa-primary);
+    margin: 12px 0 2px 0;
+  }
+
+  .sobre-slogan {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--ecoa-primary-dark);
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+
+  .sobre-tag {
+    display: inline-block;
+    background: rgba(157, 139, 201, 0.15);
+    color: var(--ecoa-primary-dark);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.sobre-card {
+  background: var(--ecoa-card-bg);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ecoa-primary-dark);
+    margin: 0 0 12px 0;
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ecoa-text);
+    margin: 0 0 10px 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.sobre-card--autoras {
+  .subtitulo-autoras {
+    font-size: 13px;
+    color: var(--ecoa-text-muted);
+    margin-bottom: 14px;
+  }
+
+  .autora-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--ecoa-primary-light);
+    border-radius: 14px;
+    margin-bottom: 10px;
+
+    .autora-icone ion-icon {
+      font-size: 32px;
+      color: var(--ecoa-primary-dark);
+    }
+
+    .autora-dados {
+      display: flex;
+      flex-direction: column;
+
+      strong {
+        font-size: 14px;
+        color: var(--ecoa-text);
+      }
+
+      span {
+        font-size: 12px;
+        color: var(--ecoa-primary-dark);
+        font-weight: 600;
+      }
+    }
+  }
+
+  .instituicao-info {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--ecoa-border);
+    font-size: 12px;
+    color: var(--ecoa-text-muted);
+    text-align: center;
+  }
+}
+
+.pilar-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  ion-icon {
+    font-size: 26px;
+    color: var(--ecoa-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    font-size: 14px;
+    color: var(--ecoa-text);
+    margin-bottom: 2px;
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--ecoa-text-muted);
+    line-height: 1.4;
+    margin: 0;
+  }
+}
+
+.termos-action {
+  margin-top: 6px;
+
+  .btn-termos {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: transparent;
+    border: 2px solid var(--ecoa-primary);
+    border-radius: 16px;
+    color: var(--ecoa-primary-dark);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    ion-icon {
+      font-size: 18px;
+    }
+
+    &:active {
+      background: var(--ecoa-primary-light);
+    }
+  }
+}
+
+.sobre-footer {
+  text-align: center;
+  margin-top: 12px;
+
+  p {
+    font-size: 12px;
+    color: var(--ecoa-text-muted);
+    margin: 4px 0;
+  }
+}

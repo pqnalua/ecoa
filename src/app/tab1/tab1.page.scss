@@ -308,3 +308,33 @@ ion-content.home {
 .home__wrap {
   padding-bottom: 88px;
 }
+
+
+/* Card Perfil Comportamental */
+.home__card--perfil {
+  background: #ffffff;
+  border-left: 4px solid var(--ecoa-primary);
+
+  .home__perfil-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .home__perfil-titulo {
+    margin: 4px 0 2px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ecoa-primary-dark);
+  }
+
+  .home__perfil-sub {
+    margin: 0;
+    font-size: 12px;
+    color: var(--ecoa-text-muted);
+  }
+}
+
+.texto-receita {
+  color: var(--ecoa-success) !important;
+}

@@ -48,6 +48,17 @@
         <small *ngIf="mostrarErro('confirmarSenha')">As senhas não são iguais.</small>
       </div>
 
+      <div class="field field--checkbox" [class.field--error]="mostrarErro('aceitouTermos')">
+        <label class="checkbox-container">
+          <input id="aceitouTermos" type="checkbox" formControlName="aceitouTermos" />
+          <span class="checkbox-text">
+            Li e concordo com os
+            <a href="javascript:void(0)" (click)="abrirTermos($event)">Termos de Uso e Política de Privacidade (LGPD)</a>.
+          </span>
+        </label>
+        <small *ngIf="mostrarErro('aceitouTermos')">Você precisa aceitar os Termos de Uso para criar sua conta.</small>
+      </div>
+
       <p class="cadastro__erro" *ngIf="erro" role="alert">{{ erro }}</p>
 
       <p class="cadastro__aviso">

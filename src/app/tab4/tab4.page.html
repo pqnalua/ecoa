@@ -1,11 +1,9 @@
 <ion-content [fullscreen]="true" class="metas-content">
-  <!-- Topo da página -->
   <div class="header-container">
     <h1 class="page-title">Metas</h1>
     <img src="../assets/pig-mascot.png" alt="Mascote porco" class="mascot-head" />
   </div>
 
-  <!-- Card: Nova meta -->
   <div class="blob-card new-goal">
     <h2>Nova meta</h2>
 
@@ -30,7 +28,6 @@
       </div>
     </div>
 
-    <!-- Botão de confirmação -->
     <div class="btn-container">
       <button class="btn-confirmar" (click)="adicionarMeta()">
         Adicionar meta
@@ -38,13 +35,13 @@
     </div>
   </div>
 
-  <!-- SEÇÃO: FAVORITAS -->
+  <!-- Metas Favoritas -->
   <div class="section-divider" *ngIf="metasFavoritas.length > 0">
     <h3>Favoritas ({{ metasFavoritas.length }})</h3>
   </div>
 
   <div class="blob-card goal-card" *ngFor="let meta of metasFavoritas">
-    <h2>Meta ainda não alcançada</h2>
+    <h2>Meta em andamento</h2>
 
     <div class="goal-title-row">
       <div class="custom-input-wrap title-pill">
@@ -66,10 +63,17 @@
     </div>
 
     <div class="row-value">
-      <span class="label-text">Valor da meta:</span>
+      <span class="label-text">Economizado:</span>
       <div class="custom-input-wrap value-pill">
-        <span>R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
+        <span>R$ {{ formatarMoeda(meta.valor_atual || 0) }} de R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
       </div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" [style.width.%]="meta.progresso || 0"></div>
+    </div>
+    <div class="progress-label">
+      <span>{{ meta.progresso || 0 }}% concluído</span>
     </div>
 
     <div class="row-value" *ngIf="meta.data_fim">
@@ -84,15 +88,22 @@
         </span>
       </div>
     </div>
+
+    <div class="aporte-container">
+      <button type="button" class="btn-guardar" (click)="solicitarAporte(meta)">
+        <ion-icon name="wallet-outline"></ion-icon>
+        + Guardar valor
+      </button>
+    </div>
   </div>
 
-  <!-- SEÇÃO: PENDENTES -->
+  <!-- Metas Pendentes -->
   <div class="section-divider" *ngIf="metasOutras.length > 0">
     <h3>Pendentes ({{ metasOutras.length }})</h3>
   </div>
 
   <div class="blob-card goal-card" *ngFor="let meta of metasOutras">
-    <h2>Meta ainda não alcançada</h2>
+    <h2>Meta em andamento</h2>
 
     <div class="goal-title-row">
       <div class="custom-input-wrap title-pill">
@@ -114,10 +125,17 @@
     </div>
 
     <div class="row-value">
-      <span class="label-text">Valor da meta:</span>
+      <span class="label-text">Economizado:</span>
       <div class="custom-input-wrap value-pill">
-        <span>R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
+        <span>R$ {{ formatarMoeda(meta.valor_atual || 0) }} de R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
       </div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" [style.width.%]="meta.progresso || 0"></div>
+    </div>
+    <div class="progress-label">
+      <span>{{ meta.progresso || 0 }}% concluído</span>
     </div>
 
     <div class="row-value" *ngIf="meta.data_fim">
@@ -132,15 +150,22 @@
         </span>
       </div>
     </div>
+
+    <div class="aporte-container">
+      <button type="button" class="btn-guardar" (click)="solicitarAporte(meta)">
+        <ion-icon name="wallet-outline"></ion-icon>
+        + Guardar valor
+      </button>
+    </div>
   </div>
 
-  <!-- SEÇÃO: CONCLUÍDAS -->
+  <!-- Metas Concluídas -->
   <div class="section-divider" *ngIf="metasConcluidas.length > 0">
     <h3>Concluídas ({{ metasConcluidas.length }})</h3>
   </div>
 
   <div class="blob-card goal-card completed-card" *ngFor="let meta of metasConcluidas">
-    <h2>Meta alcançada</h2>
+    <h2>Meta alcançada 🎉</h2>
 
     <div class="goal-title-row">
       <div class="custom-input-wrap title-pill">
@@ -164,7 +189,7 @@
     <div class="row-value">
       <span class="label-text">Valor da meta:</span>
       <div class="custom-input-wrap value-pill">
-        <span>R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
+        <span>R$ {{ formatarMoeda(meta.valor_alvo) }} (100%)</span>
       </div>
     </div>
 
