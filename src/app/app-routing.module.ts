@@ -17,31 +17,35 @@ const routes: Routes = [
   },
   {
     path: 'login',
-    loadChildren: () => import('./login/login.module').then( m => m.LoginPageModule)
+    loadChildren: () => import('./login/login.module').then(m => m.LoginPageModule)
   },
   {
     path: 'cadastro',
-    loadChildren: () => import('./cadastro/cadastro.module').then( m => m.CadastroPageModule)
+    loadChildren: () => import('./cadastro/cadastro.module').then(m => m.CadastroPageModule)
   },
   {
     path: 'questionario',
-    loadChildren: () => import('./questionario/questionario.module').then( m => m.QuestionarioPageModule)
+    loadChildren: () => import('./questionario/questionario.module').then(m => m.QuestionarioPageModule)
   },
   {
     path: 'iaecoa',
-    loadChildren: () => import('./iaecoa/iaecoa.module').then( m => m.IaecoaPageModule)
+    loadChildren: () => import('./iaecoa/iaecoa.module').then(m => m.IaecoaPageModule)
   },
   {
     path: 'editarperfil',
-    loadChildren: () => import('./editarperfil/editarperfil.module').then( m => m.EditarperfilPageModule)
+    loadChildren: () => import('./editarperfil/editarperfil.module').then(m => m.EditarperfilPageModule)
   },
   {
     path: 'integracao',
-    loadChildren: () => import('./integracao/integracao.module').then( m => m.IntegracaoPageModule)
+    loadChildren: () => import('./integracao/integracao.module').then(m => m.IntegracaoPageModule)
+  },
+  {
+    path: 'planos',
+    loadChildren: () => import('./planos/planos.module').then(m => m.PlanosPageModule)
   },
   {
     path: 'sobre',
-    loadChildren: () => import('./sobre/sobre.module').then( m => m.SobrePageModule)
+    loadChildren: () => import('./sobre/sobre.module').then(m => m.SobrePageModule)
   }
 ];
 

@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/tab2" text="" icon="arrow-back-outline"></ion-back-button>
     </ion-buttons>
-    <ion-title>Integração Bancária</ion-title>
+    <ion-title>INTEGRAÇÃO BANCÁRIA</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -25,7 +25,7 @@
 
     <section class="secao" *ngIf="bancosConectados.length > 0">
       <h2 class="secao__titulo">Contas conectadas</h2>
-      
+
       <div class="banco-conectado" *ngFor="let banco of bancosConectados">
         <div class="banco-conectado__topo">
           <div class="banco-conectado__identificacao">
@@ -34,7 +34,7 @@
             </div>
             <div>
               <h4>{{ banco.nome }}</h4>
-              <small>{{ banco.atualizadoEm }}</small>
+              <small>{{ banco.contaInfo }} • {{ banco.atualizadoEm }}</small>
             </div>
           </div>
           <span class="banco-conectado__status">Ativo</span>
@@ -42,7 +42,7 @@
 
         <div class="banco-conectado__saldo">
           <span>Saldo sincronizado</span>
-          <strong>{{ banco.saldo | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+          <strong>{{ (banco.saldo || 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
         </div>
 
         <div class="banco-conectado__acoes">
@@ -63,11 +63,11 @@
 
       <div class="busca-wrap">
         <ion-searchbar [(ngModel)]="busca" (ionInput)="filtrar()" placeholder="Buscar instituição financeira..."
-                       class="busca-custom"></ion-searchbar>
+                       class="busca-custom" [debounce]="50"></ion-searchbar>
       </div>
 
       <div class="bancos-grid">
-        <div class="banco-card" *ngFor="let banco of filtroBancos" (click)="conectar(banco)"
+        <div class="banco-card" *ngFor="let banco of filtroBancos" (click)="iniciarConexao(banco)"
              [class.banco-card--conectado]="banco.conectado">
           <div class="banco-card__icone" [style.background-color]="banco.cor">
             <ion-icon [name]="banco.icone"></ion-icon>
@@ -79,10 +79,91 @@
       </div>
     </section>
 
-    <div class="loading-overlay" *ngIf="carregando">
-      <div class="loading-box">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-        <p>Conectando com segurança via Pluggy...</p>
+    <div class="modal-backdrop" *ngIf="bancoSelecionado">
+      <div class="modal-box">
+
+        <div *ngIf="etapaModal === 1">
+          <div class="modal-header">
+            <div class="modal-banco-badge" [style.background-color]="bancoSelecionado.cor">
+              <ion-icon [name]="bancoSelecionado.icone"></ion-icon>
+            </div>
+            <div>
+              <h3>Conectar ao {{ bancoSelecionado.nome }}</h3>
+              <span class="modal-sub">Open Finance Regulamentado</span>
+            </div>
+          </div>
+
+          <div class="modal-body">
+            <div class="termo-box">
+              <p>Ao continuar, você autoriza a <strong>Pluggy Tecnologia</strong> a compartilhar com o <strong>ECOA</strong>:</p>
+              <ul>
+                <li>Saldos de contas correntes e poupança</li>
+                <li>Extrato detalhado de transações e compras</li>
+              </ul>
+              <small>Validade do consentimento: 12 meses • Cancelável a qualquer momento.</small>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-modal btn-modal--cancelar" (click)="fecharModal()">
+              Cancelar
+            </button>
+            <button type="button" class="btn-modal btn-modal--confirmar" (click)="irParaEtapaCredenciais()">
+              Concordar e Avançar
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="etapaModal === 2">
+          <div class="modal-header">
+            <div class="modal-banco-badge" [style.background-color]="bancoSelecionado.cor">
+              <ion-icon [name]="bancoSelecionado.icone"></ion-icon>
+            </div>
+            <div>
+              <h3>Acessar sua conta</h3>
+              <span class="modal-sub">{{ bancoSelecionado.nome }} via Pluggy</span>
+            </div>
+          </div>
+
+          <div class="modal-body">
+            <div class="field">
+              <label>CPF ou Código de Acesso</label>
+              <input type="text" [(ngModel)]="inputUsuario" placeholder="Digite seu CPF ou user_ok" />
+            </div>
+
+            <div class="field">
+              <label>Senha eletrônica da conta</label>
+              <input type="password" [(ngModel)]="inputSenha" placeholder="Digite sua senha ou password_ok" />
+            </div>
+
+            <div class="field">
+              <label>Saldo inicial da conta (R$)</label>
+              <input type="number" [(ngModel)]="inputSaldo" placeholder="Ex: 2450.00" />
+            </div>
+
+            <p class="modal-dica">
+              Ambiente de teste ativo. Você pode digitar sua conta real ou as credenciais <strong>user_ok</strong> e <strong>password_ok</strong>.
+            </p>
+
+            <p class="modal-erro" *ngIf="erroConexao">{{ erroConexao }}</p>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-modal btn-modal--cancelar" (click)="etapaModal = 1" [disabled]="carregando">
+              Voltar
+            </button>
+            <button type="button" class="btn-modal btn-modal--confirmar" (click)="conectarConta()" [disabled]="carregando">
+              {{ carregando ? 'Autenticando...' : 'Conectar Conta' }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="etapaModal === 3" class="modal-sincronizando">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <h4>Conectando ao {{ bancoSelecionado.nome }}...</h4>
+          <p>Autenticando token seguro e importando extratos via Pluggy.</p>
+        </div>
+
       </div>
     </div>
 

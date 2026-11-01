@@ -1,0 +1,217 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="planos__toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab2" text="" icon="arrow-back-outline"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="planos__toolbar-title">PLANOS ECOA</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="planos">
+  <main class="planos__wrap">
+
+    <header class="planos__header">
+      <div class="planos__titulo-wrap">
+        <h1 class="planos__titulo-vazado">O MUNDO</h1>
+        <h1 class="planos__titulo-vazado">ECOA SUA</h1>
+        <h1 class="planos__titulo-vazado">ESCOLHA</h1>
+      </div>
+      <div class="planos__mascote">
+        <img src="assets/porco.png" alt="Mascote ECOA" />
+      </div>
+    </header>
+
+    <div class="planos__seletor-container">
+      <span class="planos__subtitulo">
+        SAIBA QUAL ECO CRIAR COM O {{ categoriaSelecionada.toUpperCase() }}
+      </span>
+
+      <div class="planos__segment">
+        <button type="button" class="planos__segment-btn" [class.planos__segment-btn--ativo]="categoriaSelecionada === 'premium'"
+                (click)="selecionarCategoria('premium')">
+          Premium
+        </button>
+        <button type="button" class="planos__segment-btn" [class.planos__segment-btn--ativo]="categoriaSelecionada === 'vip'"
+                (click)="selecionarCategoria('vip')">
+          VIP
+        </button>
+      </div>
+    </div>
+
+    <div class="planos__cards-lista" *ngIf="categoriaSelecionada === 'premium'">
+
+      <div class="plano-card plano-card--comum">
+        <h2 class="plano-card__titulo">Plano Comum</h2>
+        <p class="plano-card__desc">Ideal para aqueles que precisam se organizar financeiramente</p>
+        <hr class="plano-card__linha" />
+
+        <ul class="plano-card__beneficios">
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle Financeiro</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle de Humor</li>
+          <li class="inativo"><ion-icon name="close-circle-outline"></ion-icon> Página de Metas</li>
+          <li class="inativo"><ion-icon name="remove-circle-outline"></ion-icon> Auxílio de Orientador Virtual</li>
+        </ul>
+
+        <div class="plano-card__bottom">
+          <div class="plano-card__precos">
+            <div class="preco-mensal">R$ 15,00 <span>/mês</span></div>
+            <div class="preco-anual">R$ 144,00 <span>/ano</span></div>
+          </div>
+          <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
+        </div>
+
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano Comum')">
+          Assinar Plano
+        </button>
+      </div>
+
+      <div class="plano-card plano-card--destaque">
+        <div class="plano-card__badge-recomendado">
+          <ion-icon name="thumbs-up"></ion-icon>
+        </div>
+        <h2 class="plano-card__titulo">Plano Especial</h2>
+        <p class="plano-card__desc">Perfeito para quem deseja facilitar sua rotina</p>
+        <hr class="plano-card__linha" />
+
+        <ul class="plano-card__beneficios">
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle Financeiro</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle de Humor</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Página de Metas</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Auxílio de IA Personalizada</li>
+        </ul>
+
+        <div class="plano-card__bottom">
+          <div class="plano-card__precos">
+            <div class="preco-mensal">R$ 50,00 <span>/mês</span></div>
+            <div class="preco-anual">R$ 480,00 <span>/ano</span></div>
+          </div>
+          <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
+        </div>
+
+        <button type="button" class="plano-card__btn plano-card__btn--destaque" (click)="assinar('Plano Especial')">
+          Assinar Plano
+        </button>
+      </div>
+
+      <div class="plano-card plano-card--familia">
+        <h2 class="plano-card__titulo">Plano Família</h2>
+        <p class="plano-card__desc">Organize-se financeiramente com sua família</p>
+        <hr class="plano-card__linha" />
+
+        <ul class="plano-card__beneficios">
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle Financeiro</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle de Humor</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Página de Metas</li>
+          <li class="inativo"><ion-icon name="remove-circle-outline"></ion-icon> Auxílio de Orientador Virtual</li>
+        </ul>
+
+        <div class="plano-card__bottom">
+          <div class="plano-card__precos">
+            <div class="preco-mensal">R$ 25,00 <span>/mês</span></div>
+            <div class="preco-anual">R$ 240,00 <span>/ano</span></div>
+          </div>
+          <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
+        </div>
+
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano Família')">
+          Assinar Plano
+        </button>
+      </div>
+
+    </div>
+
+    <div class="planos__cards-lista" *ngIf="categoriaSelecionada === 'vip'">
+
+      <div class="plano-card plano-card--destaque">
+        <div class="plano-card__vip-topo">
+          <h2 class="plano-card__titulo">Plano VIP Corporativo</h2>
+          <span class="plano-card__vip-marca plano-card__vip-marca--claro">VIP</span>
+        </div>
+        <span class="plano-card__chamada">UM FUTURO ECOA?</span>
+        <p class="plano-card__desc">Apenas para empresas parceiras com potencial.</p>
+        <hr class="plano-card__linha" />
+
+        <ul class="plano-card__beneficios">
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle Financeiro</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle de Humor</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Página de Metas</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Auxílio de IA Personalizada</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Acesso Corporativo</li>
+        </ul>
+
+        <div class="plano-card__bottom">
+          <div class="plano-card__precos">
+            <div class="preco-mensal">R$ ? <span>/4 anos</span></div>
+            <div class="preco-anual">R$ • <span>/contrato</span></div>
+          </div>
+          <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
+        </div>
+
+        <button type="button" class="plano-card__btn plano-card__btn--destaque" (click)="assinar('Plano VIP Corporativo')">
+          Contatar Parceria
+        </button>
+      </div>
+
+      <div class="plano-card plano-card--familia">
+        <div class="plano-card__badge-recomendado">
+          <ion-icon name="thumbs-up"></ion-icon>
+        </div>
+        <div class="plano-card__vip-topo">
+          <h2 class="plano-card__titulo">Plano VIP Família</h2>
+          <span class="plano-card__vip-marca">VIP</span>
+        </div>
+        <p class="plano-card__desc">Junte-se com a família nas suas escolhas financeiras!</p>
+        <hr class="plano-card__linha" />
+
+        <ul class="plano-card__beneficios">
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle Financeiro</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle de Humor</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Página de Metas</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Auxílio de IA Personalizada</li>
+        </ul>
+
+        <div class="plano-card__bottom">
+          <div class="plano-card__precos">
+            <div class="preco-mensal">R$ 85,00 <span>/mês</span></div>
+            <div class="preco-anual">R$ 816,00 <span>/ano</span></div>
+          </div>
+          <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
+        </div>
+
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano VIP Família')">
+          Assinar VIP
+        </button>
+      </div>
+
+      <div class="plano-card plano-card--comum">
+        <div class="plano-card__vip-topo">
+          <h2 class="plano-card__titulo">Plano VIP Duo</h2>
+          <span class="plano-card__vip-marca">VIP</span>
+        </div>
+        <p class="plano-card__desc">Ideal para casais e amigos que desejam crescer juntos</p>
+        <hr class="plano-card__linha" />
+
+        <ul class="plano-card__beneficios">
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle Financeiro</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Controle de Humor</li>
+          <li class="ativo"><ion-icon name="checkbox-outline"></ion-icon> Página de Metas</li>
+          <li class="inativo"><ion-icon name="remove-circle-outline"></ion-icon> IA de áudio financeiro por voz</li>
+        </ul>
+
+        <div class="plano-card__bottom">
+          <div class="plano-card__precos">
+            <div class="preco-mensal">R$ 30,00 <span>/mês</span></div>
+            <div class="preco-anual">R$ 288,00 <span>/ano</span></div>
+          </div>
+          <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
+        </div>
+
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano VIP Duo')">
+          Assinar VIP
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+</ion-content>

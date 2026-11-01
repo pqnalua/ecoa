@@ -1,0 +1,337 @@
+:host {
+  --ecoa-roxo: #48387a;
+  --ecoa-roxo-claro: #baa8ea;
+  --ecoa-roxo-suave: #a594e0;
+  --ecoa-tinta: #23222b;
+  --ecoa-tinta-suave: #2b2b2b;
+  --ecoa-papel: #f5f2ee;
+  font-family: 'Red Hat Display', sans-serif;
+}
+
+.planos__toolbar {
+  --background: var(--ecoa-papel);
+  --border-width: 0 0 1px 0;
+  --border-color: #e4ded6;
+  text-align: center;
+
+  ion-back-button {
+    --color: var(--ecoa-roxo-suave);
+  }
+}
+
+.planos__toolbar-title {
+  font-size: 18px !important;
+  letter-spacing: 3px !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ecoa-roxo-suave) !important;
+}
+
+ion-content.planos {
+  --background: var(--ecoa-papel);
+}
+
+.planos__wrap {
+  padding: 16px 18px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.planos__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 0;
+  gap: 12px;
+}
+
+.planos__titulo-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.planos__titulo-vazado {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: transparent;
+  -webkit-text-stroke: 1.3px var(--ecoa-roxo);
+  letter-spacing: 0.04em;
+}
+
+.planos__mascote {
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.planos__seletor-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.planos__subtitulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ecoa-roxo);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.planos__segment {
+  display: flex;
+  background: rgba(72, 56, 122, 0.12);
+  border-radius: 24px;
+  padding: 4px;
+  width: 220px;
+}
+
+.planos__segment-btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 9px 0;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ecoa-roxo);
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  &--ativo {
+    background: var(--ecoa-roxo);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(72, 56, 122, 0.3);
+  }
+}
+
+.planos__cards-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+  padding-top: 6px;
+}
+
+.plano-card {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--ecoa-roxo-claro);
+  border-radius: 24px;
+  padding: 24px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 6px 18px rgba(35, 34, 43, 0.08);
+
+  &--destaque {
+    background: var(--ecoa-roxo);
+    color: #ffffff;
+
+    .plano-card__titulo {
+      color: #ffffff;
+    }
+
+    .plano-card__desc {
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .plano-card__linha {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .plano-card__beneficios li {
+      color: #ffffff;
+
+      ion-icon {
+        color: #ffffff;
+      }
+    }
+
+    .preco-mensal,
+    .preco-anual {
+      color: #ffffff !important;
+
+      span {
+        color: rgba(255, 255, 255, 0.8) !important;
+      }
+    }
+  }
+
+  &__badge-recomendado {
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    background: #ffffff;
+    color: var(--ecoa-roxo);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+    font-size: 17px;
+    z-index: 2;
+  }
+
+  &__vip-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__titulo {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--ecoa-tinta);
+    letter-spacing: -0.01em;
+  }
+
+  &__vip-marca {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ecoa-roxo);
+
+    &--claro {
+      color: #ffffff;
+    }
+  }
+
+  &__chamada {
+    display: inline-block;
+    background: var(--ecoa-tinta);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-top: 5px;
+    width: fit-content;
+  }
+
+  &__desc {
+    margin: 8px 0 0;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--ecoa-tinta-suave);
+    min-height: 34px;
+  }
+
+  &__linha {
+    border: 0;
+    border-top: 1px solid rgba(35, 34, 43, 0.16);
+    margin: 14px 0;
+  }
+
+  &__beneficios {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--ecoa-tinta-suave);
+
+      ion-icon {
+        font-size: 17px;
+        color: var(--ecoa-roxo);
+      }
+
+      &.inativo {
+        opacity: 0.55;
+      }
+    }
+  }
+
+  &__bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    position: relative;
+    padding-bottom: 4px;
+  }
+
+  &__precos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .preco-mensal {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--ecoa-tinta);
+
+    span {
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+  }
+
+  .preco-anual {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ecoa-tinta);
+    opacity: 0.9;
+
+    span {
+      font-size: 12px;
+      font-weight: 400;
+    }
+  }
+
+  &__desconto-img {
+    width: 68px;
+    height: 68px;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.14));
+    flex-shrink: 0;
+  }
+
+  &__btn {
+    margin-top: 14px;
+    height: 44px;
+    border-radius: 14px;
+    border: 0;
+    background: #ffffff;
+    color: var(--ecoa-roxo);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    &--destaque {
+      background: var(--ecoa-roxo-claro);
+      color: var(--ecoa-tinta);
+    }
+  }
+}
