@@ -101,6 +101,15 @@ export class Tab1Page implements OnInit {
       this.usuario.foto = metadata['avatar_url'] || metadata['picture'];
     }
 
+    if (metadata['humor']) {
+      this.humorSelecionado = metadata['humor'];
+    } else if (user.id) {
+      const humorLocal = localStorage.getItem(`humor_${user.id}`);
+      if (humorLocal) {
+        this.humorSelecionado = humorLocal;
+      }
+    }
+
     if (metadata['tipo_consumidor']) {
       this.tipoConsumidor = metadata['tipo_consumidor'];
       this.perfilDiagnostico = metadata['tipo_consumidor'];
@@ -136,8 +145,26 @@ export class Tab1Page implements OnInit {
     return this.tipoConsumidor || this.perfilDiagnostico || 'Perfil Financeiro';
   }
 
-  selecionarHumor(id: string) {
+  async selecionarHumor(id: string) {
     this.humorSelecionado = id;
+    this.cdr.detectChanges();
+
+    try {
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
+
+      if (!user) {
+        user = await this.supabaseService.getCurrentUser();
+      }
+
+      if (user?.id) {
+        localStorage.setItem(`humor_${user.id}`, id);
+      }
+
+      await this.supabaseService.client.auth.updateUser({
+        data: { humor: id }
+      });
+    } catch {}
   }
 
   irParaGastos() {

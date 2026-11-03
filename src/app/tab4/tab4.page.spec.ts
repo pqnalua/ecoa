@@ -25,9 +25,9 @@ describe('Tab4Page', () => {
 
   it('deve separar as metas em categorias corretamente', () => {
     component.metas = [
-      { nome: 'Meta 1', valor_meta: 1000, data_alvo: '2026-12-31', concluida: false, favorita: false },
-      { nome: 'Meta 2', valor_meta: 500, data_alvo: '2026-06-01', concluida: false, favorita: true },
-      { nome: 'Meta 3', valor_meta: 200, data_alvo: '2026-01-01', concluida: true, favorita: false }
+      { nome: 'Meta 1', valor_alvo: 1000, data_fim: '2026-12-31', concluida: false, favorita: false },
+      { nome: 'Meta 2', valor_alvo: 500, data_fim: '2026-06-01', concluida: false, favorita: true },
+      { nome: 'Meta 3', valor_alvo: 200, data_fim: '2026-01-01', concluida: true, favorita: false }
     ];
 
     expect(component.metasFavoritas.length).toBe(1);
