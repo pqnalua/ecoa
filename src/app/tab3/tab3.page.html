@@ -51,6 +51,51 @@
       </div>
     </div>
 
+    <!-- Card Orçamento Planejado do Mês -->
+    <div class="ctrl__card ctrl__card--orcamento">
+      <div class="ctrl__orcamento-topo">
+        <div>
+          <span class="ctrl__subtitulo">Orçamento Planejado</span>
+          <h3 class="ctrl__orcamento-valores" *ngIf="orcamento && orcamento.valor_planejado > 0">
+            R$ {{ orcamento.valor_gasto | number:'1.2-2':'pt-BR' }} <small>de R$ {{ orcamento.valor_planejado | number:'1.2-2':'pt-BR' }}</small>
+          </h3>
+          <h3 class="ctrl__orcamento-valores sem-teto" *ngIf="!orcamento || orcamento.valor_planejado === 0">
+            Nenhum limite definido
+          </h3>
+        </div>
+
+        <button type="button" class="ctrl__btn-ajustar" (click)="definirOuEditarOrcamento()">
+          <ion-icon name="create-outline"></ion-icon>
+          {{ orcamento && orcamento.valor_planejado > 0 ? 'Ajustar' : 'Definir' }}
+        </button>
+      </div>
+
+      <div *ngIf="orcamento && orcamento.valor_planejado > 0">
+        <div class="ctrl__progresso-bg">
+          <div
+            class="ctrl__progresso-fill"
+            [style.width.%]="(orcamento.percentualConsumido || 0) > 100 ? 100 : (orcamento.percentualConsumido || 0)"
+            [class.atencao]="orcamento.statusAlerta === 'atencao'"
+            [class.estourado]="orcamento.statusAlerta === 'estourado'"
+          ></div>
+        </div>
+
+        <div class="ctrl__orcamento-status">
+          <span class="ctrl__status-txt" [class.atencao]="orcamento.statusAlerta === 'atencao'" [class.estourado]="orcamento.statusAlerta === 'estourado'">
+            <ng-container *ngIf="orcamento.statusAlerta === 'normal'">
+              {{ orcamento.percentualConsumido }}% consumido (dentro do planejado)
+            </ng-container>
+            <ng-container *ngIf="orcamento.statusAlerta === 'atencao'">
+              ⚠️ Atenção: {{ orcamento.percentualConsumido }}% consumido (acima de 80%)
+            </ng-container>
+            <ng-container *ngIf="orcamento.statusAlerta === 'estourado'">
+              🚨 Limite ultrapassado: {{ orcamento.percentualConsumido }}% do teto
+            </ng-container>
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- Abas -->
     <ion-segment [(ngModel)]="aba" class="ctrl__abas">
       <ion-segment-button value="registrar">

@@ -43,13 +43,29 @@ export class LoginPage {
       const email = this.form.value.email || '';
       const password = this.form.value.senha || '';
 
-      const { error } = await this.supabaseService.client.auth.signInWithPassword({
+      const { data, error } = await this.supabaseService.client.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
         throw error;
+      }
+
+      const userId = data?.user?.id;
+      if (userId) {
+        // Verifica se o usuário já preencheu o questionário
+        const { data: perfil } = await this.supabaseService.client
+          .from('perfil_financeiro')
+          .select('id_perfil')
+          .eq('id_usuario', userId)
+          .maybeSingle();
+
+        if (!perfil) {
+          // Primeiro acesso: direciona para o questionário
+          await this.router.navigateByUrl('/questionario', { replaceUrl: true });
+          return;
+        }
       }
 
       await this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });

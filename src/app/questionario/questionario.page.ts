@@ -329,7 +329,7 @@ export class QuestionarioPage implements OnInit {
             atualizado_em: new Date().toISOString(),
           }, { onConflict: 'id_usuario' });
 
-        this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+        this.router.navigateByUrl('/tabs/tab2', { replaceUrl: true });
       }
     } catch (e) {
       console.error('Erro ao salvar alterações no perfil financeiro:', e);

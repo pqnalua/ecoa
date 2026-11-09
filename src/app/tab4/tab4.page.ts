@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
+import { NotificacaoService } from '../services/notificacao.service';
 
 export interface Meta {
   id_meta?: string;
@@ -35,7 +36,8 @@ export class Tab4Page implements OnInit {
   constructor(
     private supabaseService: SupabaseService,
     private router: Router,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private notificacaoService: NotificacaoService
   ) {}
 
   ngOnInit() {
@@ -210,6 +212,12 @@ export class Tab4Page implements OnInit {
       if (alcancada) {
         meta.concluida = true;
         meta.status = 'concluida';
+        this.notificacaoService.criarNotificacao({
+          titulo: 'Meta Concluída! 🎯',
+          mensagem: `Parabéns! Você alcançou 100% da sua meta "${meta.nome}" (R$ ${this.formatarMoeda(meta.valor_alvo)}).`,
+          tipo: 'meta',
+          link: '/tabs/tab4',
+        });
       }
     }
   }
@@ -252,16 +260,34 @@ export class Tab4Page implements OnInit {
   async excluirMeta(meta: Meta) {
     if (!meta.id_meta) return;
 
-    const { error } = await this.supabaseService.client
-      .from('meta')
-      .update({ deletado_em: new Date().toISOString() })
-      .eq('id_meta', meta.id_meta);
+    const alert = await this.alertCtrl.create({
+      header: 'Excluir meta',
+      message: `Deseja realmente excluir a meta "${meta.nome}"?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          role: 'destructive',
+          handler: async () => {
+            const { error } = await this.supabaseService.client
+              .from('meta')
+              .update({ deletado_em: new Date().toISOString() })
+              .eq('id_meta', meta.id_meta);
 
-    if (error) {
-      console.error('Erro ao apagar meta:', error.message);
-    } else {
-      this.metas = this.metas.filter((m) => m.id_meta !== meta.id_meta);
-    }
+            if (error) {
+              console.error('Erro ao apagar meta:', error.message);
+            } else {
+              this.metas = this.metas.filter((m) => m.id_meta !== meta.id_meta);
+            }
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 
   formatarMoeda(valor?: number): string {

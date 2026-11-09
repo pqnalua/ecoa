@@ -335,3 +335,10 @@ ion-content.planos {
     }
   }
 }
+
+
+/* Responsividade para telas maiores / desktop */
+.planos__wrap {
+  max-width: 480px;
+  margin: 0 auto;
+}

@@ -61,24 +61,50 @@ export class IntegracaoPage implements OnInit {
   async carregarEstadoSalvo() {
     try {
       const user = await this.supabaseService.getCurrentUser();
-      const salvos: Banco[] = user?.user_metadata?.['bancos_conectados'];
+      if (!user) return;
 
-      if (salvos && Array.isArray(salvos) && salvos.length > 0) {
+      // 1. Tenta carregar da tabela relacional conta_bancaria
+      const { data: contas } = await this.supabaseService.client
+        .from('conta_bancaria')
+        .select('*')
+        .eq('id_usuario', user.id)
+        .is('deletado_em', null);
+
+      if (contas && contas.length > 0) {
         this.bancos = this.bancos.map(b => {
-          const salvo = salvos.find(s => s.id === b.id);
-          if (salvo) {
+          const conta = contas.find(c => c.banco.toLowerCase() === b.nome.toLowerCase());
+          if (conta) {
             return {
               ...b,
-              conectado: salvo.conectado,
-              saldo: salvo.saldo,
-              contaInfo: salvo.contaInfo,
-              atualizadoEm: salvo.atualizadoEm,
+              conectado: true,
+              saldo: Number(conta.saldo_atual) || 0,
+              contaInfo: 'Conta Corrente',
+              atualizadoEm: 'Hoje às ' + new Date(conta.atualizado_em || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
             };
           }
           return b;
         });
+      } else {
+        // 2. Fallback caso use metadados
+        const salvos: Banco[] = user?.user_metadata?.['bancos_conectados'];
+        if (salvos && Array.isArray(salvos) && salvos.length > 0) {
+          this.bancos = this.bancos.map(b => {
+            const salvo = salvos.find(s => s.id === b.id);
+            if (salvo) {
+              return {
+                ...b,
+                conectado: salvo.conectado,
+                saldo: salvo.saldo,
+                contaInfo: salvo.contaInfo,
+                atualizadoEm: salvo.atualizadoEm,
+              };
+            }
+            return b;
+          });
+        }
       }
-    } catch {
+    } catch (e) {
+      console.warn('Erro ao carregar estado de contas:', e);
     } finally {
       this.filtrar();
     }
@@ -175,12 +201,64 @@ export class IntegracaoPage implements OnInit {
 
   private async salvarNoSupabase() {
     try {
+      const user = await this.supabaseService.getCurrentUser();
+      if (!user) return;
+
       const conectados = this.bancos.filter(b => b.conectado);
+
+      // 1. Atualiza user_metadata como cache
       await this.supabaseService.client.auth.updateUser({
         data: {
           bancos_conectados: conectados,
         },
       });
-    } catch {}
+
+      // 2. Sincroniza diretamente na tabela conta_bancaria para que a Home reflita o saldo
+      for (const b of this.bancos) {
+        const { data: existente } = await this.supabaseService.client
+          .from('conta_bancaria')
+          .select('id_conta')
+          .eq('id_usuario', user.id)
+          .eq('banco', b.nome)
+          .maybeSingle();
+
+        if (b.conectado) {
+          if (existente) {
+            await this.supabaseService.client
+              .from('conta_bancaria')
+              .update({
+                saldo_atual: b.saldo || 0,
+                deletado_em: null,
+                ativa: true,
+                atualizado_em: new Date().toISOString()
+              })
+              .eq('id_conta', existente.id_conta);
+          } else {
+            await this.supabaseService.client
+              .from('conta_bancaria')
+              .insert({
+                id_usuario: user.id,
+                banco: b.nome,
+                tipo_conta: 'corrente',
+                saldo_atual: b.saldo || 0,
+                saldo_inicial: b.saldo || 0,
+                cor: b.cor,
+                ativa: true
+              });
+          }
+        } else if (existente) {
+          // Desconectado: desativa na tabela para não somar no saldo da Home
+          await this.supabaseService.client
+            .from('conta_bancaria')
+            .update({
+              deletado_em: new Date().toISOString(),
+              ativa: false
+            })
+            .eq('id_conta', existente.id_conta);
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao sincronizar conta_bancaria:', e);
+    }
   }
 }

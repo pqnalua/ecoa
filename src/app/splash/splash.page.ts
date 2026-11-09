@@ -18,11 +18,22 @@ export class SplashPage implements OnInit {
     setTimeout(async () => {
       try {
         const { data } = await this.supabaseService.client.auth.getSession();
-        if (data?.session?.user) {
-          // Usuário já está logado -> vai direto para a Home
-          this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+        const user = data?.session?.user;
+
+        if (user) {
+          // Verifica se já respondeu o questionário de perfil
+          const { data: perfil } = await this.supabaseService.client
+            .from('perfil_financeiro')
+            .select('id_perfil')
+            .eq('id_usuario', user.id)
+            .maybeSingle();
+
+          if (!perfil) {
+            this.router.navigateByUrl('/questionario', { replaceUrl: true });
+          } else {
+            this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+          }
         } else {
-          // Não está logado -> vai para a tela de Login
           this.router.navigateByUrl('/login', { replaceUrl: true });
         }
       } catch {

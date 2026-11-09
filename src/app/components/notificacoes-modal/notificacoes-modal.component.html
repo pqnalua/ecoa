@@ -1,0 +1,79 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="notif-toolbar">
+    <ion-title>Notificações</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="fechar()" class="btn-fechar">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="notif-content">
+  <div class="notif-wrap">
+
+    <div class="notif-acoes-topo" *ngIf="notificacoes.length > 0">
+      <span class="notif-total">{{ notificacoes.length }} aviso(s)</span>
+      <button type="button" class="btn-marcar-todas" (click)="marcarTodasComoLidas()">
+        <ion-icon name="checkmark-done-outline"></ion-icon>
+        Marcar todas como lidas
+      </button>
+    </div>
+
+    <!-- Carregando -->
+    <div class="notif-loading" *ngIf="carregando">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Carregando notificações...</p>
+    </div>
+
+    <!-- Estado Vazio -->
+    <div class="notif-vazio" *ngIf="!carregando && notificacoes.length === 0">
+      <div class="vazio-icone-wrap">
+        <ion-icon name="notifications-off-outline"></ion-icon>
+      </div>
+      <h3>Tudo em ordem!</h3>
+      <p>Você não possui nenhum alerta ou aviso pendente no momento.</p>
+    </div>
+
+    <!-- Lista de Notificações -->
+    <div class="notif-lista" *ngIf="!carregando && notificacoes.length > 0">
+      <div
+        class="notif-card"
+        *ngFor="let n of notificacoes"
+        [class.nao-lida]="!n.lida"
+        [class.tipo-orcamento]="n.tipo === 'orcamento'"
+        [class.tipo-meta]="n.tipo === 'meta'"
+        [class.tipo-emocional]="n.tipo === 'emocional'"
+        (click)="clicarNotificacao(n)"
+      >
+        <div class="notif-icone-col">
+          <div class="icone-circulo">
+            <ion-icon [name]="getIcone(n.tipo)"></ion-icon>
+          </div>
+        </div>
+
+        <div class="notif-corpo">
+          <div class="notif-cabecalho">
+            <h4 class="notif-titulo">{{ n.titulo }}</h4>
+            <span class="ponto-nao-lida" *ngIf="!n.lida"></span>
+          </div>
+
+          <p class="notif-msg">{{ n.mensagem }}</p>
+
+          <div class="notif-rodape">
+            <span class="notif-data">{{ formatarData(n.criado_em) }}</span>
+            <button
+              type="button"
+              class="btn-excluir"
+              (click)="excluir(n, $event)"
+              title="Excluir notificação"
+            >
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

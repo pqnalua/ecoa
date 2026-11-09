@@ -1,0 +1,249 @@
+:host {
+  --ecoa-roxo: #48387a;
+  --ecoa-roxo-primario: #9d8bc9;
+  --ecoa-roxo-escuro: #816eb3;
+  --ecoa-fundo: #f5f2ee;
+  --ecoa-texto: #2f2c38;
+  --ecoa-texto-mutado: #736f7d;
+  --ecoa-alerta: #e67e22;
+  --ecoa-sucesso: #27ae60;
+  --ecoa-rosa: #e84393;
+  font-family: 'Red Hat Display', sans-serif;
+}
+
+.notif-toolbar {
+  --background: #ffffff;
+  --border-width: 0 0 1px 0;
+  --border-color: #ede8e3;
+  text-align: center;
+
+  ion-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ecoa-roxo);
+    letter-spacing: 0.5px;
+  }
+
+  .btn-fechar {
+    --color: var(--ecoa-texto-mutado);
+    font-size: 20px;
+  }
+}
+
+.notif-content {
+  --background: var(--ecoa-fundo);
+}
+
+.notif-wrap {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 18px 16px 36px 16px;
+}
+
+.notif-acoes-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 0 4px;
+
+  .notif-total {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ecoa-texto-mutado);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-marcar-todas {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--ecoa-roxo-escuro);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+
+    ion-icon {
+      font-size: 16px;
+    }
+  }
+}
+
+.notif-loading {
+  text-align: center;
+  padding: 40px 20px;
+
+  p {
+    font-size: 14px;
+    color: var(--ecoa-texto-mutado);
+    margin-top: 10px;
+  }
+}
+
+.notif-vazio {
+  text-align: center;
+  padding: 50px 20px;
+
+  .vazio-icone-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(157, 139, 201, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px auto;
+
+    ion-icon {
+      font-size: 34px;
+      color: var(--ecoa-roxo-escuro);
+    }
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ecoa-roxo);
+    margin: 0 0 6px 0;
+  }
+
+  p {
+    font-size: 13.5px;
+    color: var(--ecoa-texto-mutado);
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+.notif-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notif-card {
+  display: flex;
+  gap: 12px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid #ebe6df;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  &.nao-lida {
+    background: #fdfcff;
+    border-left: 4px solid var(--ecoa-roxo-escuro);
+  }
+
+  .notif-icone-col {
+    flex-shrink: 0;
+
+    .icone-circulo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(157, 139, 201, 0.15);
+      color: var(--ecoa-roxo-escuro);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      ion-icon {
+        font-size: 20px;
+      }
+    }
+  }
+
+  &.tipo-orcamento {
+    .icone-circulo {
+      background: rgba(230, 126, 34, 0.15);
+      color: var(--ecoa-alerta);
+    }
+  }
+
+  &.tipo-meta {
+    .icone-circulo {
+      background: rgba(39, 174, 96, 0.15);
+      color: var(--ecoa-sucesso);
+    }
+  }
+
+  &.tipo-emocional {
+    .icone-circulo {
+      background: rgba(232, 67, 147, 0.15);
+      color: var(--ecoa-rosa);
+    }
+  }
+
+  .notif-corpo {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notif-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+
+    .notif-titulo {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ecoa-texto);
+      margin: 0;
+    }
+
+    .ponto-nao-lida {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ecoa-roxo-escuro);
+      flex-shrink: 0;
+    }
+  }
+
+  .notif-msg {
+    font-size: 13px;
+    color: #4f4b59;
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+  }
+
+  .notif-rodape {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .notif-data {
+      font-size: 11.5px;
+      color: var(--ecoa-texto-mutado);
+    }
+
+    .btn-excluir {
+      background: transparent;
+      border: none;
+      color: #a5a0af;
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 6px;
+
+      ion-icon {
+        font-size: 15px;
+      }
+
+      &:hover {
+        color: #e74c3c;
+      }
+    }
+  }
+}

@@ -499,3 +499,200 @@ ion-content.ctrl {
   font-weight: 600;
   color: var(--ecoa-primary-dark);
 }
+
+
+/* ---------- Seletor e Estilos de Despesas / Receitas ---------- */
+.ctrl__resumo-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ctrl__totais-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.ctrl__total-mini {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--ecoa-text-muted);
+
+  strong {
+    font-weight: 700;
+  }
+
+  &--receita strong {
+    color: var(--ecoa-success);
+  }
+
+  &--despesa strong {
+    color: var(--ecoa-danger);
+  }
+}
+
+.ctrl__total--positivo {
+  color: var(--ecoa-primary-dark);
+}
+
+.ctrl__total--negativo {
+  color: var(--ecoa-danger) !important;
+}
+
+.ctrl__seletor-transacao {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ctrl__btn-tipo-transacao {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 2px solid var(--ecoa-border);
+  background: #ffffff;
+  color: var(--ecoa-text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  ion-icon {
+    font-size: 20px;
+  }
+
+  &--ativo-despesa {
+    background: rgba(193, 92, 92, 0.12);
+    border-color: var(--ecoa-danger);
+    color: var(--ecoa-danger);
+  }
+
+  &--ativo-receita {
+    background: rgba(82, 164, 122, 0.15);
+    border-color: var(--ecoa-success);
+    color: var(--ecoa-success);
+  }
+}
+
+.ctrl__btn--sucesso {
+  background: var(--ecoa-success);
+  color: #ffffff;
+
+  &:hover {
+    background: #468c68;
+  }
+}
+
+.ctrl__tag--receita {
+  background: var(--ecoa-success) !important;
+}
+
+.ctrl__num--receita {
+  color: var(--ecoa-success) !important;
+}
+
+/* Card de Orçamento Planejado */
+.ctrl__card--orcamento {
+  background: #ffffff;
+  border-left: 4px solid var(--ecoa-primary-dark);
+
+  .ctrl__orcamento-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .ctrl__orcamento-valores {
+    margin: 4px 0 0 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ecoa-text);
+
+    small {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ecoa-text-muted);
+    }
+
+    &.sem-teto {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--ecoa-text-muted);
+    }
+  }
+
+  .ctrl__btn-ajustar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--ecoa-primary-light);
+    color: var(--ecoa-primary-dark);
+    border: none;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    ion-icon {
+      font-size: 14px;
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+
+  .ctrl__progresso-bg {
+    width: 100%;
+    height: 9px;
+    border-radius: 5px;
+    background: #eae5de;
+    overflow: hidden;
+    margin: 14px 0 8px 0;
+
+    .ctrl__progresso-fill {
+      height: 100%;
+      border-radius: 5px;
+      background: var(--ecoa-success);
+      transition: width 0.3s ease;
+
+      &.atencao {
+        background: #e67e22;
+      }
+
+      &.estourado {
+        background: #e74c3c;
+      }
+    }
+  }
+
+  .ctrl__orcamento-status {
+    .ctrl__status-txt {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ecoa-text-muted);
+
+      &.atencao {
+        color: #d35400;
+        font-weight: 700;
+      }
+
+      &.estourado {
+        color: #c0392b;
+        font-weight: 800;
+      }
+    }
+  }
+}

@@ -5,8 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { Tab1Page } from './tab1.page';
-
 import { Tab1PageRoutingModule } from './tab1-routing.module';
+import { ComandoVozModalModule } from '../components/comando-voz-modal/comando-voz-modal.module';
+import { NotificacoesModalModule } from '../components/notificacoes-modal/notificacoes-modal.module';
 
 registerLocaleData(localePt, 'pt-BR');
 
@@ -15,8 +16,10 @@ registerLocaleData(localePt, 'pt-BR');
     IonicModule,
     CommonModule,
     FormsModule,
-    Tab1PageRoutingModule
+    Tab1PageRoutingModule,
+    ComandoVozModalModule,
+    NotificacoesModalModule,
   ],
-  declarations: [Tab1Page]
+  declarations: [Tab1Page],
 })
 export class Tab1PageModule {}

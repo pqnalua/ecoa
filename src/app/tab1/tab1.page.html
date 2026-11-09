@@ -1,6 +1,14 @@
 <ion-header class="home__header ion-no-border">
   <ion-toolbar class="home__toolbar">
     <ion-title class="home__logo">ECOA</ion-title>
+    <ion-buttons slot="end">
+      <button type="button" class="home__notif-btn" (click)="abrirNotificacoes()" aria-label="Notificações">
+        <ion-icon name="notifications-outline"></ion-icon>
+        <span class="home__notif-badge" *ngIf="notificacoesNaoLidas > 0">
+          {{ notificacoesNaoLidas }}
+        </span>
+      </button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -29,16 +37,49 @@
       </div>
     </div>
 
-    <!-- Perfil Financeiro Ativo (quando já fez o questionário) -->
-    <div class="home__card home__card--perfil" *ngIf="temQuestionario">
-      <div class="home__perfil-row">
+    <!-- Orçamento do Mês (Limite de Gastos) -->
+    <div class="home__card home__card--orcamento" *ngIf="orcamentoMes">
+      <div class="home__orcamento-header">
         <div>
-          <span class="home__card-subtitle">Perfil Comportamental</span>
-          <h3 class="home__perfil-titulo">{{ getTituloPerfil(tipoConsumidor) }}</h3>
-          <p class="home__perfil-sub">Diagnóstico mapeado no sistema.</p>
+          <span class="home__card-subtitle">Orçamento de {{ mesNomeAtual }}</span>
+          <h3 class="home__orcamento-val" *ngIf="orcamentoMes.valor_planejado > 0">
+            R$ {{ orcamentoMes.valor_gasto | number:'1.2-2':'pt-BR' }} <small>de R$ {{ orcamentoMes.valor_planejado | number:'1.2-2':'pt-BR' }}</small>
+          </h3>
+          <h3 class="home__orcamento-val" *ngIf="orcamentoMes.valor_planejado === 0">
+            Nenhum limite planejado
+          </h3>
         </div>
-        <button type="button" class="home__link-btn" (click)="irParaQuestionario()">
-          Editar dados
+        <span
+          class="home__orcamento-tag"
+          *ngIf="orcamentoMes.valor_planejado > 0"
+          [class.alerta]="orcamentoMes.statusAlerta === 'atencao'"
+          [class.estourado]="orcamentoMes.statusAlerta === 'estourado'"
+        >
+          {{ orcamentoMes.percentualConsumido }}% consumido
+        </span>
+      </div>
+
+      <div class="home__orcamento-barra" *ngIf="orcamentoMes.valor_planejado > 0">
+        <div
+          class="home__orcamento-fill"
+          [style.width.%]="(orcamentoMes.percentualConsumido || 0) > 100 ? 100 : (orcamentoMes.percentualConsumido || 0)"
+          [class.alerta]="orcamentoMes.statusAlerta === 'atencao'"
+          [class.estourado]="orcamentoMes.statusAlerta === 'estourado'"
+        ></div>
+      </div>
+
+      <div class="home__orcamento-rodape">
+        <span class="home__orcamento-dica" *ngIf="orcamentoMes.valor_planejado > 0 && orcamentoMes.statusAlerta === 'normal'">
+          Dentro do previsto para o mês
+        </span>
+        <span class="home__orcamento-dica alerta" *ngIf="orcamentoMes.statusAlerta === 'atencao'">
+          ⚠️ Mais de 80% do orçamento consumido
+        </span>
+        <span class="home__orcamento-dica estourado" *ngIf="orcamentoMes.statusAlerta === 'estourado'">
+          🚨 Limite ultrapassado em {{ orcamentoMes.percentualConsumido }}%
+        </span>
+        <button type="button" class="home__link-btn" (click)="irParaGastos()">
+          {{ orcamentoMes.valor_planejado > 0 ? 'Ajustar' : 'Definir limite' }}
         </button>
       </div>
     </div>

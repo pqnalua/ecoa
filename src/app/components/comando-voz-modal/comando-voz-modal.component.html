@@ -1,0 +1,215 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="voz-toolbar">
+    <ion-title>Comando por Voz</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="fechar()" class="btn-fechar">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="voz-content">
+  <div class="voz-container">
+
+    <!-- 1. ESTADO ESCUTANDO -->
+    <div class="voz-secao escutando" *ngIf="estado === 'escutando'">
+      <div class="pulso-wrapper">
+        <div class="pulso-anel anel-1"></div>
+        <div class="pulso-anel anel-2"></div>
+        <button class="btn-mic-animado" (click)="pararGravacaoManual()">
+          <ion-icon name="mic"></ion-icon>
+        </button>
+      </div>
+
+      <h2 class="titulo-status">Ouvindo sua voz...</h2>
+      <p class="dica-status">Pode falar seu gasto ou ganho naturalmente.</p>
+
+      <!-- Transcrição em tempo real -->
+      <div class="caixa-transcricao" *ngIf="transcricao || textoInterim">
+        <p class="texto-falado">
+          {{ transcricao }} <span class="texto-interim">{{ textoInterim }}</span>
+        </p>
+      </div>
+
+      <div class="exemplo-card" *ngIf="!transcricao && !textoInterim">
+        <span class="exemplo-label">Exemplo de comando:</span>
+        <p class="exemplo-frase">"Gastei 25 reais no almoço hoje e estava feliz"</p>
+        <p class="exemplo-frase">"Recebi quinhentos reais de freelance ontem"</p>
+      </div>
+
+      <div class="acoes-inferiores">
+        <button class="btn-concluir-fala" (click)="pararGravacaoManual()">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          Concluir fala
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. ESTADO PROCESSANDO IA -->
+    <div class="voz-secao processando" *ngIf="estado === 'processando'">
+      <div class="ia-loader">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+      </div>
+      <h2 class="titulo-status">Interpretando dados com IA...</h2>
+      <p class="dica-status">
+        Identificando valor, categoria, sentimento e detalhes da sua fala.
+      </p>
+      <div class="caixa-transcricao compacta" *ngIf="transcricao">
+        <span class="label-citacao">Você disse:</span>
+        <p class="texto-falado">“{{ transcricao }}”</p>
+      </div>
+    </div>
+
+    <!-- 3. ESTADO REVISÃO E CONFIRMAÇÃO -->
+    <div class="voz-secao revisao" *ngIf="estado === 'revisao'">
+      <div class="revisao-cabecalho">
+        <span class="tag-ia">
+          <ion-icon name="sparkles"></ion-icon>
+          Extraído com IA
+        </span>
+        <span class="badge-origem">Origem: Voz</span>
+      </div>
+
+      <!-- Frase transcrita -->
+      <div class="citacao-frase">
+        <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+        <p>“{{ transcricao }}”</p>
+      </div>
+
+      <!-- Formulário de Confirmação dos Dados -->
+      <div class="card-formulario">
+        <!-- Seletor Tipo -->
+        <div class="seletor-tipo">
+          <button
+            type="button"
+            class="btn-tipo"
+            [class.ativo]="dados.tipo === 'despesa'"
+            (click)="selecionarTipo('despesa')"
+          >
+            <ion-icon name="arrow-down-circle-outline"></ion-icon>
+            Despesa
+          </button>
+          <button
+            type="button"
+            class="btn-tipo btn-tipo--receita"
+            [class.ativo]="dados.tipo === 'receita'"
+            (click)="selecionarTipo('receita')"
+          >
+            <ion-icon name="arrow-up-circle-outline"></ion-icon>
+            Receita
+          </button>
+        </div>
+
+        <!-- Valor -->
+        <div class="campo-grupo">
+          <label class="campo-label">Valor (R$):</label>
+          <div class="input-wrap valor-wrap">
+            <span class="cifrao">R$</span>
+            <input
+              type="number"
+              step="0.01"
+              [(ngModel)]="dados.valor"
+              placeholder="0,00"
+            />
+          </div>
+        </div>
+
+        <!-- Descrição -->
+        <div class="campo-grupo">
+          <label class="campo-label">Descrição:</label>
+          <div class="input-wrap">
+            <input
+              type="text"
+              [(ngModel)]="dados.descricao"
+              placeholder="Ex: Almoço, Cinema..."
+            />
+          </div>
+        </div>
+
+        <!-- Categoria e Natureza -->
+        <div class="campos-linha">
+          <div class="campo-grupo metade">
+            <label class="campo-label">Categoria:</label>
+            <div class="input-wrap">
+              <select [(ngModel)]="dados.categoria">
+                <option *ngFor="let cat of categoriasDisponiveis" [value]="cat">
+                  {{ cat }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="campo-grupo metade">
+            <label class="campo-label">Natureza:</label>
+            <div class="input-wrap">
+              <select [(ngModel)]="dados.natureza">
+                <option value="variavel">Variável</option>
+                <option value="fixo">Fixo</option>
+                <option value="extra">Extra</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Humor (apenas se for despesa) -->
+        <div class="campo-grupo" *ngIf="dados.tipo === 'despesa'">
+          <label class="campo-label">Sentimento / Humor:</label>
+          <div class="humores-grid">
+            <button
+              type="button"
+              class="humor-btn"
+              *ngFor="let h of humores"
+              [class.ativo]="dados.humor === h.id"
+              (click)="selecionarHumor(h.id)"
+            >
+              <img [src]="h.imagem" [alt]="h.label" />
+              <span>{{ h.label }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações de Confirmação -->
+      <div class="acoes-revisao">
+        <button
+          type="button"
+          class="btn-confirmar"
+          (click)="confirmarRegistro()"
+          [disabled]="salvando"
+        >
+          <ion-icon name="checkmark-outline" *ngIf="!salvando"></ion-icon>
+          <ion-spinner name="dots" *ngIf="salvando"></ion-spinner>
+          <span>{{ salvando ? 'Salvando...' : 'Confirmar Registro' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn-repetir"
+          (click)="iniciarGravacao()"
+          [disabled]="salvando"
+        >
+          <ion-icon name="refresh-outline"></ion-icon>
+          Falar novamente
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. ESTADO DE ERRO -->
+    <div class="voz-secao erro" *ngIf="estado === 'erro'">
+      <div class="erro-icone">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </div>
+      <h2 class="titulo-status">Não conseguimos ouvir</h2>
+      <p class="mensagem-erro">{{ mensagemErro }}</p>
+
+      <div class="acoes-inferiores">
+        <button class="btn-tentar-novamente" (click)="iniciarGravacao()">
+          <ion-icon name="mic-outline"></ion-icon>
+          Tentar Novamente
+        </button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

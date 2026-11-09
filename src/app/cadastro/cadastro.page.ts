@@ -132,7 +132,12 @@ export class CadastroPage {
         }
       }
 
-      await this.router.navigateByUrl('/login', { replaceUrl: true });
+      // Se já criou sessão ativa, vai direto para o questionário; senão, vai para login
+      if (data?.session) {
+        await this.router.navigateByUrl('/questionario', { replaceUrl: true });
+      } else {
+        await this.router.navigateByUrl('/login', { replaceUrl: true });
+      }
     } catch (e: any) {
       this.erro = e?.message || 'Não foi possível criar sua conta. Confira os dados e tente de novo.';
     } finally {

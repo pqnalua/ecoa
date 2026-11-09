@@ -1,6 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { ModalController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
+import { ComandoVozModalComponent } from '../components/comando-voz-modal/comando-voz-modal.component';
+import { NotificacaoService } from '../services/notificacao.service';
+import { NotificacoesModalComponent } from '../components/notificacoes-modal/notificacoes-modal.component';
+import { OrcamentoService, OrcamentoMensal } from '../services/orcamento.service';
 
 interface Humor {
   id: string;
@@ -32,11 +37,20 @@ export class Tab1Page implements OnInit {
   tipoConsumidor = 'Organizador';
   perfilDiagnostico = 'Organizador';
 
+  notificacoesNaoLidas = 0;
+  orcamentoMes: OrcamentoMensal | null = null;
+  mesNomeAtual = '';
+
+  readonly mesesNomes = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
   resumoMes: ResumoMes = {
-    fixos: 900,
-    variaveis: 350,
-    extras: 120,
-    receitas: 2500,
+    fixos: 0,
+    variaveis: 0,
+    extras: 0,
+    receitas: 0,
   };
 
   humores: Humor[] = [
@@ -52,22 +66,61 @@ export class Tab1Page implements OnInit {
   constructor(
     private router: Router,
     private supabaseService: SupabaseService,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    private modalCtrl: ModalController,
+    private notificacaoService: NotificacaoService,
+    private orcamentoService: OrcamentoService
+  ) {
+    const hoje = new Date();
+    this.mesNomeAtual = this.mesesNomes[hoje.getMonth()];
+  }
 
   async ngOnInit() {
+    this.notificacaoService.naoLidas$.subscribe((total) => {
+      this.notificacoesNaoLidas = total;
+      this.cdr.detectChanges();
+    });
+
     await this.carregarDados();
   }
 
   async ionViewWillEnter() {
     await this.carregarDados();
+    await this.notificacaoService.contarNaoLidas();
   }
 
   async carregarDados() {
     await Promise.all([
       this.carregarUsuario(),
       this.carregarSaldoBancario(),
+      this.carregarResumoMes(),
+      this.carregarOrcamento(),
+      this.notificacaoService.contarNaoLidas(),
     ]);
+  }
+
+  async carregarOrcamento() {
+    try {
+      const hoje = new Date();
+      const mes = hoje.getMonth() + 1;
+      const ano = hoje.getFullYear();
+      this.orcamentoMes = await this.orcamentoService.carregarOrcamentoMes(mes, ano);
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.warn('Erro ao carregar orçamento:', e);
+    }
+  }
+
+  async abrirNotificacoes() {
+    const modal = await this.modalCtrl.create({
+      component: NotificacoesModalComponent,
+      breakpoints: [0, 0.7, 1],
+      initialBreakpoint: 1,
+    });
+
+    await modal.present();
+    await modal.onWillDismiss();
+    await this.notificacaoService.contarNaoLidas();
   }
 
   async carregarUsuario() {
@@ -104,11 +157,22 @@ export class Tab1Page implements OnInit {
     if (metadata['tipo_consumidor']) {
       this.tipoConsumidor = metadata['tipo_consumidor'];
       this.perfilDiagnostico = metadata['tipo_consumidor'];
-      this.temQuestionario = true;
     } else if (metadata['perfil_diagnostico']) {
       this.tipoConsumidor = metadata['perfil_diagnostico'];
       this.perfilDiagnostico = metadata['perfil_diagnostico'];
-      this.temQuestionario = true;
+    }
+
+    // Consulta direta no banco se o usuário já preencheu o questionário de perfil financeiro
+    try {
+      const { data: perfil } = await this.supabaseService.client
+        .from('perfil_financeiro')
+        .select('id_perfil')
+        .eq('id_usuario', user.id)
+        .maybeSingle();
+
+      this.temQuestionario = !!perfil || !!metadata['tipo_consumidor'] || !!metadata['perfil_diagnostico'];
+    } catch {
+      this.temQuestionario = !!metadata['tipo_consumidor'] || !!metadata['perfil_diagnostico'];
     }
 
     this.cdr.detectChanges();
@@ -117,16 +181,74 @@ export class Tab1Page implements OnInit {
   async carregarSaldoBancario() {
     try {
       const user = await this.supabaseService.getCurrentUser();
-      const bancos = user?.user_metadata?.['bancos_conectados'] || [];
+      if (!user) return;
 
-      if (bancos.length > 0) {
-        this.saldo = bancos.reduce((acc: number, b: any) => acc + (Number(b.saldo) || 0), 0);
+      const { data: contas } = await this.supabaseService.client
+        .from('conta_bancaria')
+        .select('saldo_atual')
+        .eq('id_usuario', user.id)
+        .is('deletado_em', null);
+
+      if (contas && contas.length > 0) {
+        this.saldo = contas.reduce((acc: number, c: any) => acc + (Number(c.saldo_atual) || 0), 0);
       } else {
-        this.saldo = 0.0;
+        const bancos = user?.user_metadata?.['bancos_conectados'] || [];
+        if (bancos.length > 0) {
+          this.saldo = bancos.reduce((acc: number, b: any) => acc + (Number(b.saldo) || 0), 0);
+        } else {
+          this.saldo = 0.0;
+        }
       }
       this.atualizadoEm = new Date();
       this.cdr.detectChanges();
     } catch {}
+  }
+
+  async carregarResumoMes() {
+    try {
+      const user = await this.supabaseService.getCurrentUser();
+      if (!user) return;
+
+      const agora = new Date();
+      const ano = agora.getFullYear();
+      const mes = String(agora.getMonth() + 1).padStart(2, '0');
+      const inicio = `${ano}-${mes}-01`;
+      const seguinte = new Date(ano, agora.getMonth() + 1, 1);
+      const anoSeg = seguinte.getFullYear();
+      const mesSeg = String(seguinte.getMonth() + 1).padStart(2, '0');
+      const fim = `${anoSeg}-${mesSeg}-01`;
+
+      const { data, error } = await this.supabaseService.client
+        .from('movimentacao')
+        .select('valor, tipo, natureza')
+        .eq('id_usuario', user.id)
+        .is('deletado_em', null)
+        .gte('data_transacao', inicio)
+        .lt('data_transacao', fim);
+
+      if (!error && data) {
+        let fixos = 0;
+        let variaveis = 0;
+        let extras = 0;
+        let receitas = 0;
+
+        for (const m of data) {
+          const v = Number(m.valor) || 0;
+          if (m.tipo === 'receita') {
+            receitas += v;
+          } else {
+            if (m.natureza === 'fixo') fixos += v;
+            else if (m.natureza === 'extra') extras += v;
+            else variaveis += v;
+          }
+        }
+
+        this.resumoMes = { fixos, variaveis, extras, receitas };
+        this.cdr.detectChanges();
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar resumo do mês:', e);
+    }
   }
 
   getTituloPerfil(tipo?: any): string {
@@ -144,8 +266,18 @@ export class Tab1Page implements OnInit {
     this.router.navigateByUrl('/tabs/tab3');
   }
 
-  registrarPorVoz() {
-    console.log('Comando por voz ainda não implementado');
+  async registrarPorVoz() {
+    const modal = await this.modalCtrl.create({
+      component: ComandoVozModalComponent,
+      backdropDismiss: false,
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data?.registrado) {
+      await this.carregarDados();
+    }
   }
 
   irParaGraficos() {

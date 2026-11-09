@@ -338,3 +338,129 @@ ion-content.home {
 .texto-receita {
   color: var(--ecoa-success) !important;
 }
+
+/* Botão de Notificações no Header */
+.home__notif-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon {
+    font-size: 24px;
+    color: var(--ecoa-primary-dark);
+  }
+
+  .home__notif-badge {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: #e74c3c;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 17px;
+    height: 17px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid var(--ecoa-bg);
+  }
+}
+
+/* Card Orçamento do Mês */
+.home__card--orcamento {
+  background: #ffffff;
+  border-left: 4px solid #816eb3;
+
+  .home__orcamento-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .home__orcamento-val {
+    margin: 4px 0 0 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ecoa-text);
+
+    small {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ecoa-text-muted);
+    }
+  }
+
+  .home__orcamento-tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: var(--ecoa-primary-light);
+    color: var(--ecoa-primary-dark);
+
+    &.alerta {
+      background: #fdf3e7;
+      color: #e67e22;
+    }
+
+    &.estourado {
+      background: #fdeeee;
+      color: #e74c3c;
+    }
+  }
+
+  .home__orcamento-barra {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #eae5de;
+    overflow: hidden;
+    margin: 10px 0 8px 0;
+
+    .home__orcamento-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: #52a47a;
+      transition: width 0.3s ease;
+
+      &.alerta {
+        background: #e67e22;
+      }
+
+      &.estourado {
+        background: #e74c3c;
+      }
+    }
+  }
+
+  .home__orcamento-rodape {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+
+    .home__orcamento-dica {
+      font-size: 11.5px;
+      color: var(--ecoa-text-muted);
+
+      &.alerta {
+        color: #d35400;
+        font-weight: 600;
+      }
+
+      &.estourado {
+        color: #c0392b;
+        font-weight: 700;
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
+import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
+import { OrcamentoService, OrcamentoMensal } from '../services/orcamento.service';
 
 type Aba = 'registrar' | 'planilha' | 'graficos';
 type Natureza = 'fixo' | 'variavel' | 'extra';
@@ -76,14 +78,64 @@ export class Tab3Page {
     },
   ];
 
+  orcamento: OrcamentoMensal | null = null;
   novo = this.formVazio();
   private requisicao = 0;
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(
+    private supabase: SupabaseService,
+    private orcamentoService: OrcamentoService,
+    private alertCtrl: AlertController
+  ) {}
 
   async ionViewWillEnter() {
     await this.carregarCategorias();
     await this.carregarMovimentacoes();
+    await this.carregarOrcamento();
+  }
+
+  async carregarOrcamento() {
+    const mes = this.mesRef.getMonth() + 1;
+    const ano = this.mesRef.getFullYear();
+    this.orcamento = await this.orcamentoService.carregarOrcamentoMes(mes, ano);
+  }
+
+  async definirOuEditarOrcamento() {
+    const valorAtual = this.orcamento?.valor_planejado || '';
+    const alert = await this.alertCtrl.create({
+      header: 'Orçamento Planejado',
+      subHeader: `Definir teto de gastos para ${this.mesLabel}`,
+      message: 'Insira o valor máximo que você planeja gastar neste mês:',
+      inputs: [
+        {
+          name: 'valor',
+          type: 'number',
+          placeholder: 'Ex: 1500',
+          value: Number(valorAtual) > 0 ? valorAtual : '',
+          min: 1,
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Salvar',
+          handler: async (dados) => {
+            const valor = parseFloat(dados.valor);
+            if (!isNaN(valor) && valor > 0) {
+              const mes = this.mesRef.getMonth() + 1;
+              const ano = this.mesRef.getFullYear();
+              await this.orcamentoService.salvarOrcamento(mes, ano, valor);
+              await this.carregarOrcamento();
+            }
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 
   get categoriasAtuais(): string[] {
@@ -164,11 +216,13 @@ export class Tab3Page {
   mesAnterior() {
     this.mesRef = new Date(this.mesRef.getFullYear(), this.mesRef.getMonth() - 1, 1);
     this.carregarMovimentacoes();
+    this.carregarOrcamento();
   }
 
   proximoMes() {
     this.mesRef = new Date(this.mesRef.getFullYear(), this.mesRef.getMonth() + 1, 1);
     this.carregarMovimentacoes();
+    this.carregarOrcamento();
   }
 
   get movimentacoesDoMes(): MovimentacaoItem[] {
@@ -251,6 +305,7 @@ export class Tab3Page {
     setTimeout(() => (this.mensagemSucesso = false), 2500);
 
     await this.carregarMovimentacoes();
+    await this.carregarOrcamento();
   }
 
   pedirExclusao(item: MovimentacaoItem) {
@@ -280,6 +335,7 @@ export class Tab3Page {
     }
 
     this.movimentacoes = this.movimentacoes.filter((m) => m.id !== item.id);
+    await this.carregarOrcamento();
   }
 
   exportarCsv() {

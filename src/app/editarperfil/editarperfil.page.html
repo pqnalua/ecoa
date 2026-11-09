@@ -42,7 +42,7 @@
 
       <div class="field" [class.field--error]="mostrarErro('idade')">
         <label for="idade">Idade</label>
-        <input id="idade" type="number" formControlName="idade" inputmode="numeric" placeholder="Sua idade" min="13" max="120" />
+        <input id="idade" type="number" formControlName="idade" inputmode="numeric" placeholder="Sua idade" min="18" max="120" />
         <small *ngIf="mostrarErro('idade')">Digite uma idade válida.</small>
       </div>
 
