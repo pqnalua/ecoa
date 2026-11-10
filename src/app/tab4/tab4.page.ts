@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 import { NotificacaoService } from '../services/notificacao.service';
-
 export interface Meta {
   id_meta?: string;
   id_usuario?: string;
@@ -18,7 +17,6 @@ export interface Meta {
   favorita?: boolean;
   status?: string;
 }
-
 @Component({
   selector: 'app-tab4',
   templateUrl: './tab4.page.html',
@@ -31,29 +29,21 @@ export class Tab4Page implements OnInit {
     valor: null as number | null,
     dataFim: '',
   };
-
   metas: Meta[] = [];
   carregando = false;
-
   constructor(
     private supabaseService: SupabaseService,
     private router: Router,
     private alertCtrl: AlertController,
-<<<<<<< HEAD
-    private notificacaoService: NotificacaoService
-=======
+    private notificacaoService: NotificacaoService,
     private cdr: ChangeDetectorRef
->>>>>>> 3f2bbff26bbc938f19763a16a0d9a674069fb189
   ) {}
-
   ngOnInit() {
     this.carregarMetas();
   }
-
   ionViewWillEnter() {
     this.carregarMetas();
   }
-
   private async getActiveUserId(): Promise<string | null> {
     try {
       const { data: sessionData } = await this.supabaseService.client.auth.getSession();
@@ -69,7 +59,6 @@ export class Tab4Page implements OnInit {
       return null;
     }
   }
-
   private async salvarMetas(userId?: string) {
     let id = userId;
     if (!id) {
@@ -84,7 +73,6 @@ export class Tab4Page implements OnInit {
       });
     } catch {}
   }
-
   async carregarMetas() {
     this.carregando = true;
     const { data: sessionData } = await this.supabaseService.client.auth.getSession();
@@ -97,16 +85,13 @@ export class Tab4Page implements OnInit {
       this.cdr.detectChanges();
       return;
     }
-
     let metasCarregadas: Meta[] = [];
-
     try {
       const { data, error } = await this.supabaseService.client
         .from('meta')
         .select('*')
         .eq('id_usuario', user.id)
         .is('deletado_em', null);
-
       if (!error && data && data.length > 0) {
         metasCarregadas = data.map((m: any) => ({
           ...m,
@@ -118,7 +103,6 @@ export class Tab4Page implements OnInit {
         }));
       }
     } catch {}
-
     if (metasCarregadas.length === 0) {
       const metadata = user.user_metadata?.['metas'];
       if (Array.isArray(metadata) && metadata.length > 0) {
@@ -132,12 +116,10 @@ export class Tab4Page implements OnInit {
         }
       }
     }
-
     this.metas = metasCarregadas;
     this.carregando = false;
     this.cdr.detectChanges();
   }
-
   private ordenarPorData(a: Meta, b: Meta): number {
     if (a.data_fim && b.data_fim) {
       return new Date(a.data_fim).getTime() - new Date(b.data_fim).getTime();
@@ -146,29 +128,23 @@ export class Tab4Page implements OnInit {
     if (b.data_fim) return 1;
     return 0;
   }
-
   get metasFavoritas(): Meta[] {
     return this.metas
       .filter((m) => !m.concluida && m.favorita)
       .sort(this.ordenarPorData);
   }
-
   get metasOutras(): Meta[] {
     return this.metas
       .filter((m) => !m.concluida && !m.favorita)
       .sort(this.ordenarPorData);
   }
-
   get metasConcluidas(): Meta[] {
     return this.metas.filter((m) => m.concluida);
   }
-
   async adicionarMeta() {
     if (!this.novaMeta.nome || !this.novaMeta.valor) return;
-
     const userId = await this.getActiveUserId();
     if (!userId) return;
-
     const nova: Meta = {
       id_meta: Date.now().toString(),
       id_usuario: userId,
@@ -181,11 +157,9 @@ export class Tab4Page implements OnInit {
       progresso: 0,
       status: 'ativa',
     };
-
     this.metas = [...this.metas, nova];
     this.novaMeta = { nome: '', valor: null, dataFim: '' };
     this.cdr.detectChanges();
-
     try {
       const { data, error } = await this.supabaseService.client
         .from('meta')
@@ -202,19 +176,15 @@ export class Tab4Page implements OnInit {
         })
         .select()
         .single();
-
       if (!error && data) {
         nova.id_meta = data.id_meta;
       }
     } catch {}
-
     await this.salvarMetas(userId);
     this.cdr.detectChanges();
   }
-
   async solicitarAporte(meta: Meta) {
     if (!meta.id_meta) return;
-
     const alert = await this.alertCtrl.create({
       header: 'Guardar Dinheiro',
       subHeader: meta.nome,
@@ -243,56 +213,28 @@ export class Tab4Page implements OnInit {
         },
       ],
     });
-
     await alert.present();
   }
-
   async adicionarAporte(meta: Meta, valorAporte: number) {
     if (!meta.id_meta) return;
-
+    const valorAlvo = meta.valor_alvo || 1;
     const novoValorAtual = Number(meta.valor_atual || 0) + Number(valorAporte);
-    const progresso = Math.min(100, Math.round((novoValorAtual / meta.valor_alvo) * 100));
-    const alcancada = novoValorAtual >= meta.valor_alvo;
-
-<<<<<<< HEAD
-    const { error } = await this.supabaseService.client
-      .from('meta')
-      .update({
-        valor_atual: novoValorAtual,
-        progresso: progresso,
-        concluida: alcancada || meta.concluida,
-        status: alcancada ? 'concluida' : (meta.status || 'ativa'),
-        atualizado_em: new Date().toISOString(),
-      })
-      .eq('id_meta', meta.id_meta);
-
-    if (error) {
-      console.error('Erro ao adicionar valor à meta:', error.message);
-    } else {
-      meta.valor_atual = novoValorAtual;
-      meta.progresso = progresso;
-      if (alcancada) {
-        meta.concluida = true;
-        meta.status = 'concluida';
-        this.notificacaoService.criarNotificacao({
-          titulo: 'Meta Concluída! 🎯',
-          mensagem: `Parabéns! Você alcançou 100% da sua meta "${meta.nome}" (R$ ${this.formatarMoeda(meta.valor_alvo)}).`,
-          tipo: 'meta',
-          link: '/tabs/tab4',
-        });
-      }
-=======
+    const progresso = Math.min(100, Math.round((novoValorAtual / valorAlvo) * 100));
+    const alcancada = novoValorAtual >= (meta.valor_alvo || 0);
     meta.valor_atual = novoValorAtual;
     meta.progresso = progresso;
     if (alcancada) {
       meta.concluida = true;
       meta.status = 'concluida';
->>>>>>> 3f2bbff26bbc938f19763a16a0d9a674069fb189
+      this.notificacaoService.criarNotificacao({
+        titulo: 'Meta Concluída! 🎯',
+        mensagem: `Parabéns! Você alcançou 100% da sua meta "${meta.nome}" (R$ ${this.formatarMoeda(meta.valor_alvo)}).`,
+        tipo: 'meta',
+        link: '/tabs/tab4',
+      });
     }
-
     this.metas = [...this.metas];
     this.cdr.detectChanges();
-
     try {
       await this.supabaseService.client
         .from('meta')
@@ -305,37 +247,29 @@ export class Tab4Page implements OnInit {
         })
         .eq('id_meta', meta.id_meta);
     } catch {}
-
     await this.salvarMetas();
     this.cdr.detectChanges();
   }
-
   async favoritar(meta: Meta) {
     if (!meta.id_meta) return;
-
     meta.favorita = !meta.favorita;
     this.metas = [...this.metas];
     this.cdr.detectChanges();
-
     try {
       await this.supabaseService.client
         .from('meta')
         .update({ favorita: meta.favorita })
         .eq('id_meta', meta.id_meta);
     } catch {}
-
     await this.salvarMetas();
     this.cdr.detectChanges();
   }
-
   async marcarConcluida(meta: Meta) {
     if (!meta.id_meta) return;
-
     meta.concluida = !meta.concluida;
     meta.status = meta.concluida ? 'concluida' : 'ativa';
     this.metas = [...this.metas];
     this.cdr.detectChanges();
-
     try {
       await this.supabaseService.client
         .from('meta')
@@ -345,15 +279,11 @@ export class Tab4Page implements OnInit {
         })
         .eq('id_meta', meta.id_meta);
     } catch {}
-
     await this.salvarMetas();
     this.cdr.detectChanges();
   }
-
   async excluirMeta(meta: Meta) {
     if (!meta.id_meta) return;
-
-<<<<<<< HEAD
     const alert = await this.alertCtrl.create({
       header: 'Excluir meta',
       message: `Deseja realmente excluir a meta "${meta.nome}"?`,
@@ -366,38 +296,22 @@ export class Tab4Page implements OnInit {
           text: 'Excluir',
           role: 'destructive',
           handler: async () => {
-            const { error } = await this.supabaseService.client
-              .from('meta')
-              .update({ deletado_em: new Date().toISOString() })
-              .eq('id_meta', meta.id_meta);
-
-            if (error) {
-              console.error('Erro ao apagar meta:', error.message);
-            } else {
-              this.metas = this.metas.filter((m) => m.id_meta !== meta.id_meta);
-            }
+            try {
+              await this.supabaseService.client
+                .from('meta')
+                .update({ deletado_em: new Date().toISOString() })
+                .eq('id_meta', meta.id_meta);
+            } catch {}
+            this.metas = this.metas.filter((m) => m.id_meta !== meta.id_meta);
+            this.cdr.detectChanges();
+            await this.salvarMetas();
+            this.cdr.detectChanges();
           },
         },
       ],
     });
-
     await alert.present();
-=======
-    this.metas = this.metas.filter((m) => m.id_meta !== meta.id_meta);
-    this.cdr.detectChanges();
-
-    try {
-      await this.supabaseService.client
-        .from('meta')
-        .update({ deletado_em: new Date().toISOString() })
-        .eq('id_meta', meta.id_meta);
-    } catch {}
-
-    await this.salvarMetas();
-    this.cdr.detectChanges();
->>>>>>> 3f2bbff26bbc938f19763a16a0d9a674069fb189
   }
-
   formatarMoeda(valor?: number): string {
     if (valor === null || valor === undefined) return '0,00';
     return valor.toLocaleString('pt-BR', {
@@ -405,7 +319,6 @@ export class Tab4Page implements OnInit {
       maximumFractionDigits: 2,
     });
   }
-
   formatarData(dataString?: string): string {
     if (!dataString) return '';
     try {
@@ -418,20 +331,15 @@ export class Tab4Page implements OnInit {
       return dataString;
     }
   }
-
   calcularDiasRestantes(dataString?: string): { texto: string; expirado: boolean } {
     if (!dataString) return { texto: '', expirado: false };
-
     try {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
-
       const parts = dataString.split('-').map(Number);
       const dataAlvo = new Date(parts[0], parts[1] - 1, parts[2]);
-
       const diferencaTempo = dataAlvo.getTime() - hoje.getTime();
       const diferencaDias = Math.ceil(diferencaTempo / (1000 * 3600 * 24));
-
       if (diferencaDias < 0) {
         return { texto: `Atrasado ${Math.abs(diferencaDias)}d`, expirado: true };
       } else if (diferencaDias === 0) {
