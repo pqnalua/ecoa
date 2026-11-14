@@ -1,5 +1,8 @@
 <ion-header class="home__header ion-no-border">
   <ion-toolbar class="home__toolbar">
+    <ion-buttons slot="start">
+      <div class="home__notif-spacer"></div>
+    </ion-buttons>
     <ion-title class="home__logo">ECOA</ion-title>
     <ion-buttons slot="end">
       <button type="button" class="home__notif-btn" (click)="abrirNotificacoes()" aria-label="Notificações">
@@ -132,7 +135,7 @@
     <!-- Ações Gerais -->
     <div class="home__acoes">
       <button type="button" class="home__btn home__btn--outline" (click)="irParaChat()">
-        Falar com ECO
+        Falar com o ECO
       </button>
 
       <!-- Só aparece o botão de fazer diagnóstico se a pessoa ainda NÃO fez -->

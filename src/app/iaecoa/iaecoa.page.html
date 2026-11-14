@@ -1,9 +1,12 @@
-<ion-header class="chat__header" class="ion-no-border">
+<ion-header class="chat__header ion-no-border">
   <ion-toolbar class="chat__toolbar">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/tab1" text="" color="primary"></ion-back-button>
     </ion-buttons>
     <ion-title class="chat__logo">ECOA IA</ion-title>
+    <ion-buttons slot="end">
+      <div class="chat__spacer"></div>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -60,7 +63,7 @@
 </ion-content>
 
 <!-- Campo de Envio de Mensagem Fixo no Rodapé -->
-<ion-footer class="chat__footer" class="ion-no-border">
+<ion-footer class="chat__footer ion-no-border">
   <div class="chat__input-container">
     <input 
       type="text" 
