@@ -380,7 +380,7 @@ ion-content.integracao {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 
   label {
     font-size: 13px;
@@ -392,13 +392,23 @@ ion-content.integracao {
     height: 46px;
     padding: 0 14px;
     border-radius: 10px;
-    border: 1.5px solid rgba(35, 34, 43, 0.15);
+    border: 1.5px solid rgba(78, 61, 140, 0.2);
+    background: #f8f7fc;
+    color: #23222b;
     font: inherit;
     font-size: 14px;
+    font-weight: 500;
     outline: none;
+    transition: all 0.2s ease;
+
+    &::placeholder {
+      color: rgba(35, 34, 43, 0.4);
+    }
 
     &:focus {
+      background: #ffffff;
       border-color: var(--ecoa-roxo);
+      box-shadow: 0 0 0 3px rgba(78, 61, 140, 0.12);
     }
   }
 }
@@ -407,7 +417,7 @@ ion-content.integracao {
   margin: 4px 0 0;
   font-size: 12px;
   color: var(--ecoa-tinta);
-  opacity: 0.7;
+  opacity: 0.75;
   background: rgba(78, 61, 140, 0.06);
   padding: 8px 12px;
   border-radius: 8px;
