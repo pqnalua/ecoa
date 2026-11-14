@@ -7,7 +7,6 @@
 <ion-content class="ctrl">
   <div class="ctrl__wrap">
 
-    <!-- Navegação de mês -->
     <div class="ctrl__mes">
       <button type="button" class="ctrl__mes-btn" (click)="mesAnterior()" aria-label="Mês anterior">
         <ion-icon name="chevron-back"></ion-icon>
@@ -18,10 +17,8 @@
       </button>
     </div>
 
-    <!-- Mensagem de erro -->
     <p class="ctrl__erro" *ngIf="erro">{{ erro }}</p>
 
-    <!-- Resumo Financeiro do Mês -->
     <div class="ctrl__card ctrl__card--total">
       <div class="ctrl__resumo-topo">
         <div>
@@ -51,7 +48,6 @@
       </div>
     </div>
 
-    <!-- Card Orçamento Planejado do Mês -->
     <div class="ctrl__card ctrl__card--orcamento">
       <div class="ctrl__orcamento-topo">
         <div>
@@ -96,7 +92,6 @@
       </div>
     </div>
 
-    <!-- Abas -->
     <ion-segment [(ngModel)]="aba" class="ctrl__abas">
       <ion-segment-button value="registrar">
         <ion-label>Registrar</ion-label>
@@ -107,11 +102,12 @@
       <ion-segment-button value="graficos">
         <ion-label>Gráficos</ion-label>
       </ion-segment-button>
+      <ion-segment-button value="eco_ia">
+        <ion-label>IA ECO</ion-label>
+      </ion-segment-button>
     </ion-segment>
 
-    <!-- ========== REGISTRAR (DESPESA OU RECEITA) ========== -->
     <div class="ctrl__card" *ngIf="aba === 'registrar'">
-      <!-- Seletor Despesa / Receita -->
       <div class="ctrl__seletor-transacao">
         <button
           type="button"
@@ -180,7 +176,6 @@
           <ion-select-option *ngFor="let c of categoriasAtuais" [value]="c">{{ c }}</ion-select-option>
         </ion-select>
 
-        <!-- Se for Despesa, mostra tipo de gasto e humor -->
         <ng-container *ngIf="novo.tipoTransacao === 'despesa'">
           <div>
             <span class="ctrl__rotulo">Tipo de gasto</span>
@@ -231,7 +226,6 @@
       </div>
     </div>
 
-    <!-- ========== PLANILHA ========== -->
     <div class="ctrl__card" *ngIf="aba === 'planilha'">
       <div class="ctrl__card-topo">
         <h3 class="ctrl__card-titulo">Extrato de {{ meses[mesRef.getMonth()] }}</h3>
@@ -294,7 +288,6 @@
       </div>
     </div>
 
-    <!-- ========== GRÁFICOS ========== -->
     <ng-container *ngIf="aba === 'graficos'">
 
       <p class="ctrl__vazio ctrl__card" *ngIf="!despesasDoMes.length">
@@ -303,7 +296,6 @@
 
       <ng-container *ngIf="despesasDoMes.length">
 
-        <!-- Por tipo de gasto -->
         <div class="ctrl__card">
           <h3 class="ctrl__card-titulo">Despesas por tipo</h3>
           <div class="ctrl__donut-area">
@@ -331,7 +323,6 @@
           </div>
         </div>
 
-        <!-- Por categoria -->
         <div class="ctrl__card">
           <h3 class="ctrl__card-titulo">Despesas por categoria</h3>
           <div class="ctrl__barra-item" *ngFor="let c of porCategoria">
@@ -345,7 +336,6 @@
           </div>
         </div>
 
-        <!-- Por humor -->
         <div class="ctrl__card">
           <h3 class="ctrl__card-titulo">Despesas por humor</h3>
           <p class="ctrl__vazio" *ngIf="!porHumor.length">
@@ -354,7 +344,7 @@
           <div class="ctrl__barra-item" *ngFor="let h of porHumor">
             <div class="ctrl__barra-info">
               <span class="ctrl__barra-humor">
-                <img [src]="h.imagem" [alt]="h.nome" class="ctrl__humor-mini" /> {{ h.nome }}
+                <img [src]="imagemHumor(h.id)" [alt]="h.nome" class="ctrl__humor-mini" /> {{ h.nome }}
               </span>
               <strong>{{ h.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
             </div>
@@ -368,9 +358,120 @@
       </ng-container>
     </ng-container>
 
+    <div class="ctrl__ia-container" *ngIf="aba === 'eco_ia'">
+
+      <div class="ctrl__card ctrl__ia-hero">
+        <div class="ctrl__ia-hero-topo">
+          <div class="ctrl__ia-avatar-wrap">
+            <img src="assets/eco.png" alt="ECO Mascote" class="ctrl__ia-avatar-img" />
+          </div>
+          <div>
+            <h3 class="ctrl__ia-titulo">ECO • Inteligência Financeira</h3>
+            <span class="ctrl__ia-status">Análise direta de {{ mesLabel }}</span>
+          </div>
+        </div>
+        <p class="ctrl__ia-desc">
+          Leio sua planilha e seus gráficos para te dar dicas diretas de economia e controle emocional.
+        </p>
+      </div>
+
+      <div class="ctrl__card" *ngIf="!movimentacoesDoMes.length">
+        <p class="ctrl__vazio">
+          Nenhuma movimentação registrada em {{ mesLabel }}. Registre despesas ou receitas para ativar a IA.
+        </p>
+      </div>
+
+      <ng-container *ngIf="movimentacoesDoMes.length">
+        <div class="ctrl__card ctrl__ia-diagnostico">
+          <div class="ctrl__card-topo">
+            <h3 class="ctrl__card-titulo">Diagnóstico Automático</h3>
+            <button type="button" class="ctrl__link-btn" (click)="gerarAnaliseCompleta()">
+              <ion-icon name="refresh-outline"></ion-icon> Atualizar
+            </button>
+          </div>
+
+          <div class="ctrl__ia-cards-resumo">
+            <div class="ctrl__ia-resumo-item">
+              <span class="ctrl__ia-resumo-rotulo">Saúde Financeira</span>
+              <strong [class.positivo]="saldoMes >= 0" [class.negativo]="saldoMes < 0">
+                {{ saldoMes >= 0 ? 'Positiva (+ ' + (saldoMesAbs | currency:'BRL':'symbol':'1.0-0':'pt-BR') + ')' : 'Negativa (- ' + (saldoMesAbs | currency:'BRL':'symbol':'1.0-0':'pt-BR') + ')' }}
+              </strong>
+            </div>
+
+            <div class="ctrl__ia-resumo-item">
+              <span class="ctrl__ia-resumo-rotulo">Maior Categoria de Gastos</span>
+              <strong>{{ porCategoria.length ? porCategoria[0].nome + ' (' + (porCategoria[0].valor | currency:'BRL':'symbol':'1.0-0':'pt-BR') + ')' : '—' }}</strong>
+            </div>
+
+            <div class="ctrl__ia-resumo-item" *ngIf="porHumor.length">
+              <span class="ctrl__ia-resumo-rotulo">Emoção Dominante</span>
+              <span class="ctrl__barra-humor">
+                <img [src]="imagemHumor(porHumor[0].id)" [alt]="porHumor[0].nome" class="ctrl__humor-mini" />
+                <strong>{{ porHumor[0].nome }}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctrl__card">
+          <h3 class="ctrl__card-titulo">Análises Rápidas</h3>
+          <div class="ctrl__ia-sugestoes">
+            <button type="button" class="ctrl__ia-chip" (click)="perguntarIa('Como posso economizar este mês?')">
+              💡 Como economizar?
+            </button>
+            <button type="button" class="ctrl__ia-chip" (click)="perguntarIa('Qual emoção mais impactou meu bolso?')">
+              🧠 Emoção e consumo
+            </button>
+            <button type="button" class="ctrl__ia-chip" (click)="perguntarIa('Estou dentro do meu orçamento?')">
+              🎯 Status do orçamento
+            </button>
+            <button type="button" class="ctrl__ia-chip" (click)="perguntarIa('Faça uma leitura completa da minha planilha e gráficos')">
+              📊 Leitura completa
+            </button>
+          </div>
+        </div>
+
+        <div class="ctrl__card ctrl__ia-conversa" *ngIf="historicoIa.length">
+          <div class="ctrl__ia-mensagens">
+            <div *ngFor="let msg of historicoIa" class="ctrl__ia-msg" [class.ctrl__ia-msg--usuario]="msg.autor === 'usuario'" [class.ctrl__ia-msg--eco]="msg.autor === 'eco'">
+              <div class="ctrl__ia-msg-avatar" *ngIf="msg.autor === 'eco'">
+                <img src="assets/eco.png" alt="ECO" class="ctrl__ia-msg-avatar-img" />
+              </div>
+              <div class="ctrl__ia-msg-bolha">
+                <strong *ngIf="msg.autor === 'eco'" class="ctrl__ia-msg-nome">IA ECO</strong>
+                <p>{{ msg.texto }}</p>
+                <small class="ctrl__ia-msg-hora">{{ msg.hora }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctrl__card ctrl__ia-form-pergunta">
+          <div class="ctrl__ia-input-linha">
+            <input
+              type="text"
+              class="ctrl__ia-input"
+              [(ngModel)]="perguntaIa"
+              placeholder="Pergunte ao ECO sobre seus gráficos ou gastos..."
+              (keyup.enter)="enviarPerguntaManual()"
+            />
+            <button
+              type="button"
+              class="ctrl__ia-send-btn"
+              [disabled]="!perguntaIa.trim() || processandoIa"
+              (click)="enviarPerguntaManual()"
+              aria-label="Enviar pergunta"
+            >
+              <ion-icon name="send"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+
   </div>
 
-  <!-- Confirmação de exclusão -->
   <ion-alert
     [isOpen]="!!movimentacaoParaExcluir"
     header="Excluir movimentação?"

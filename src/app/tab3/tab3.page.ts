@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 import { OrcamentoService, OrcamentoMensal } from '../services/orcamento.service';
 
-type Aba = 'registrar' | 'planilha' | 'graficos';
+type Aba = 'registrar' | 'planilha' | 'graficos' | 'eco_ia';
 type Natureza = 'fixo' | 'variavel' | 'extra';
 type TipoTransacao = 'despesa' | 'receita';
 
@@ -11,11 +11,17 @@ interface MovimentacaoItem {
   id: string;
   descricao: string;
   valor: number;
-  data: string; // AAAA-MM-DD
+  data: string;
   categoria: string;
   tipoTransacao: TipoTransacao;
   natureza: Natureza;
   humor: string | null;
+}
+
+interface MensagemIa {
+  autor: 'usuario' | 'eco';
+  texto: string;
+  hora: string;
 }
 
 @Component({
@@ -51,11 +57,11 @@ export class Tab3Page {
   ];
 
   readonly humores = [
-    { id: 'alegria', label: 'Alegria', imagem: 'assets/alegria.png' },
-    { id: 'tristeza', label: 'Tristeza', imagem: 'assets/tristeza.png' },
-    { id: 'ansiedade', label: 'Ansiedade', imagem: 'assets/ansiedade.png' },
-    { id: 'tedio', label: 'Tédio', imagem: 'assets/tedio.png' },
-    { id: 'raiva', label: 'Raiva', imagem: 'assets/raiva.png' },
+    { id: 'alegria', label: 'Alegria', imagem: 'assets/alegre.png' },
+    { id: 'tristeza', label: 'Tristeza', imagem: 'assets/triste.png' },
+    { id: 'ansiedade', label: 'Ansiedade', imagem: 'assets/ansioso.png' },
+    { id: 'tedio', label: 'Tédio', imagem: 'assets/entediado.png' },
+    { id: 'raiva', label: 'Raiva', imagem: 'assets/raivoso.png' },
   ];
 
   mesRef = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -82,16 +88,35 @@ export class Tab3Page {
   novo = this.formVazio();
   private requisicao = 0;
 
+  perguntaIa = '';
+  processandoIa = false;
+  historicoIa: MensagemIa[] = [];
+
   constructor(
     private supabase: SupabaseService,
     private orcamentoService: OrcamentoService,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ionViewWillEnter() {
     await this.carregarCategorias();
     await this.carregarMovimentacoes();
     await this.carregarOrcamento();
+    if (this.historicoIa.length === 0) {
+      this.iniciarHistoricoIa();
+    }
+  }
+
+  iniciarHistoricoIa() {
+    const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    this.historicoIa = [
+      {
+        autor: 'eco',
+        texto: `Olá! Sou o ECO. Analisei sua planilha de ${this.mesLabel}. Toque em uma pergunta rápida acima ou faça sua pergunta!`,
+        hora,
+      }
+    ];
   }
 
   async carregarOrcamento() {
@@ -217,12 +242,14 @@ export class Tab3Page {
     this.mesRef = new Date(this.mesRef.getFullYear(), this.mesRef.getMonth() - 1, 1);
     this.carregarMovimentacoes();
     this.carregarOrcamento();
+    this.iniciarHistoricoIa();
   }
 
   proximoMes() {
     this.mesRef = new Date(this.mesRef.getFullYear(), this.mesRef.getMonth() + 1, 1);
     this.carregarMovimentacoes();
     this.carregarOrcamento();
+    this.iniciarHistoricoIa();
   }
 
   get movimentacoesDoMes(): MovimentacaoItem[] {
@@ -250,6 +277,10 @@ export class Tab3Page {
 
   get saldoMes(): number {
     return this.totalReceitas - this.totalDespesas;
+  }
+
+  get saldoMesAbs(): number {
+    return Math.abs(this.saldoMes);
   }
 
   totalNatureza(tipo: Natureza): number {
@@ -395,7 +426,7 @@ export class Tab3Page {
       Array.from(mapa, ([id, valor]) => ({
         id,
         nome: this.nomeHumor(id),
-        imagem: this.humores.find((h) => h.id === id)?.imagem ?? '',
+        imagem: this.imagemHumor(id),
         valor,
       }))
     );
@@ -420,7 +451,23 @@ export class Tab3Page {
   }
 
   imagemHumor(id: string): string {
-    return this.humores.find((h) => h.id === id)?.imagem ?? '';
+    const mapa: { [key: string]: string } = {
+      alegria: 'assets/alegre.png',
+      alegre: 'assets/alegre.png',
+      ansiedade: 'assets/ansioso.png',
+      ansioso: 'assets/ansioso.png',
+      tedio: 'assets/entediado.png',
+      entediado: 'assets/entediado.png',
+      raiva: 'assets/raivoso.png',
+      raivoso: 'assets/raivoso.png',
+      tristeza: 'assets/triste.png',
+      triste: 'assets/triste.png',
+    };
+    return mapa[id] || (this.humores.find((h) => h.id === id)?.imagem ?? '');
+  }
+
+  imagemHumorIa(id: string): string {
+    return this.imagemHumor(id);
   }
 
   formatarData(iso: string, completa = false): string {
@@ -455,5 +502,73 @@ export class Tab3Page {
       natureza: 'fixo' as Natureza,
       humor: null as string | null,
     };
+  }
+
+  perguntarIa(pergunta: string) {
+    if (this.processandoIa) return;
+    const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    this.historicoIa.push({ autor: 'usuario', texto: pergunta, hora });
+    this.cdr.detectChanges();
+
+    const resposta = this.gerarRespostaIa(pergunta);
+    const horaResposta = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    this.historicoIa.push({ autor: 'eco', texto: resposta, hora: horaResposta });
+    this.cdr.detectChanges();
+  }
+
+  enviarPerguntaManual() {
+    if (!this.perguntaIa.trim() || this.processandoIa) return;
+    const txt = this.perguntaIa.trim();
+    this.perguntaIa = '';
+    this.perguntarIa(txt);
+  }
+
+  gerarAnaliseCompleta() {
+    this.perguntarIa('Faça uma leitura completa da minha planilha e gráficos');
+  }
+
+  private gerarRespostaIa(pergunta: string): string {
+    const p = pergunta.toLowerCase();
+    const maiorCat = this.porCategoria[0];
+    const maiorHumor = this.porHumor[0];
+
+    if (p.includes('economizar') || p.includes('poupar') || p.includes('cortar')) {
+      if (!maiorCat) {
+        return 'Registre despesas neste mês para eu te mostrar onde economizar.';
+      }
+      const valorCat = maiorCat.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const economia15 = (maiorCat.valor * 0.15).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      return `Seu maior gasto é em ${maiorCat.nome} (${valorCat}). Cortando 15% aqui, você poupa ${economia15} este mês. Evite compras extras por impulso para equilibrar o saldo!`;
+    }
+
+    if (p.includes('emoção') || p.includes('humor') || p.includes('sentimento') || p.includes('emocional')) {
+      if (!maiorHumor) {
+        return 'Você ainda não registrou emoções nas despesas deste mês. Ao cadastrar gastos, marque seu humor!';
+      }
+      const valorHumor = maiorHumor.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      return `Você gastou mais quando sentiu ${maiorHumor.nome} (${valorHumor}). Dica: ao sentir ${maiorHumor.nome.toLowerCase()}, espere 24 horas antes de comprar qualquer item que não seja urgente.`;
+    }
+
+    if (p.includes('orçamento') || p.includes('teto') || p.includes('limite')) {
+      if (!this.orcamento || this.orcamento.valor_planejado === 0) {
+        return 'Você ainda não definiu um teto de gastos para este mês. Toque no botão "Definir" no topo!';
+      }
+      const planejado = this.orcamento.valor_planejado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const gasto = this.orcamento.valor_gasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const status = this.orcamento.statusAlerta === 'estourado'
+        ? '🚨 Você ultrapassou o teto! Segure gastos extras.'
+        : (this.orcamento.statusAlerta === 'atencao'
+          ? '⚠️ Atenção: já consumiu mais de 80% do limite.'
+          : '✅ Muito bem: seus gastos estão dentro da meta.');
+      return `Teto: ${planejado} | Gasto: ${gasto} (${this.orcamento.percentualConsumido}%). ${status}`;
+    }
+
+    const rec = this.totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const desp = this.totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const saldo = this.saldoMesAbs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const cat = maiorCat ? `${maiorCat.nome} (${maiorCat.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : 'Nenhuma';
+    const humor = maiorHumor ? `${maiorHumor.nome}` : 'Não informado';
+
+    return `Resumo direto de ${this.mesLabel}:\n• Entradas: +${rec}\n• Saídas: -${desp}\n• Saldo Líquido: ${this.saldoMes >= 0 ? '+' : '-'}${saldo} (${this.saldoMes >= 0 ? 'No azul' : 'No vermelho'})\n• Maior Categoria: ${cat}\n• Emoção Dominante: ${humor}\n\nFoco para fechar bem: priorize custos fixos e evite compras extras!`;
   }
 }

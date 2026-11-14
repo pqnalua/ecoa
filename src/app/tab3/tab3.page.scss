@@ -43,7 +43,6 @@ ion-content.ctrl {
   gap: 16px;
 }
 
-/* Navegação de mês */
 .ctrl__mes {
   display: flex;
   align-items: center;
@@ -72,7 +71,6 @@ ion-content.ctrl {
   cursor: pointer;
 }
 
-/* Mensagem de erro */
 .ctrl__erro {
   margin: 0;
   padding: 10px 12px;
@@ -84,7 +82,6 @@ ion-content.ctrl {
   color: var(--ecoa-danger);
 }
 
-/* Cards */
 .ctrl__card {
   background: var(--ecoa-card-bg);
   border-radius: 20px;
@@ -157,7 +154,6 @@ ion-content.ctrl {
   display: inline-block;
 }
 
-/* Abas */
 .ctrl__abas {
   --background: rgba(157, 139, 201, 0.12);
   border-radius: 14px;
@@ -168,12 +164,22 @@ ion-content.ctrl {
     --color-checked: #ffffff;
     --indicator-color: var(--ecoa-primary);
     --border-radius: 12px;
+    --padding-start: 2px;
+    --padding-end: 2px;
+    min-width: 0;
     font-weight: 700;
     text-transform: none;
+    font-size: 11px;
+    letter-spacing: -0.3px;
+
+    ion-label {
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+    }
   }
 }
 
-/* Formulário */
 .ctrl__form {
   display: flex;
   flex-direction: column;
@@ -228,7 +234,6 @@ ion-content.ctrl {
   }
 }
 
-/* Humor na Tab 3 (alinhado com o padrão da Tab 1) */
 .ctrl__humores {
   display: flex;
   gap: 8px;
@@ -320,7 +325,6 @@ ion-content.ctrl {
   text-align: center;
 }
 
-/* Planilha */
 .ctrl__tabela-wrap {
   overflow-x: auto;
   margin: 0 -6px;
@@ -365,7 +369,6 @@ ion-content.ctrl {
     font-weight: 700;
   }
 
-  /* Última coluna (lixeira) sempre visível, mesmo com a tabela rolando */
   th:last-child,
   td:last-child {
     position: sticky;
@@ -409,7 +412,6 @@ ion-content.ctrl {
   justify-content: center;
 }
 
-/* Gráficos */
 .ctrl__donut-area {
   display: flex;
   align-items: center;
@@ -500,8 +502,6 @@ ion-content.ctrl {
   color: var(--ecoa-primary-dark);
 }
 
-
-/* ---------- Seletor e Estilos de Despesas / Receitas ---------- */
 .ctrl__resumo-topo {
   display: flex;
   justify-content: space-between;
@@ -601,7 +601,6 @@ ion-content.ctrl {
   color: var(--ecoa-success) !important;
 }
 
-/* Card de Orçamento Planejado */
 .ctrl__card--orcamento {
   background: #ffffff;
   border-left: 4px solid var(--ecoa-primary-dark);
@@ -694,5 +693,250 @@ ion-content.ctrl {
         font-weight: 800;
       }
     }
+  }
+}
+
+.ctrl__ia-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ctrl__ia-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #f6f3fc 100%);
+  border-left: 4px solid var(--ecoa-primary);
+
+  &-topo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.ctrl__ia-avatar-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--ecoa-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(157, 139, 201, 0.35);
+  flex-shrink: 0;
+
+  img {
+    width: 86%;
+    height: 86%;
+    object-fit: contain;
+  }
+}
+
+.ctrl__ia-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ecoa-text);
+}
+
+.ctrl__ia-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ecoa-primary-dark);
+}
+
+.ctrl__ia-desc {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ecoa-text-muted);
+}
+
+.ctrl__ia-cards-resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ctrl__ia-resumo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fbf9f6;
+  border-radius: 12px;
+  border: 1px solid var(--ecoa-border);
+  font-size: 13px;
+
+  strong {
+    color: var(--ecoa-text);
+
+    &.positivo {
+      color: var(--ecoa-success);
+    }
+
+    &.negativo {
+      color: var(--ecoa-danger);
+    }
+  }
+}
+
+.ctrl__ia-resumo-rotulo {
+  color: var(--ecoa-text-muted);
+  font-weight: 600;
+}
+
+.ctrl__ia-sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ctrl__ia-chip {
+  background: var(--ecoa-primary-light);
+  color: var(--ecoa-primary-dark);
+  border: 1px solid rgba(157, 139, 201, 0.3);
+  border-radius: 18px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.96);
+    background: var(--ecoa-primary);
+    color: #ffffff;
+  }
+}
+
+.ctrl__ia-mensagens {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ctrl__ia-msg {
+  display: flex;
+  gap: 8px;
+  max-width: 90%;
+
+  &--usuario {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+
+    .ctrl__ia-msg-bolha {
+      background: var(--ecoa-primary);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+
+      .ctrl__ia-msg-hora {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+  }
+
+  &--eco {
+    align-self: flex-start;
+
+    .ctrl__ia-msg-bolha {
+      background: #f5f2ee;
+      color: var(--ecoa-text);
+      border-bottom-left-radius: 4px;
+    }
+  }
+}
+
+.ctrl__ia-msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ecoa-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+  }
+}
+
+.ctrl__ia-msg-bolha {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+
+  p {
+    margin: 0;
+    white-space: pre-line;
+  }
+}
+
+.ctrl__ia-msg-nome {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ecoa-primary-dark);
+  margin-bottom: 3px;
+}
+
+.ctrl__ia-msg-hora {
+  display: block;
+  font-size: 10px;
+  text-align: right;
+  margin-top: 4px;
+  color: var(--ecoa-text-muted);
+}
+
+.ctrl__ia-input-linha {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ctrl__ia-input {
+  flex: 1;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--ecoa-border);
+  background: #fdfcfa;
+  color: var(--ecoa-text);
+  font: inherit;
+  font-size: 13.5px;
+  outline: none;
+
+  &:focus {
+    border-color: var(--ecoa-primary);
+    background: #ffffff;
+  }
+}
+
+.ctrl__ia-send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: var(--ecoa-primary);
+  color: #ffffff;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 }
