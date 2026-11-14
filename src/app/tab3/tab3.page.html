@@ -432,7 +432,7 @@
         </div>
 
         <div class="ctrl__card ctrl__ia-conversa" *ngIf="historicoIa.length">
-          <div class="ctrl__ia-mensagens">
+          <div class="ctrl__ia-mensagens" #chatContainer (scroll)="onChatScroll($event)">
             <div *ngFor="let msg of historicoIa" class="ctrl__ia-msg" [class.ctrl__ia-msg--usuario]="msg.autor === 'usuario'" [class.ctrl__ia-msg--eco]="msg.autor === 'eco'">
               <div class="ctrl__ia-msg-avatar" *ngIf="msg.autor === 'eco'">
                 <img src="assets/eco.png" alt="ECO" class="ctrl__ia-msg-avatar-img" />
@@ -443,7 +443,32 @@
                 <small class="ctrl__ia-msg-hora">{{ msg.hora }}</small>
               </div>
             </div>
+
+            <div *ngIf="digitandoIa" class="ctrl__ia-msg ctrl__ia-msg--eco ctrl__ia-msg--digitando">
+              <div class="ctrl__ia-msg-avatar">
+                <img src="assets/eco.png" alt="ECO" class="ctrl__ia-msg-avatar-img" />
+              </div>
+              <div class="ctrl__ia-msg-bolha">
+                <strong class="ctrl__ia-msg-nome">IA ECO</strong>
+                <div class="ctrl__digitando">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <button
+            type="button"
+            class="ctrl__ia-btn-descer"
+            *ngIf="mostrarBotaoDescer"
+            (click)="rolarChatParaBaixo(true)"
+            aria-label="Rolar para as mensagens mais recentes"
+          >
+            <ion-icon name="chevron-down"></ion-icon>
+            <span class="ctrl__ia-badge-novo" *ngIf="mensagensNaoLidas > 0">{{ mensagensNaoLidas }}</span>
+          </button>
         </div>
 
         <div class="ctrl__card ctrl__ia-form-pergunta">

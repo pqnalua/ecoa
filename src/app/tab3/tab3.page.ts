@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 import { OrcamentoService, OrcamentoMensal } from '../services/orcamento.service';
@@ -31,6 +31,8 @@ interface MensagemIa {
   standalone: false,
 })
 export class Tab3Page {
+  @ViewChild('chatContainer') chatContainer?: ElementRef<HTMLDivElement>;
+
   aba: Aba = 'registrar';
 
   readonly meses = [
@@ -90,6 +92,9 @@ export class Tab3Page {
 
   perguntaIa = '';
   processandoIa = false;
+  digitandoIa = false;
+  mostrarBotaoDescer = false;
+  mensagensNaoLidas = 0;
   historicoIa: MensagemIa[] = [];
 
   constructor(
@@ -504,16 +509,57 @@ export class Tab3Page {
     };
   }
 
-  perguntarIa(pergunta: string) {
-    if (this.processandoIa) return;
+  onChatScroll(e: Event) {
+    const el = e.target as HTMLElement;
+    if (!el) return;
+    const distanciaDoFim = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.mostrarBotaoDescer = distanciaDoFim > 70;
+    if (!this.mostrarBotaoDescer) {
+      this.mensagensNaoLidas = 0;
+    }
+    this.cdr.detectChanges();
+  }
+
+  rolarChatParaBaixo(suave = true) {
+    setTimeout(() => {
+      if (this.chatContainer?.nativeElement) {
+        const el = this.chatContainer.nativeElement;
+        el.scrollTo({
+          top: el.scrollHeight,
+          behavior: suave ? 'smooth' : 'auto',
+        });
+      }
+      this.mostrarBotaoDescer = false;
+      this.mensagensNaoLidas = 0;
+      this.cdr.detectChanges();
+    }, 60);
+  }
+
+  async perguntarIa(pergunta: string) {
+    if (this.processandoIa || !pergunta.trim()) return;
+    this.processandoIa = true;
+
     const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     this.historicoIa.push({ autor: 'usuario', texto: pergunta, hora });
+    this.digitandoIa = true;
     this.cdr.detectChanges();
+    this.rolarChatParaBaixo(true);
 
     const resposta = this.gerarRespostaIa(pergunta);
+    await new Promise((resolve) => setTimeout(resolve, 950));
+
+    this.digitandoIa = false;
     const horaResposta = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     this.historicoIa.push({ autor: 'eco', texto: resposta, hora: horaResposta });
+    this.processandoIa = false;
     this.cdr.detectChanges();
+
+    if (this.mostrarBotaoDescer) {
+      this.mensagensNaoLidas++;
+      this.cdr.detectChanges();
+    } else {
+      this.rolarChatParaBaixo(true);
+    }
   }
 
   enviarPerguntaManual() {
@@ -532,43 +578,160 @@ export class Tab3Page {
     const maiorCat = this.porCategoria[0];
     const maiorHumor = this.porHumor[0];
 
-    if (p.includes('economizar') || p.includes('poupar') || p.includes('cortar')) {
+    if (
+      p.includes('suicid') ||
+      p.includes('me matar') ||
+      p.includes('me machucar') ||
+      p.includes('tirar minha vida') ||
+      p.includes('morrer') ||
+      p.includes('socorro') ||
+      p.includes('preciso de ajuda') ||
+      p.includes('ajuda psicolog') ||
+      p.includes('crise de panico') ||
+      p.includes('nao aguento mais') ||
+      p.includes('não aguento mais') ||
+      p.includes('desespero') ||
+      p.includes('saude mental') ||
+      p.includes('saúde mental') ||
+      p.includes('apoio emocional') ||
+      p.includes('cvv') ||
+      p.includes('caps') ||
+      p.includes('psicolog') ||
+      p.includes('psiquiatr')
+    ) {
+      return `Desculpe, mas estou aqui apenas para analisar seus dados financeiros.
+
+Se você ou alguém que você conhece está precisando de apoio emocional ou ajuda médica e psicológica, procure estes profissionais e canais gratuitos no Brasil:
+
+• CVV (Centro de Valorização da Vida): Ligue 188 (ligação gratuita, 24 horas) ou acesse cvv.org.br
+• SAMU (Ambulância / Emergência médica): Ligue 192
+• Polícia Militar (Emergência): Ligue 190
+• Corpo de Bombeiros: Ligue 193
+• CAPS (Centro de Atenção Psicossocial): Procure a unidade de saúde municipal do seu bairro.
+
+Você não está sozinho(a). Por favor, entre em contato com um desses serviços!`;
+    }
+
+    if (
+      p === 'oi' ||
+      p === 'ola' ||
+      p === 'olá' ||
+      p === 'opa' ||
+      p.startsWith('oi ') ||
+      p.startsWith('olá ') ||
+      p.startsWith('ola ') ||
+      p.includes('bom dia') ||
+      p.includes('boa tarde') ||
+      p.includes('boa noite') ||
+      p.includes('tudo bem') ||
+      p.includes('quem e voce') ||
+      p.includes('quem é você')
+    ) {
+      return `Olá! Sou o ECO, sua inteligência de análise financeira. Analiso seus gastos, gráficos e hábitos de consumo em ${this.mesLabel}. O que gostaria de analisar hoje?`;
+    }
+
+    if (
+      p.includes('planej') ||
+      p.includes('organiz') ||
+      p.includes('dica') ||
+      p.includes('conselho') ||
+      p.includes('meta')
+    ) {
+      return `Análise para planejamento financeiro em ${this.mesLabel}:
+1. Regra 50/30/20: até 50% para despesas fixas, 30% para variáveis e 20% para reserva.
+2. Teto de gastos: Toque no botão "Definir" no topo para registrar seu limite mensal.
+3. Acompanhamento: Registre as saídas no dia a dia e consulte a aba Gráficos para monitorar as proporções.
+4. Saldo preventivo: Separe a cota de economia logo no início do mês ao registrar suas receitas.`;
+    }
+
+    if (
+      p.includes('economiz') ||
+      p.includes('poupar') ||
+      p.includes('cortar') ||
+      p.includes('reduzir') ||
+      p.includes('guardar dinheiro')
+    ) {
       if (!maiorCat) {
-        return 'Registre despesas neste mês para eu te mostrar onde economizar.';
+        return 'Registre despesas neste mês para eu analisar e apontar onde economizar.';
       }
       const valorCat = maiorCat.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const economia15 = (maiorCat.valor * 0.15).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      return `Seu maior gasto é em ${maiorCat.nome} (${valorCat}). Cortando 15% aqui, você poupa ${economia15} este mês. Evite compras extras por impulso para equilibrar o saldo!`;
+      return `Na análise deste mês, o maior volume está em ${maiorCat.nome} (${valorCat}). Uma redução de 15% nessa categoria representa uma economia de ${economia15} em ${this.mesLabel}. Foco em conter compras impulsivas nessa área!`;
     }
 
-    if (p.includes('emoção') || p.includes('humor') || p.includes('sentimento') || p.includes('emocional')) {
+    if (
+      p.includes('emoc') ||
+      p.includes('humor') ||
+      p.includes('sentimento') ||
+      p.includes('impulso')
+    ) {
       if (!maiorHumor) {
-        return 'Você ainda não registrou emoções nas despesas deste mês. Ao cadastrar gastos, marque seu humor!';
+        return 'Você ainda não registrou emoções nas despesas deste mês. Ao cadastrar gastos na aba "Registrar", marque seu humor para eu analisar o impacto emocional nas suas contas!';
       }
       const valorHumor = maiorHumor.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      return `Você gastou mais quando sentiu ${maiorHumor.nome} (${valorHumor}). Dica: ao sentir ${maiorHumor.nome.toLowerCase()}, espere 24 horas antes de comprar qualquer item que não seja urgente.`;
+      return `Análise comportamental: você gastou mais quando estava com ${maiorHumor.nome} (${valorHumor}). Dica de controle: ao vivenciar ${maiorHumor.nome.toLowerCase()}, aguarde 24 horas antes de efetuar compras que não sejam estritamente necessárias.`;
     }
 
-    if (p.includes('orçamento') || p.includes('teto') || p.includes('limite')) {
+    if (
+      p.includes('orcamento') ||
+      p.includes('orçamento') ||
+      p.includes('teto') ||
+      p.includes('limite')
+    ) {
       if (!this.orcamento || this.orcamento.valor_planejado === 0) {
-        return 'Você ainda não definiu um teto de gastos para este mês. Toque no botão "Definir" no topo!';
+        return 'Você ainda não definiu um teto de gastos para este mês. Toque no botão "Definir" no topo para analisar seu progresso!';
       }
       const planejado = this.orcamento.valor_planejado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const gasto = this.orcamento.valor_gasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const status = this.orcamento.statusAlerta === 'estourado'
-        ? '🚨 Você ultrapassou o teto! Segure gastos extras.'
+        ? '🚨 Limite estourado! Evite despesas adicionais.'
         : (this.orcamento.statusAlerta === 'atencao'
-          ? '⚠️ Atenção: já consumiu mais de 80% do limite.'
-          : '✅ Muito bem: seus gastos estão dentro da meta.');
-      return `Teto: ${planejado} | Gasto: ${gasto} (${this.orcamento.percentualConsumido}%). ${status}`;
+          ? '⚠️ Atenção: você já consumiu mais de 80% do teto planejado.'
+          : '✅ Situação controlada: seus gastos permanecem dentro do limite definido.');
+      return `Teto: ${planejado} | Gasto: ${gasto} (${this.orcamento.percentualConsumido}% consumido). ${status}`;
     }
 
-    const rec = this.totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const desp = this.totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const saldo = this.saldoMesAbs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const cat = maiorCat ? `${maiorCat.nome} (${maiorCat.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : 'Nenhuma';
-    const humor = maiorHumor ? `${maiorHumor.nome}` : 'Não informado';
+    if (
+      p.includes('invest') ||
+      p.includes('reserva') ||
+      p.includes('divid') ||
+      p.includes('dívid') ||
+      p.includes('juro') ||
+      p.includes('cartao') ||
+      p.includes('cartão')
+    ) {
+      return `Análise de estrutura patrimonial:
+• Priorize liquidar dívidas com juros elevados antes de iniciar aportes em investimentos.
+• Forme uma Reserva de Emergência (3 a 6 meses do custo mensal) com alta liquidez e baixo risco.
+• Mantenha os lançamentos atualizados no aplicativo para identificar com precisão a sobra líquida mensal.`;
+    }
 
-    return `Resumo direto de ${this.mesLabel}:\n• Entradas: +${rec}\n• Saídas: -${desp}\n• Saldo Líquido: ${this.saldoMes >= 0 ? '+' : '-'}${saldo} (${this.saldoMes >= 0 ? 'No azul' : 'No vermelho'})\n• Maior Categoria: ${cat}\n• Emoção Dominante: ${humor}\n\nFoco para fechar bem: priorize custos fixos e evite compras extras!`;
+    if (
+      p.includes('leitura') ||
+      p.includes('grafic') ||
+      p.includes('gráfico') ||
+      p.includes('planilha') ||
+      p.includes('extrato') ||
+      p.includes('resumo') ||
+      p.includes('balanco') ||
+      p.includes('balanço') ||
+      p.includes('saldo') ||
+      p.includes('situac') ||
+      p.includes('situaç') ||
+      p.includes('conta') ||
+      p.includes('gasto') ||
+      p.includes('despesa') ||
+      p.includes('receita')
+    ) {
+      const rec = this.totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const desp = this.totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const saldo = this.saldoMesAbs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const cat = maiorCat ? `${maiorCat.nome} (${maiorCat.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})` : 'Nenhuma';
+      const humor = maiorHumor ? `${maiorHumor.nome}` : 'Não informado';
+
+      return `Resumo direto de ${this.mesLabel}:\n• Entradas: +${rec}\n• Saídas: -${desp}\n• Saldo Líquido: ${this.saldoMes >= 0 ? '+' : '-'}${saldo} (${this.saldoMes >= 0 ? 'No azul' : 'No vermelho'})\n• Maior Categoria: ${cat}\n• Emoção Dominante: ${humor}\n\nFoco para fechar bem: priorize custos fixos e evite compras extras!`;
+    }
+
+    return 'Desculpe, mas estou aqui apenas para analisar financeiramente seus dados. Posso analisar seus gráficos, sua planilha de gastos ou identificar como suas emoções estão impactando seu bolso neste mês!';
   }
 }
