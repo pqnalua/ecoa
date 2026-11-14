@@ -19,6 +19,12 @@
   }
 }
 
+.planos__spacer {
+  width: 48px;
+  height: 40px;
+  pointer-events: none;
+}
+
 .planos__toolbar-title {
   font-size: 18px !important;
   letter-spacing: 3px !important;
@@ -26,6 +32,7 @@
   text-transform: uppercase;
   text-align: center;
   color: var(--ecoa-roxo-suave) !important;
+  padding-inline-start: 3px;
 }
 
 ion-content.planos {
@@ -335,7 +342,6 @@ ion-content.planos {
     }
   }
 }
-
 
 /* Responsividade para telas maiores / desktop */
 .planos__wrap {
