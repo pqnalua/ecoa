@@ -59,11 +59,11 @@ export class Tab3Page {
   ];
 
   readonly humores = [
-    { id: 'alegria', label: 'Alegria', imagem: 'assets/alegre.png' },
-    { id: 'tristeza', label: 'Tristeza', imagem: 'assets/triste.png' },
-    { id: 'ansiedade', label: 'Ansiedade', imagem: 'assets/ansioso.png' },
-    { id: 'tedio', label: 'Tédio', imagem: 'assets/entediado.png' },
-    { id: 'raiva', label: 'Raiva', imagem: 'assets/raivoso.png' },
+    { id: 'alegria', label: 'Alegria', imagem: 'assets/alegria.png' },
+    { id: 'tristeza', label: 'Tristeza', imagem: 'assets/tristeza.png' },
+    { id: 'ansiedade', label: 'Ansiedade', imagem: 'assets/ansiedade.png' },
+    { id: 'tedio', label: 'Tédio', imagem: 'assets/tedio.png' },
+    { id: 'raiva', label: 'Raiva', imagem: 'assets/raiva.png' },
   ];
 
   mesRef = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
