@@ -1,7 +1,10 @@
-import { Component, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 import { NotificacaoService } from '../services/notificacao.service';
+import { PlanoService } from '../services/plano.service';
+import { Subscription } from 'rxjs';
 
 export type TipoAporte = 'deposito' | 'retirada' | 'ajuste';
 
@@ -25,7 +28,6 @@ export interface Meta {
   concluida?: boolean;
   favorita?: boolean;
   status?: string;
-  /** true = ainda não foi salva no Supabase (só existe neste aparelho) */
   pendente_sync?: boolean;
 }
 
@@ -44,7 +46,6 @@ export interface InsightGastos {
   texto: string;
 }
 
-// Humores que contam como "gasto emocional" (alegria fica de fora)
 const HUMORES_EMOCIONAIS = ['ansiedade', 'tedio', 'raiva', 'tristeza'];
 const NOMES_HUMOR: Record<string, string> = {
   ansiedade: 'ansiedade',
@@ -66,7 +67,7 @@ interface Confete {
   styleUrls: ['./tab4.page.scss'],
   standalone: false,
 })
-export class Tab4Page implements OnDestroy {
+export class Tab4Page implements OnInit, OnDestroy {
   readonly icones = ['🎯', '✈️', '📱', '🏠', '🚗', '🎓', '🛟', '🎁', '💻', '🎮'];
 
   novaMeta = {
@@ -78,8 +79,8 @@ export class Tab4Page implements OnDestroy {
 
   formAberto = false;
   carregando = false;
+  temAcessoMetas = true;
 
-  // Listas derivadas (recalculadas sempre que `metas` é atribuído)
   metasFavoritas: Meta[] = [];
   metasOutras: Meta[] = [];
   metasConcluidas: Meta[] = [];
@@ -91,28 +92,28 @@ export class Tab4Page implements OnDestroy {
     mensagem: '',
   };
 
-  // Ligação com os gastos (tela de gastos / tabela movimentacao)
   insightGastos: InsightGastos | null = null;
   private gastosEmocionais: { total: number; humor: string | null; valorHumor: number } | null = null;
 
-  // Histórico de aportes (um card aberto por vez)
   historicoMetaId: string | null = null;
   historico: Aporte[] = [];
   carregandoHistorico = false;
 
-  // Confete ao concluir uma meta
   confetes: Confete[] = [];
   private confeteTimer: any;
 
   private _metas: Meta[] = [];
   private primeiraCarga = true;
   private sincronizando = new Set<string>();
+  private subPlano: Subscription | null = null;
 
   constructor(
     private supabaseService: SupabaseService,
+    private router: Router,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private notificacaoService: NotificacaoService,
+    private planoService: PlanoService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -125,21 +126,38 @@ export class Tab4Page implements OnDestroy {
     this.recalcular();
   }
 
-  ionViewWillEnter() {
-    this.carregarMetas();
+  async ngOnInit() {
+    this.subPlano = this.planoService.planoAtivo$.subscribe(() => {
+      this.verificarAcesso();
+    });
+    await this.verificarAcesso();
+  }
+
+  async ionViewWillEnter() {
+    await this.verificarAcesso();
   }
 
   ngOnDestroy() {
     clearTimeout(this.confeteTimer);
+    this.subPlano?.unsubscribe();
+  }
+
+  async verificarAcesso() {
+    await this.planoService.carregarPlanoAtivo();
+    this.temAcessoMetas = this.planoService.temAcessoMetas();
+    this.cdr.detectChanges();
+    if (this.temAcessoMetas) {
+      await this.carregarMetas();
+    }
+  }
+
+  irParaPlanos() {
+    this.router.navigateByUrl('/planos');
   }
 
   trackMeta(_: number, meta: Meta) {
     return meta.id_meta;
   }
-
-  // ---------------------------------------------------------------------------
-  // Derivados: listas por categoria + resumo do topo
-  // ---------------------------------------------------------------------------
 
   private ordenarPorData(a: Meta, b: Meta): number {
     if (a.data_fim && b.data_fim) {
@@ -178,7 +196,6 @@ export class Tab4Page implements OnDestroy {
     this.atualizarInsight();
   }
 
-  /** Busca os gastos do mês feitos em momentos de ansiedade, tédio, raiva ou tristeza. */
   private async carregarGastoEmocional(userId: string) {
     const hoje = new Date();
     const mes = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -198,7 +215,6 @@ export class Tab4Page implements OnDestroy {
         .lt('data_transacao', fim);
 
       if (error) {
-        console.warn('Não foi possível carregar gastos emocionais:', error.message);
         return;
       }
 
@@ -222,9 +238,7 @@ export class Tab4Page implements OnDestroy {
       this.gastosEmocionais = { total, humor, valorHumor };
       this.atualizarInsight();
       this.cdr.detectChanges();
-    } catch (e) {
-      console.warn('Não foi possível carregar gastos emocionais:', e);
-    }
+    } catch {}
   }
 
   private atualizarInsight() {
@@ -275,10 +289,6 @@ export class Tab4Page implements OnDestroy {
     if (p >= 25) return `Bom começo em "${maior.nome}". Cada valor guardado conta.`;
     return 'Guardar um pouquinho de cada vez já faz diferença.';
   }
-
-  // ---------------------------------------------------------------------------
-  // Usuário, cache local e carregamento
-  // ---------------------------------------------------------------------------
 
   private async getActiveUserId(): Promise<string | null> {
     try {
@@ -331,9 +341,7 @@ export class Tab4Page implements OnDestroy {
     if (!id) return;
     try {
       localStorage.setItem(`metas_${id}`, JSON.stringify(this.metas));
-    } catch (e) {
-      console.error('Erro ao salvar cache de metas:', e);
-    }
+    } catch {}
   }
 
   async carregarMetas() {
@@ -354,17 +362,12 @@ export class Tab4Page implements OnDestroy {
           .eq('id_usuario', userId)
           .is('deletado_em', null);
 
-        if (error) {
-          console.error('Erro ao carregar metas:', error.message);
-        } else {
-          remotas = (data || []).map((m: any) => this.normalizarMeta(m));
+        if (!error && data) {
+          remotas = data.map((m: any) => this.normalizarMeta(m));
         }
-      } catch (e) {
-        console.error('Erro ao carregar metas:', e);
-      }
+      } catch {}
 
       if (remotas) {
-        // Metas que só existem no aparelho (criadas offline ou com falha no insert)
         const pendentes = locais
           .filter(
             (m) =>
@@ -391,10 +394,6 @@ export class Tab4Page implements OnDestroy {
     this.sincronizarPendentes();
   }
 
-  // ---------------------------------------------------------------------------
-  // Sincronização com o Supabase
-  // ---------------------------------------------------------------------------
-
   private async sincronizarPendentes() {
     for (const meta of this.metas.filter((m) => m.pendente_sync)) {
       await this.enviarNovaMeta(meta);
@@ -409,7 +408,6 @@ export class Tab4Page implements OnDestroy {
     );
   }
 
-  /** Insere a meta no Supabase com o estado atual. Retorna true se deu certo. */
   private async enviarNovaMeta(meta: Meta, userId?: string): Promise<boolean> {
     const idLocal = meta.id_meta;
     if (!idLocal || this.sincronizando.has(idLocal)) return false;
@@ -436,13 +434,11 @@ export class Tab4Page implements OnDestroy {
         .select()
         .single();
 
-      // Se a coluna "icone" ainda não existe no banco, tenta sem ela
       if (res.error) {
         res = await this.supabaseService.client.from('meta').insert(base).select().single();
       }
 
       if (res.error || !res.data) {
-        console.error('Erro ao salvar meta:', res.error?.message);
         return false;
       }
 
@@ -453,15 +449,13 @@ export class Tab4Page implements OnDestroy {
       await this.salvarCache(uid);
       this.cdr.detectChanges();
       return true;
-    } catch (e) {
-      console.error('Erro ao salvar meta:', e);
+    } catch {
       return false;
     } finally {
       this.sincronizando.delete(idLocal);
     }
   }
 
-  /** Atualiza campos no Supabase. Se a meta ainda não existe lá, tenta criá-la. */
   private async persistirRemoto(
     meta: Meta,
     campos: Record<string, any>
@@ -476,12 +470,10 @@ export class Tab4Page implements OnDestroy {
         .update(campos)
         .eq('id_meta', meta.id_meta);
       if (error) {
-        console.error('Erro ao atualizar meta:', error.message);
         return 'erro';
       }
       return 'ok';
-    } catch (e) {
-      console.error('Erro ao atualizar meta:', e);
+    } catch {
       return 'erro';
     }
   }
@@ -496,10 +488,6 @@ export class Tab4Page implements OnDestroy {
     }
     this.cdr.detectChanges();
   }
-
-  // ---------------------------------------------------------------------------
-  // Criar meta
-  // ---------------------------------------------------------------------------
 
   async adicionarMeta() {
     const nome = this.novaMeta.nome.trim();
@@ -541,10 +529,6 @@ export class Tab4Page implements OnDestroy {
     }
     this.cdr.detectChanges();
   }
-
-  // ---------------------------------------------------------------------------
-  // Guardar e retirar valores
-  // ---------------------------------------------------------------------------
 
   async solicitarAporte(meta: Meta) {
     if (!meta.id_meta) return;
@@ -665,10 +649,6 @@ export class Tab4Page implements OnDestroy {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Histórico de aportes (tabela aporte_meta + cópia local)
-  // ---------------------------------------------------------------------------
-
   private lerAportesLocais(userId: string): Record<string, Aporte[]> {
     try {
       const raw = localStorage.getItem(`aportes_${userId}`);
@@ -682,9 +662,7 @@ export class Tab4Page implements OnDestroy {
   private salvarAportesLocais(userId: string, mapa: Record<string, Aporte[]>) {
     try {
       localStorage.setItem(`aportes_${userId}`, JSON.stringify(mapa));
-    } catch (e) {
-      console.error('Erro ao salvar histórico local:', e);
-    }
+    } catch {}
   }
 
   private async registrarAporte(meta: Meta, valor: number, tipo: TipoAporte) {
@@ -707,20 +685,16 @@ export class Tab4Page implements OnDestroy {
       this.historico = [aporte, ...this.historico];
     }
 
-    // Metas ainda não sincronizadas enviam o histórico junto, quando forem salvas
     if (userId && !meta.pendente_sync) {
       try {
-        const { error } = await this.supabaseService.client.from('aporte_meta').insert({
+        await this.supabaseService.client.from('aporte_meta').insert({
           id_meta: meta.id_meta,
           id_usuario: userId,
           valor,
           tipo,
           criado_em: aporte.criado_em,
         });
-        if (error) console.warn('Aporte não salvo online (tabela aporte_meta existe?):', error.message);
-      } catch (e) {
-        console.warn('Aporte não salvo online:', e);
-      }
+      } catch {}
     }
   }
 
@@ -736,7 +710,7 @@ export class Tab4Page implements OnDestroy {
     if (this.historicoMetaId === idAntigo) this.historicoMetaId = idNovo;
 
     try {
-      const { error } = await this.supabaseService.client.from('aporte_meta').insert(
+      await this.supabaseService.client.from('aporte_meta').insert(
         lista.map((a) => ({
           id_meta: idNovo,
           id_usuario: userId,
@@ -745,10 +719,7 @@ export class Tab4Page implements OnDestroy {
           criado_em: a.criado_em,
         }))
       );
-      if (error) console.warn('Histórico não salvo online:', error.message);
-    } catch (e) {
-      console.warn('Histórico não salvo online:', e);
-    }
+    } catch {}
   }
 
   private async obterHistorico(meta: Meta): Promise<Aporte[]> {
@@ -764,10 +735,8 @@ export class Tab4Page implements OnDestroy {
           .select('*')
           .eq('id_meta', meta.id_meta)
           .order('criado_em', { ascending: false });
-        if (error) {
-          console.warn('Histórico online indisponível:', error.message);
-        } else {
-          remotos = (data || []).map((a: any) => ({
+        if (!error && data) {
+          remotos = data.map((a: any) => ({
             id_aporte: a.id_aporte,
             id_meta: a.id_meta,
             valor: Number(a.valor) || 0,
@@ -775,9 +744,7 @@ export class Tab4Page implements OnDestroy {
             criado_em: a.criado_em,
           }));
         }
-      } catch (e) {
-        console.warn('Histórico online indisponível:', e);
-      }
+      } catch {}
     }
 
     const unicos = new Map<string, Aporte>();
@@ -835,10 +802,6 @@ export class Tab4Page implements OnDestroy {
       minute: '2-digit',
     });
   }
-
-  // ---------------------------------------------------------------------------
-  // Favoritar, editar, concluir e excluir
-  // ---------------------------------------------------------------------------
 
   async favoritar(meta: Meta) {
     if (!meta.id_meta) return;
@@ -967,7 +930,6 @@ export class Tab4Page implements OnDestroy {
   }
 
   private async reabrirMeta(meta: Meta) {
-    // Desfaz o valor que foi lançado como "ajuste" ao concluir manualmente
     const historico = await this.obterHistorico(meta);
     const ajusteLiquido = historico
       .filter((a) => a.tipo === 'ajuste')
@@ -1020,17 +982,11 @@ export class Tab4Page implements OnDestroy {
 
             if (!pendente) {
               try {
-                const { error } = await this.supabaseService.client
+                await this.supabaseService.client
                   .from('meta')
                   .update({ deletado_em: new Date().toISOString() })
                   .eq('id_meta', id);
-                if (error) {
-                  console.error('Erro ao apagar meta:', error.message);
-                  this.avisar('Não foi possível excluir online. Ela pode voltar ao reabrir o app.');
-                }
-              } catch (e) {
-                console.error('Erro ao apagar meta:', e);
-              }
+              } catch {}
             }
             this.cdr.detectChanges();
           },
@@ -1040,11 +996,6 @@ export class Tab4Page implements OnDestroy {
     await alert.present();
   }
 
-  // ---------------------------------------------------------------------------
-  // Dicas e estado visual de cada meta
-  // ---------------------------------------------------------------------------
-
-  /** Quanto guardar por mês para chegar no prazo (só para metas com data limite). */
   sugestaoMensal(meta: Meta): string | null {
     if (meta.concluida || !meta.data_fim) return null;
     const falta = (meta.valor_alvo || 0) - (meta.valor_atual || 0);
@@ -1076,10 +1027,6 @@ export class Tab4Page implements OnDestroy {
     if (p >= 25) return 'Bom começo';
     return '';
   }
-
-  // ---------------------------------------------------------------------------
-  // Formatação e datas
-  // ---------------------------------------------------------------------------
 
   formatarMoeda(valor?: number): string {
     if (valor === null || valor === undefined) return '0,00';
@@ -1115,10 +1062,6 @@ export class Tab4Page implements OnDestroy {
     if (dias === 0) return { texto: 'Vence hoje', expirado: false };
     return { texto: dias === 1 ? '1 dia' : `${dias} dias`, expirado: false };
   }
-
-  // ---------------------------------------------------------------------------
-  // Feedback: toast e confete
-  // ---------------------------------------------------------------------------
 
   private async avisar(mensagem: string, cor: 'success' | 'warning' | 'danger' = 'warning') {
     const toast = await this.toastCtrl.create({

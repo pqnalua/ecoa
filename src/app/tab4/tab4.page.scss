@@ -1,4 +1,3 @@
-// Definição das Variáveis Ecoa
 :host {
   --ecoa-primary: #9d8bc9;
   --ecoa-primary-dark: #816eb3;
@@ -17,7 +16,6 @@
   position: relative;
 }
 
-// Topo da Página
 .header-container {
   display: flex;
   justify-content: space-between;
@@ -39,7 +37,6 @@
   }
 }
 
-// Resumo no topo
 .resumo-card {
   background: var(--ecoa-card-bg);
   border: 1px solid var(--ecoa-border);
@@ -125,7 +122,6 @@
   }
 }
 
-// Gastos emocionais x metas
 .insight-gastos {
   display: flex;
   align-items: flex-start;
@@ -159,7 +155,6 @@
   }
 }
 
-// Divisores de Seção (Favoritas, Pendentes e Concluídas)
 .section-divider {
   padding: 20px 20px 8px 20px;
 
@@ -173,7 +168,6 @@
   }
 }
 
-// Cartões em Lilás com sombras suaves
 .blob-card {
   background: var(--ecoa-primary);
   border-radius: 20px;
@@ -189,13 +183,11 @@
   }
 }
 
-// Cartões de metas concluídas
 .completed-card {
   opacity: 0.9;
   background: #7361a3;
 }
 
-// Formulário "Nova meta" recolhível
 .new-goal {
   .form-toggle {
     display: flex;
@@ -235,7 +227,6 @@
   }
 }
 
-// Seletor de ícone da meta
 .icone-picker {
   display: flex;
   flex-wrap: wrap;
@@ -258,7 +249,6 @@
   }
 }
 
-// Rótulos e Grupos
 .form-group {
   margin-bottom: 14px;
 
@@ -271,7 +261,6 @@
   }
 }
 
-// Inputs e Cápsulas Internas Brancas
 .custom-input-wrap {
   background: #ffffff;
   border-radius: 12px;
@@ -304,7 +293,6 @@
   }
 }
 
-// Botão Adicionar Meta
 .btn-container {
   display: flex;
   justify-content: flex-end;
@@ -329,7 +317,6 @@
   }
 }
 
-// Estado vazio
 .vazio {
   display: flex;
   flex-direction: column;
@@ -369,7 +356,6 @@
   }
 }
 
-// Cartões de Metas Criadas
 .goal-card {
   .goal-title-row {
     display: flex;
@@ -483,7 +469,6 @@
     }
   }
 
-  // Barra de Progresso (cor muda conforme o prazo)
   .progress-bar-container {
     width: 100%;
     height: 10px;
@@ -525,7 +510,6 @@
     }
   }
 
-  // Dica de quanto guardar por mês
   .dica {
     display: flex;
     align-items: flex-start;
@@ -550,7 +534,6 @@
     }
   }
 
-  // Aviso de meta que só existe no aparelho
   .sync-aviso {
     display: flex;
     align-items: center;
@@ -581,7 +564,6 @@
     }
   }
 
-  // Aporte / Guardar valor
   .aporte-container {
     display: flex;
     align-items: center;
@@ -644,7 +626,6 @@
     }
   }
 
-  // Histórico de aportes
   .historico {
     margin-top: 12px;
     padding: 10px 12px;
@@ -708,7 +689,6 @@
   }
 }
 
-// Confete (concluir meta)
 .confete-layer {
   position: absolute;
   top: 0;
@@ -751,9 +731,83 @@
   }
 }
 
-/* Responsividade para desktop e tablets */
 .metas-wrap {
   max-width: 480px;
   margin: 0 auto;
   padding-bottom: 32px;
+}
+
+.metas-bloqueio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 20px;
+}
+
+.metas-bloqueio__card {
+  background: var(--ecoa-primary);
+  border-radius: 24px;
+  padding: 36px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  max-width: 380px;
+  width: 100%;
+}
+
+.metas-bloqueio__icone {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--ecoa-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.metas-bloqueio__mascote {
+  width: 100px;
+  height: auto;
+  margin: 8px 0 14px;
+}
+
+.metas-bloqueio__titulo {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.metas-bloqueio__texto {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.45;
+  margin: 0 0 22px;
+}
+
+.metas-bloqueio__btn {
+  background: #ffffff;
+  color: var(--ecoa-primary-dark);
+  border: none;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  width: 100%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
 }

@@ -1,7 +1,10 @@
-import { Component, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 import { OrcamentoService, OrcamentoMensal } from '../services/orcamento.service';
+import { PlanoService } from '../services/plano.service';
+import { Subscription } from 'rxjs';
 
 type Aba = 'registrar' | 'planilha' | 'graficos' | 'eco_ia';
 type Natureza = 'fixo' | 'variavel' | 'extra';
@@ -30,10 +33,12 @@ interface MensagemIa {
   styleUrls: ['tab3.page.scss'],
   standalone: false,
 })
-export class Tab3Page {
+export class Tab3Page implements OnInit, OnDestroy {
   @ViewChild('chatContainer') chatContainer?: ElementRef<HTMLDivElement>;
 
   aba: Aba = 'registrar';
+  temAcessoIaControle = false;
+  private subPlano: Subscription | null = null;
 
   readonly meses = [
     'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -101,16 +106,40 @@ export class Tab3Page {
     private supabase: SupabaseService,
     private orcamentoService: OrcamentoService,
     private alertCtrl: AlertController,
+    private planoService: PlanoService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
+  async ngOnInit() {
+    this.subPlano = this.planoService.planoAtivo$.subscribe(() => {
+      this.verificarAcessoIa();
+    });
+    await this.verificarAcessoIa();
+  }
+
+  ngOnDestroy() {
+    this.subPlano?.unsubscribe();
+  }
+
   async ionViewWillEnter() {
+    await this.verificarAcessoIa();
     await this.carregarCategorias();
     await this.carregarMovimentacoes();
     await this.carregarOrcamento();
     if (this.historicoIa.length === 0) {
       this.iniciarHistoricoIa();
     }
+  }
+
+  async verificarAcessoIa() {
+    await this.planoService.carregarPlanoAtivo();
+    this.temAcessoIaControle = this.planoService.temAcessoIaControle();
+    this.cdr.detectChanges();
+  }
+
+  irParaPlanos() {
+    this.router.navigateByUrl('/planos');
   }
 
   iniciarHistoricoIa() {

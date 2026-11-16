@@ -15,19 +15,41 @@ export interface Assinatura {
   providedIn: 'root',
 })
 export class PlanoService {
+  private readonly STORAGE_KEY = 'ecoa_assinatura_ativa';
   private planoAtivoSubject = new BehaviorSubject<Assinatura | null>(null);
   public planoAtivo$: Observable<Assinatura | null> = this.planoAtivoSubject.asObservable();
 
   constructor(private supabase: SupabaseService) {
+    this.inicializarPlano();
+  }
+
+  private inicializarPlano() {
+    const salvoLocal = localStorage.getItem(this.STORAGE_KEY);
+    if (salvoLocal) {
+      try {
+        const parsed = JSON.parse(salvoLocal);
+        this.planoAtivoSubject.next(parsed);
+      } catch {}
+    }
     this.carregarPlanoAtivo();
   }
 
   async carregarPlanoAtivo(): Promise<Assinatura | null> {
     try {
-      const user = await this.supabase.getCurrentUser();
+      const salvoLocal = localStorage.getItem(this.STORAGE_KEY);
+      if (salvoLocal) {
+        const parsed = JSON.parse(salvoLocal);
+        this.planoAtivoSubject.next(parsed);
+      }
+
+      const { data: sessionData } = await this.supabase.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
       if (!user) {
-        this.planoAtivoSubject.next(null);
-        return null;
+        user = await this.supabase.getCurrentUser();
+      }
+
+      if (!user) {
+        return this.planoAtivoSubject.value;
       }
 
       const { data, error } = await this.supabase.client
@@ -39,86 +61,97 @@ export class PlanoService {
         .limit(1)
         .maybeSingle();
 
-      if (error || !data) {
-        const local = localStorage.getItem(`plano_${user.id}`);
-        if (local) {
-          const parsed = JSON.parse(local);
-          this.planoAtivoSubject.next(parsed);
-          return parsed;
-        }
-        this.planoAtivoSubject.next(null);
-        return null;
+      if (!error && data) {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        this.planoAtivoSubject.next(data);
+        return data;
       }
 
-      localStorage.setItem(`plano_${user.id}`, JSON.stringify(data));
-      this.planoAtivoSubject.next(data);
-      return data;
+      return this.planoAtivoSubject.value;
     } catch {
-      this.planoAtivoSubject.next(null);
-      return null;
+      return this.planoAtivoSubject.value;
     }
   }
 
   async assinar(nomePlano: string, categoria: 'premium' | 'vip'): Promise<boolean> {
+    const novaAssinatura: Assinatura = {
+      nome_plano: nomePlano,
+      categoria: categoria,
+      ativo: true,
+      criado_em: new Date().toISOString(),
+    };
+
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(novaAssinatura));
+    this.planoAtivoSubject.next(novaAssinatura);
+
     try {
-      const user = await this.supabase.getCurrentUser();
+      const { data: sessionData } = await this.supabase.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
       if (!user) {
-        return false;
+        user = await this.supabase.getCurrentUser();
       }
 
-      await this.supabase.client
-        .from('assinatura')
-        .update({ ativo: false })
-        .eq('user_id', user.id);
+      if (user) {
+        novaAssinatura.user_id = user.id;
 
-      const { data, error } = await this.supabase.client
-        .from('assinatura')
-        .insert({
-          user_id: user.id,
-          nome_plano: nomePlano,
-          categoria: categoria,
-          ativo: true,
-        })
-        .select()
-        .single();
+        await this.supabase.client
+          .from('assinatura')
+          .update({ ativo: false })
+          .eq('user_id', user.id);
 
-      const novaAssinatura: Assinatura = data || {
-        user_id: user.id,
-        nome_plano: nomePlano,
-        categoria: categoria,
-        ativo: true,
-      };
+        const { data, error } = await this.supabase.client
+          .from('assinatura')
+          .insert({
+            user_id: user.id,
+            nome_plano: nomePlano,
+            categoria: categoria,
+            ativo: true,
+          })
+          .select()
+          .single();
 
-      localStorage.setItem(`plano_${user.id}`, JSON.stringify(novaAssinatura));
-      this.planoAtivoSubject.next(novaAssinatura);
-      return true;
-    } catch {
-      return false;
-    }
+        if (!error && data) {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+          this.planoAtivoSubject.next(data);
+        }
+      }
+    } catch {}
+
+    return true;
   }
 
   async cancelarAssinatura(): Promise<boolean> {
+    localStorage.removeItem(this.STORAGE_KEY);
+    this.planoAtivoSubject.next(null);
+
     try {
-      const user = await this.supabase.getCurrentUser();
+      const { data: sessionData } = await this.supabase.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
       if (!user) {
-        return false;
+        user = await this.supabase.getCurrentUser();
       }
 
-      await this.supabase.client
-        .from('assinatura')
-        .update({ ativo: false })
-        .eq('user_id', user.id);
+      if (user) {
+        await this.supabase.client
+          .from('assinatura')
+          .update({ ativo: false })
+          .eq('user_id', user.id);
+      }
+    } catch {}
 
-      localStorage.removeItem(`plano_${user.id}`);
-      this.planoAtivoSubject.next(null);
-      return true;
-    } catch {
-      return false;
-    }
+    return true;
   }
 
   getPlanoAtual(): Assinatura | null {
     return this.planoAtivoSubject.value;
+  }
+
+  temAcessoMetas(): boolean {
+    const plano = this.planoAtivoSubject.value;
+    if (plano && plano.ativo) {
+      return !plano.nome_plano.toLowerCase().includes('comum');
+    }
+    return true;
   }
 
   temAcessoChatbot(): boolean {
@@ -149,13 +182,17 @@ export class PlanoService {
     return false;
   }
 
-  temAcessoMetas(): boolean {
+  temAcessoIaControle(): boolean {
     const plano = this.planoAtivoSubject.value;
     if (!plano || !plano.ativo) return false;
     const nome = plano.nome_plano.toLowerCase();
-    if (nome.includes('comum')) {
-      return false;
+    const cat = plano.categoria;
+    if (cat === 'premium') {
+      return nome.includes('especial');
     }
-    return true;
+    if (cat === 'vip') {
+      return nome.includes('família') || nome.includes('familia');
+    }
+    return false;
   }
 }
