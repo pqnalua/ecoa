@@ -44,6 +44,8 @@ ion-content.planos {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .planos__header {
@@ -83,6 +85,40 @@ ion-content.planos {
     height: 100%;
     object-fit: contain;
   }
+}
+
+.planos__status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1.5px solid var(--ecoa-roxo);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 10px rgba(72, 56, 122, 0.08);
+}
+
+.planos__status-rotulo {
+  display: block;
+  font-size: 11px;
+  color: var(--ecoa-tinta-suave);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.planos__status-nome {
+  font-size: 14px;
+  color: var(--ecoa-roxo);
+}
+
+.planos__status-tag {
+  background: #52a47a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 14px;
+  text-transform: uppercase;
 }
 
 .planos__seletor-container {
@@ -343,8 +379,38 @@ ion-content.planos {
   }
 }
 
-/* Responsividade para telas maiores / desktop */
-.planos__wrap {
-  max-width: 480px;
-  margin: 0 auto;
+.planos__cancelar-wrap {
+  width: 100%;
+  padding-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.planos__cancelar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffffff;
+  color: #c15c5c;
+  border: 1.5px solid #c15c5c;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  ion-icon {
+    font-size: 18px;
+  }
+
+  &:active {
+    background: #c15c5c;
+    color: #ffffff;
+    transform: scale(0.98);
+  }
 }

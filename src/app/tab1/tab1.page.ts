@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular/lazy';
+import { ModalController, AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 import { ComandoVozModalComponent } from '../components/comando-voz-modal/comando-voz-modal.component';
 import { NotificacaoService } from '../services/notificacao.service';
 import { NotificacoesModalComponent } from '../components/notificacoes-modal/notificacoes-modal.component';
 import { OrcamentoService, OrcamentoMensal } from '../services/orcamento.service';
+import { PlanoService } from '../services/plano.service';
 
 interface Humor {
   id: string;
@@ -68,8 +69,10 @@ export class Tab1Page implements OnInit {
     private supabaseService: SupabaseService,
     private cdr: ChangeDetectorRef,
     private modalCtrl: ModalController,
+    private alertCtrl: AlertController,
     private notificacaoService: NotificacaoService,
-    private orcamentoService: OrcamentoService
+    private orcamentoService: OrcamentoService,
+    private planoService: PlanoService
   ) {
     const hoje = new Date();
     this.mesNomeAtual = this.mesesNomes[hoje.getMonth()];
@@ -87,6 +90,7 @@ export class Tab1Page implements OnInit {
   async ionViewWillEnter() {
     await this.carregarDados();
     await this.notificacaoService.contarNaoLidas();
+    await this.planoService.carregarPlanoAtivo();
   }
 
   async carregarDados() {
@@ -171,7 +175,6 @@ export class Tab1Page implements OnInit {
       this.perfilDiagnostico = metadata['perfil_diagnostico'];
     }
 
-    // Consulta direta no banco se o usuário já preencheu o questionário de perfil financeiro
     try {
       const { data: perfil } = await this.supabaseService.client
         .from('perfil_financeiro')
@@ -294,6 +297,19 @@ export class Tab1Page implements OnInit {
   }
 
   async registrarPorVoz() {
+    if (!this.planoService.temAcessoComandoVoz()) {
+      const alert = await this.alertCtrl.create({
+        header: 'Recurso Bloqueado',
+        message: 'O registro de gastos por comando de voz com IA é exclusivo dos planos Duo, Especial e Família VIP.',
+        buttons: [
+          { text: 'Agora não', role: 'cancel' },
+          { text: 'Ver Planos', handler: () => this.router.navigateByUrl('/planos') },
+        ],
+      });
+      await alert.present();
+      return;
+    }
+
     const modal = await this.modalCtrl.create({
       component: ComandoVozModalComponent,
       backdropDismiss: false,
@@ -311,7 +327,20 @@ export class Tab1Page implements OnInit {
     this.router.navigateByUrl('/tabs/tab3');
   }
 
-  irParaChat() {
+  async irParaChat() {
+    if (!this.planoService.temAcessoChatbot()) {
+      const alert = await this.alertCtrl.create({
+        header: 'Recurso Bloqueado',
+        message: 'O Chatbot ECO é exclusivo para assinantes dos planos Comum, Família, Especial ou Família VIP.',
+        buttons: [
+          { text: 'Agora não', role: 'cancel' },
+          { text: 'Ver Planos', handler: () => this.router.navigateByUrl('/planos') },
+        ],
+      });
+      await alert.present();
+      return;
+    }
+
     this.router.navigateByUrl('/iaecoa');
   }
 

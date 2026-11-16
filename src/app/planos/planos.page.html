@@ -24,6 +24,14 @@
       </div>
     </header>
 
+    <div class="planos__status-card" *ngIf="planoAtivo">
+      <div class="planos__status-info">
+        <span class="planos__status-rotulo">Plano ativo no momento:</span>
+        <strong class="planos__status-nome">{{ planoAtivo.nome_plano }} ({{ planoAtivo.categoria | uppercase }})</strong>
+      </div>
+      <span class="planos__status-tag">Ativo</span>
+    </div>
+
     <div class="planos__seletor-container">
       <span class="planos__subtitulo">
         SAIBA QUAL ECO CRIAR COM O {{ categoriaSelecionada.toUpperCase() }}
@@ -66,8 +74,8 @@
           <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
         </div>
 
-        <button type="button" class="plano-card__btn plano-card__btn--destaque" (click)="assinar('Plano Especial')">
-          Assinar Plano
+        <button type="button" class="plano-card__btn plano-card__btn--destaque" (click)="assinar('Plano Especial', 'premium')">
+          {{ isPlanoAtual('Plano Especial', 'premium') ? 'Plano Ativo' : 'Assinar Plano' }}
         </button>
       </div>
 
@@ -91,8 +99,8 @@
           <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
         </div>
 
-        <button type="button" class="plano-card__btn" (click)="assinar('Plano Comum')">
-          Assinar Plano
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano Comum', 'premium')">
+          {{ isPlanoAtual('Plano Comum', 'premium') ? 'Plano Ativo' : 'Assinar Plano' }}
         </button>
       </div>
 
@@ -116,8 +124,8 @@
           <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
         </div>
 
-        <button type="button" class="plano-card__btn" (click)="assinar('Plano Família')">
-          Assinar Plano
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano Família', 'premium')">
+          {{ isPlanoAtual('Plano Família', 'premium') ? 'Plano Ativo' : 'Assinar Plano' }}
         </button>
       </div>
 
@@ -151,8 +159,8 @@
           <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
         </div>
 
-        <button type="button" class="plano-card__btn plano-card__btn--destaque" (click)="assinar('Plano Família')">
-          Assinar VIP
+        <button type="button" class="plano-card__btn plano-card__btn--destaque" (click)="assinar('Plano Família', 'vip')">
+          {{ isPlanoAtual('Plano Família', 'vip') ? 'Plano Ativo' : 'Assinar VIP' }}
         </button>
       </div>
 
@@ -179,8 +187,8 @@
           <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
         </div>
 
-        <button type="button" class="plano-card__btn" (click)="assinar('Plano Duo')">
-          Assinar VIP
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano Duo', 'vip')">
+          {{ isPlanoAtual('Plano Duo', 'vip') ? 'Plano Ativo' : 'Assinar VIP' }}
         </button>
       </div>
 
@@ -209,11 +217,18 @@
           <img src="assets/desconto.png" class="plano-card__desconto-img" alt="Desconto de 20% Anual" />
         </div>
 
-        <button type="button" class="plano-card__btn" (click)="assinar('Plano Corporativo')">
+        <button type="button" class="plano-card__btn" (click)="assinar('Plano Corporativo', 'vip')">
           Contatar Parceria
         </button>
       </div>
 
+    </div>
+
+    <div class="planos__cancelar-wrap" *ngIf="planoAtivo">
+      <button type="button" class="planos__cancelar-btn" (click)="cancelarAssinatura()">
+        <ion-icon name="close-circle-outline"></ion-icon>
+        Cancelar Assinatura Atual
+      </button>
     </div>
 
   </main>
