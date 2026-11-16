@@ -15,33 +15,35 @@ export interface Assinatura {
   providedIn: 'root',
 })
 export class PlanoService {
-  private readonly STORAGE_KEY = 'ecoa_assinatura_ativa';
   private planoAtivoSubject = new BehaviorSubject<Assinatura | null>(null);
   public planoAtivo$: Observable<Assinatura | null> = this.planoAtivoSubject.asObservable();
 
   constructor(private supabase: SupabaseService) {
-    this.inicializarPlano();
+    this.configurarAuthListener();
+    this.carregarPlanoAtivo();
   }
 
-  private inicializarPlano() {
-    const salvoLocal = localStorage.getItem(this.STORAGE_KEY);
-    if (salvoLocal) {
-      try {
-        const parsed = JSON.parse(salvoLocal);
-        this.planoAtivoSubject.next(parsed);
-      } catch {}
+  private configurarAuthListener() {
+    this.supabase.client.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('ecoa_assinatura_ativa');
+        this.emitirSeMudou(null);
+      } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+        await this.carregarPlanoAtivo();
+      }
+    });
+  }
+
+  private emitirSeMudou(novo: Assinatura | null) {
+    const atualStr = JSON.stringify(this.planoAtivoSubject.value);
+    const novoStr = JSON.stringify(novo);
+    if (atualStr !== novoStr) {
+      this.planoAtivoSubject.next(novo);
     }
-    this.carregarPlanoAtivo();
   }
 
   async carregarPlanoAtivo(): Promise<Assinatura | null> {
     try {
-      const salvoLocal = localStorage.getItem(this.STORAGE_KEY);
-      if (salvoLocal) {
-        const parsed = JSON.parse(salvoLocal);
-        this.planoAtivoSubject.next(parsed);
-      }
-
       const { data: sessionData } = await this.supabase.client.auth.getSession();
       let user: any = sessionData?.session?.user;
       if (!user) {
@@ -49,7 +51,18 @@ export class PlanoService {
       }
 
       if (!user) {
-        return this.planoAtivoSubject.value;
+        localStorage.removeItem('ecoa_assinatura_ativa');
+        this.emitirSeMudou(null);
+        return null;
+      }
+
+      const userStorageKey = `ecoa_assinatura_ativa_${user.id}`;
+      const salvoLocal = localStorage.getItem(userStorageKey);
+      if (salvoLocal) {
+        try {
+          const parsed = JSON.parse(salvoLocal);
+          this.emitirSeMudou(parsed);
+        } catch {}
       }
 
       const { data, error } = await this.supabase.client
@@ -62,12 +75,15 @@ export class PlanoService {
         .maybeSingle();
 
       if (!error && data) {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-        this.planoAtivoSubject.next(data);
+        localStorage.setItem(userStorageKey, JSON.stringify(data));
+        this.emitirSeMudou(data);
         return data;
       }
 
-      return this.planoAtivoSubject.value;
+      localStorage.removeItem(userStorageKey);
+      localStorage.removeItem('ecoa_assinatura_ativa');
+      this.emitirSeMudou(null);
+      return null;
     } catch {
       return this.planoAtivoSubject.value;
     }
@@ -81,9 +97,6 @@ export class PlanoService {
       criado_em: new Date().toISOString(),
     };
 
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(novaAssinatura));
-    this.planoAtivoSubject.next(novaAssinatura);
-
     try {
       const { data: sessionData } = await this.supabase.client.auth.getSession();
       let user: any = sessionData?.session?.user;
@@ -93,6 +106,9 @@ export class PlanoService {
 
       if (user) {
         novaAssinatura.user_id = user.id;
+        const userStorageKey = `ecoa_assinatura_ativa_${user.id}`;
+        localStorage.setItem(userStorageKey, JSON.stringify(novaAssinatura));
+        this.emitirSeMudou(novaAssinatura);
 
         await this.supabase.client
           .from('assinatura')
@@ -111,18 +127,24 @@ export class PlanoService {
           .single();
 
         if (!error && data) {
-          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-          this.planoAtivoSubject.next(data);
+          localStorage.setItem(userStorageKey, JSON.stringify(data));
+          this.emitirSeMudou(data);
         }
+      } else {
+        localStorage.setItem('ecoa_assinatura_ativa', JSON.stringify(novaAssinatura));
+        this.emitirSeMudou(novaAssinatura);
       }
-    } catch {}
+    } catch {
+      localStorage.setItem('ecoa_assinatura_ativa', JSON.stringify(novaAssinatura));
+      this.emitirSeMudou(novaAssinatura);
+    }
 
     return true;
   }
 
   async cancelarAssinatura(): Promise<boolean> {
-    localStorage.removeItem(this.STORAGE_KEY);
-    this.planoAtivoSubject.next(null);
+    localStorage.removeItem('ecoa_assinatura_ativa');
+    this.emitirSeMudou(null);
 
     try {
       const { data: sessionData } = await this.supabase.client.auth.getSession();
@@ -132,6 +154,7 @@ export class PlanoService {
       }
 
       if (user) {
+        localStorage.removeItem(`ecoa_assinatura_ativa_${user.id}`);
         await this.supabase.client
           .from('assinatura')
           .update({ ativo: false })
@@ -148,10 +171,10 @@ export class PlanoService {
 
   temAcessoMetas(): boolean {
     const plano = this.planoAtivoSubject.value;
-    if (plano && plano.ativo) {
-      return !plano.nome_plano.toLowerCase().includes('comum');
+    if (!plano || !plano.ativo) {
+      return false;
     }
-    return true;
+    return !plano.nome_plano.toLowerCase().includes('comum');
   }
 
   temAcessoChatbot(): boolean {

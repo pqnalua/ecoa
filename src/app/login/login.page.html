@@ -26,6 +26,10 @@
         <small *ngIf="mostrarErro('senha')">A senha precisa ter pelo menos 6 caracteres.</small>
       </div>
 
+      <div class="login__esqueci">
+        <button type="button" class="btn-link" (click)="esqueciSenha()">Esqueci minha senha</button>
+      </div>
+
       <p class="login__erro" *ngIf="erro" role="alert">{{ erro }}</p>
 
       <button type="submit" class="btn btn--primario" [disabled]="carregando">

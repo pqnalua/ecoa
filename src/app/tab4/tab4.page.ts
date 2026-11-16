@@ -126,11 +126,12 @@ export class Tab4Page implements OnInit, OnDestroy {
     this.recalcular();
   }
 
-  async ngOnInit() {
+  ngOnInit() {
     this.subPlano = this.planoService.planoAtivo$.subscribe(() => {
-      this.verificarAcesso();
+      this.temAcessoMetas = this.planoService.temAcessoMetas();
+      this.cdr.detectChanges();
     });
-    await this.verificarAcesso();
+    this.verificarAcesso();
   }
 
   async ionViewWillEnter() {
@@ -290,17 +291,18 @@ export class Tab4Page implements OnInit, OnDestroy {
     return 'Guardar um pouquinho de cada vez já faz diferença.';
   }
 
-  private async getActiveUserId(): Promise<string | null> {
+  private async getActiveUserId(): Promise<string> {
     try {
       const { data: sessionData } = await this.supabaseService.client.auth.getSession();
       let user: any = sessionData?.session?.user;
       if (!user) {
         user = await this.supabaseService.getCurrentUser();
       }
-      return user ? user.id : null;
-    } catch {
-      return null;
-    }
+      if (user?.id) {
+        return user.id;
+      }
+    } catch {}
+    return 'usuario_padrao_ecoa';
   }
 
   private normalizarMeta(m: any): Meta {
@@ -338,7 +340,6 @@ export class Tab4Page implements OnInit, OnDestroy {
 
   private async salvarCache(userId?: string) {
     const id = userId || (await this.getActiveUserId());
-    if (!id) return;
     try {
       localStorage.setItem(`metas_${id}`, JSON.stringify(this.metas));
     } catch {}
@@ -350,8 +351,6 @@ export class Tab4Page implements OnInit, OnDestroy {
 
     try {
       const userId = await this.getActiveUserId();
-      if (!userId) return;
-
       const locais = this.lerCache(userId);
       let remotas: Meta[] | null = null;
 
@@ -412,7 +411,6 @@ export class Tab4Page implements OnInit, OnDestroy {
     const idLocal = meta.id_meta;
     if (!idLocal || this.sincronizando.has(idLocal)) return false;
     const uid = userId || (await this.getActiveUserId());
-    if (!uid) return false;
 
     this.sincronizando.add(idLocal);
     try {
@@ -497,10 +495,6 @@ export class Tab4Page implements OnInit, OnDestroy {
       return;
     }
     const userId = await this.getActiveUserId();
-    if (!userId) {
-      this.avisar('Entre na sua conta para criar metas.');
-      return;
-    }
 
     const nova: Meta = {
       id_meta: `local_${Date.now()}`,
@@ -675,17 +669,15 @@ export class Tab4Page implements OnInit, OnDestroy {
       criado_em: new Date().toISOString(),
     };
 
-    if (userId) {
-      const mapa = this.lerAportesLocais(userId);
-      mapa[meta.id_meta] = [aporte, ...(mapa[meta.id_meta] || [])];
-      this.salvarAportesLocais(userId, mapa);
-    }
+    const mapa = this.lerAportesLocais(userId);
+    mapa[meta.id_meta] = [aporte, ...(mapa[meta.id_meta] || [])];
+    this.salvarAportesLocais(userId, mapa);
 
     if (this.historicoMetaId === meta.id_meta) {
       this.historico = [aporte, ...this.historico];
     }
 
-    if (userId && !meta.pendente_sync) {
+    if (!meta.pendente_sync) {
       try {
         await this.supabaseService.client.from('aporte_meta').insert({
           id_meta: meta.id_meta,
@@ -725,7 +717,7 @@ export class Tab4Page implements OnInit, OnDestroy {
   private async obterHistorico(meta: Meta): Promise<Aporte[]> {
     if (!meta.id_meta) return [];
     const userId = await this.getActiveUserId();
-    const locais = userId ? this.lerAportesLocais(userId)[meta.id_meta] || [] : [];
+    const locais = this.lerAportesLocais(userId)[meta.id_meta] || [];
     let remotos: Aporte[] = [];
 
     if (!meta.pendente_sync) {
@@ -974,11 +966,9 @@ export class Tab4Page implements OnInit, OnDestroy {
             await this.salvarCache();
 
             const userId = await this.getActiveUserId();
-            if (userId) {
-              const mapa = this.lerAportesLocais(userId);
-              delete mapa[id];
-              this.salvarAportesLocais(userId, mapa);
-            }
+            const mapa = this.lerAportesLocais(userId);
+            delete mapa[id];
+            this.salvarAportesLocais(userId, mapa);
 
             if (!pendente) {
               try {
@@ -1089,4 +1079,4 @@ export class Tab4Page implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     }, 3500);
   }
-}
+} 

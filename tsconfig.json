@@ -17,7 +17,8 @@
     "module": "es2020",
     "lib": ["es2022", "dom"],
     "skipLibCheck": true,
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "ignoreDeprecations": "6.0"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -29,5 +30,8 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.spec.json" }
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

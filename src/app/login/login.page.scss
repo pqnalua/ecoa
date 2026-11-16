@@ -1,10 +1,7 @@
 :host {
-  /* Tom das marcas e detalhes no tom de lilás suave da logo */
   --ecoa-lilas-claro: #a594e0; 
-  /* Tom do botão principal e elementos em destaque */
   --ecoa-lilas-botao: #544393;
   --ecoa-lilas-botao-hover: #43337a;
-  
   --ecoa-tinta: #23222b;
   --ecoa-papel: #edeae5;
   --ecoa-erro: #c15c5c;
@@ -34,7 +31,6 @@ ion-content.login {
   text-align: center;
 }
 
-/* Ajuste e centralização da Imagem da Logo */
 .login__logo-img {
   width: 100%;
   max-width: 240px;
@@ -43,12 +39,10 @@ ion-content.login {
   display: block;
 }
 
-/* Subtítulo integrado com o design */
 .login__tagline {
   margin: 8px 0 0;
   font-size: 19px;
   font-style: italic;
-  font-weight: 500;
   font-weight: bold;
   color: var(--ecoa-lilas-botao);
   opacity: 0.8;
@@ -125,6 +119,28 @@ ion-content.login {
   color: var(--ecoa-tinta);
   opacity: 0.6;
   cursor: pointer;
+}
+
+.login__esqueci {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+
+  .btn-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ecoa-lilas-botao);
+    cursor: pointer;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 .login__erro {

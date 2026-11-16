@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AlertController, ToastController } from '@ionic/angular';
 import { SupabaseService } from '../services/supabase.service';
 
 @Component({
@@ -9,7 +10,7 @@ import { SupabaseService } from '../services/supabase.service';
   styleUrls: ['./login.page.scss'],
   standalone: false,
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   verSenha = false;
   carregando = false;
   erro = '';
@@ -18,11 +19,21 @@ export class LoginPage {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private alertCtrl: AlertController,
+    private toastCtrl: ToastController
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       senha: ['', [Validators.required, Validators.minLength(6)]],
+    });
+  }
+
+  ngOnInit() {
+    this.supabaseService.client.auth.onAuthStateChange(async (event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        await this.abrirModalNovaSenha();
+      }
     });
   }
 
@@ -54,7 +65,6 @@ export class LoginPage {
 
       const userId = data?.user?.id;
       if (userId) {
-        // Verifica se o usuário já preencheu o questionário
         const { data: perfil } = await this.supabaseService.client
           .from('perfil_financeiro')
           .select('id_perfil')
@@ -62,7 +72,6 @@ export class LoginPage {
           .maybeSingle();
 
         if (!perfil) {
-          // Primeiro acesso: direciona para o questionário
           await this.router.navigateByUrl('/questionario', { replaceUrl: true });
           return;
         }
@@ -95,5 +104,100 @@ export class LoginPage {
     } finally {
       this.carregando = false;
     }
+  }
+
+  async esqueciSenha() {
+    const alert = await this.alertCtrl.create({
+      header: 'Recuperar senha',
+      message: 'Digite o e-mail cadastrado para receber o link de redefinição:',
+      inputs: [
+        {
+          name: 'email',
+          type: 'email',
+          placeholder: 'voce@email.com',
+          value: this.form.get('email')?.value || '',
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Enviar link',
+          handler: async (dados) => {
+            const email = (dados.email || '').trim();
+            if (!email) {
+              await this.mostrarToast('Por favor, informe seu e-mail.', 'warning');
+              return false;
+            }
+            await this.enviarRecuperacao(email);
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async enviarRecuperacao(email: string) {
+    try {
+      const { error } = await this.supabaseService.client.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      if (error) throw error;
+      await this.mostrarToast('E-mail de recuperação enviado com sucesso!', 'success');
+    } catch (e: any) {
+      await this.mostrarToast(e?.message || 'Erro ao enviar e-mail de recuperação.', 'danger');
+    }
+  }
+
+  async abrirModalNovaSenha() {
+    const alert = await this.alertCtrl.create({
+      header: 'Nova Senha',
+      message: 'Digite sua nova senha (mínimo de 6 caracteres):',
+      backdropDismiss: false,
+      inputs: [
+        {
+          name: 'novaSenha',
+          type: 'password',
+          placeholder: 'Nova senha',
+        },
+      ],
+      buttons: [
+        {
+          text: 'Salvar nova senha',
+          handler: async (dados) => {
+            const novaSenha = (dados.novaSenha || '').trim();
+            if (novaSenha.length < 6) {
+              await this.mostrarToast('A senha precisa ter no mínimo 6 caracteres.', 'warning');
+              return false;
+            }
+            try {
+              const { error } = await this.supabaseService.client.auth.updateUser({
+                password: novaSenha,
+              });
+              if (error) throw error;
+              await this.mostrarToast('Senha atualizada com sucesso! Você já pode entrar.', 'success');
+              return true;
+            } catch (e: any) {
+              await this.mostrarToast(e?.message || 'Erro ao redefinir senha.', 'danger');
+              return false;
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async mostrarToast(mensagem: string, cor: 'success' | 'warning' | 'danger') {
+    const toast = await this.toastCtrl.create({
+      message: mensagem,
+      duration: 3500,
+      position: 'top',
+      color: cor,
+    });
+    await toast.present();
   }
 }
