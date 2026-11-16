@@ -6,6 +6,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "prebuild": "node -e \"const fs=require('fs'); fs.writeFileSync('./src/app/iaecoa/segredo.ts', 'export const OPENROUTER_KEY = \\'' + (process.env.OPENROUTER_KEY || '') + '\\';');\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
