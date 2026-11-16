@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { IonContent } from '@ionic/angular';
+import { OPENROUTER_KEY } from './segredo';
 
 interface Mensagem {
   texto: string;
@@ -19,8 +20,7 @@ export class IaecoaPage implements OnInit {
   novaMensagem: string = '';
   carregando: boolean = false;
 
-  private readonly OPENROUTER_API_KEY = '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';
-
+  private readonly OPENROUTER_API_KEY = OPENROUTER_KEY;
   mensagens: Mensagem[] = [
     {
       texto: 'Olá! Sou a sua IA especialista em finanças pessoais do ECOA. Como posso te ajudar a organizar seu dinheiro hoje?',

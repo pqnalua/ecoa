@@ -1,193 +1,219 @@
 <ion-content [fullscreen]="true" class="metas-content">
+  <!-- Confete ao concluir uma meta -->
+  <div slot="fixed" class="confete-layer" *ngIf="confetes.length > 0" aria-hidden="true">
+    <span
+      class="confete"
+      *ngFor="let c of confetes"
+      [style.left.%]="c.left"
+      [style.background]="c.cor"
+      [style.animation-delay.s]="c.delay"
+      [style.animation-duration.s]="c.dur"
+    ></span>
+  </div>
+
   <div class="metas-wrap">
-  <div class="header-container">
-    <h1 class="page-title">Metas</h1>
-    <img src="../assets/alegre.png" alt="Mascote porco" class="mascot-head" />
-  </div>
+    <div class="header-container">
+      <h1 class="page-title">Metas</h1>
+      <img src="../assets/alegre.png" alt="Mascote porco" class="mascot-head" />
+    </div>
 
-  <div class="blob-card new-goal">
-    <h2>Nova meta</h2>
+    <!-- Resumo -->
+    <div class="resumo-card" *ngIf="metas.length > 0">
+      <div class="resumo-total">
+        <span class="resumo-label">Total guardado</span>
+        <strong class="resumo-valor">R$ {{ formatarMoeda(resumo.totalGuardado) }}</strong>
+      </div>
 
-    <div class="form-group">
-      <label>Meta:</label>
-      <div class="custom-input-wrap">
-        <input type="text" placeholder="Digite sua meta" [(ngModel)]="novaMeta.nome" />
+      <div class="resumo-stats">
+        <div class="stat">
+          <strong>{{ resumo.ativas }}</strong>
+          <span>Em andamento</span>
+        </div>
+        <div class="stat" [class.alerta]="resumo.atrasadas > 0">
+          <strong>{{ resumo.atrasadas }}</strong>
+          <span>Atrasadas</span>
+        </div>
+        <div class="stat">
+          <strong>{{ resumo.concluidas }}</strong>
+          <span>Concluídas</span>
+        </div>
+      </div>
+
+      <div class="resumo-mascote">
+        <img src="../assets/alegre.png" alt="" />
+        <p>{{ resumo.mensagem }}</p>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Valor da meta:</label>
-      <div class="custom-input-wrap">
-        <input type="number" placeholder="Digite o valor de sua meta" [(ngModel)]="novaMeta.valor" />
+    <!-- Ligação com os gastos -->
+    <div class="insight-gastos" *ngIf="insightGastos as g">
+      <ion-icon name="pulse-outline"></ion-icon>
+      <div>
+        <strong>Gastos emocionais do mês: R$ {{ formatarMoeda(g.total) }}</strong>
+        <p>{{ g.texto }}</p>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Data limite (opcional):</label>
-      <div class="custom-input-wrap">
-        <input type="date" [(ngModel)]="novaMeta.dataFim" />
+    <!-- Nova meta (recolhível) -->
+    <div class="blob-card new-goal">
+      <button
+        type="button"
+        class="form-toggle"
+        (click)="formAberto = !formAberto"
+        [attr.aria-expanded]="formAberto"
+      >
+        <h2>Nova meta</h2>
+        <ion-icon [name]="formAberto ? 'chevron-up-outline' : 'add-circle-outline'"></ion-icon>
+      </button>
+
+      <div class="form-body" *ngIf="formAberto">
+        <div class="form-group">
+          <label>Ícone:</label>
+          <div class="icone-picker">
+            <button
+              type="button"
+              class="icone-opt"
+              *ngFor="let i of icones"
+              [class.ativo]="novaMeta.icone === i"
+              [attr.aria-pressed]="novaMeta.icone === i"
+              (click)="novaMeta.icone = i"
+            >
+              {{ i }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Meta:</label>
+          <div class="custom-input-wrap">
+            <input type="text" placeholder="Digite sua meta" [(ngModel)]="novaMeta.nome" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Valor da meta:</label>
+          <div class="custom-input-wrap">
+            <input
+              type="number"
+              placeholder="Digite o valor de sua meta"
+              [(ngModel)]="novaMeta.valor"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Data limite (opcional):</label>
+          <div class="custom-input-wrap">
+            <input type="date" [(ngModel)]="novaMeta.dataFim" />
+          </div>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn-confirmar" (click)="adicionarMeta()">Adicionar meta</button>
+        </div>
       </div>
     </div>
 
-    <div class="btn-container">
-      <button class="btn-confirmar" (click)="adicionarMeta()">
-        Adicionar meta
+    <!-- Estado vazio -->
+    <div class="vazio" *ngIf="!carregando && metas.length === 0">
+      <img src="../assets/alegre.png" alt="" />
+      <h3>Nenhuma meta ainda</h3>
+      <p>Crie a primeira e guarde um pouquinho de cada vez. Suas escolhas ecoam no tempo.</p>
+      <button type="button" class="btn-guardar" *ngIf="!formAberto" (click)="formAberto = true">
+        Criar primeira meta
       </button>
     </div>
-  </div>
 
-  <!-- Metas Favoritas -->
-  <div class="section-divider" *ngIf="metasFavoritas.length > 0">
-    <h3>Favoritas ({{ metasFavoritas.length }})</h3>
-  </div>
+    <!-- Favoritas -->
+    <div class="section-divider" *ngIf="metasFavoritas.length > 0">
+      <h3>Favoritas ({{ metasFavoritas.length }})</h3>
+    </div>
+    <ng-container *ngFor="let meta of metasFavoritas; trackBy: trackMeta">
+      <ng-container *ngTemplateOutlet="cardMeta; context: { $implicit: meta }"></ng-container>
+    </ng-container>
 
-  <div class="blob-card goal-card" *ngFor="let meta of metasFavoritas">
-    <h2>Meta em andamento</h2>
+    <!-- Pendentes -->
+    <div class="section-divider" *ngIf="metasOutras.length > 0">
+      <h3>Pendentes ({{ metasOutras.length }})</h3>
+    </div>
+    <ng-container *ngFor="let meta of metasOutras; trackBy: trackMeta">
+      <ng-container *ngTemplateOutlet="cardMeta; context: { $implicit: meta }"></ng-container>
+    </ng-container>
+
+    <!-- Concluídas -->
+    <div class="section-divider" *ngIf="metasConcluidas.length > 0">
+      <h3>Concluídas ({{ metasConcluidas.length }})</h3>
+    </div>
+    <ng-container *ngFor="let meta of metasConcluidas; trackBy: trackMeta">
+      <ng-container *ngTemplateOutlet="cardMeta; context: { $implicit: meta }"></ng-container>
+    </ng-container>
+  </div>
+</ion-content>
+
+<!-- Card de meta (usado nas três seções) -->
+<ng-template #cardMeta let-meta>
+  <div class="blob-card goal-card" [class.completed-card]="meta.concluida">
+    <h2>{{ meta.concluida ? 'Meta alcançada 🎉' : 'Meta em andamento' }}</h2>
 
     <div class="goal-title-row">
       <div class="custom-input-wrap title-pill">
-        <span>{{ meta.nome }}</span>
+        <span class="meta-icone">{{ meta.icone || '🎯' }}</span>
+        <span class="meta-nome">{{ meta.nome }}</span>
       </div>
 
       <div class="action-icons">
-        <ion-icon 
-          [name]="meta.favorita ? 'heart' : 'heart-outline'" 
-          [style.color]="meta.favorita ? '#ff4d4d' : '#ffffff'"
-          (click)="favoritar(meta)">
-        </ion-icon>
-        <ion-icon name="remove-circle-outline" (click)="excluirMeta(meta)"></ion-icon>
-        <ion-icon
-          name="square-outline"
-          (click)="marcarConcluida(meta)">
-        </ion-icon>
+        <button
+          type="button"
+          class="icon-btn"
+          [attr.aria-label]="meta.favorita ? 'Remover dos favoritos' : 'Favoritar'"
+          (click)="favoritar(meta)"
+        >
+          <ion-icon
+            [name]="meta.favorita ? 'heart' : 'heart-outline'"
+            [style.color]="meta.favorita ? '#ff4d4d' : '#ffffff'"
+          ></ion-icon>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Editar meta" (click)="editarMeta(meta)">
+          <ion-icon name="create-outline"></ion-icon>
+        </button>
+        <button type="button" class="icon-btn" aria-label="Excluir meta" (click)="excluirMeta(meta)">
+          <ion-icon name="remove-circle-outline"></ion-icon>
+        </button>
+        <button
+          type="button"
+          class="icon-btn"
+          [attr.aria-label]="meta.concluida ? 'Reabrir meta' : 'Marcar como concluída'"
+          (click)="marcarConcluida(meta)"
+        >
+          <ion-icon [name]="meta.concluida ? 'checkbox-outline' : 'square-outline'"></ion-icon>
+        </button>
       </div>
     </div>
 
-    <div class="row-value">
-      <span class="label-text">Economizado:</span>
-      <div class="custom-input-wrap value-pill">
-        <span>R$ {{ formatarMoeda(meta.valor_atual || 0) }} de R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
-      </div>
-    </div>
-
-    <div class="progress-bar-container">
-      <div class="progress-bar-fill" [style.width.%]="meta.progresso || 0"></div>
-    </div>
-    <div class="progress-label">
-      <span>{{ meta.progresso || 0 }}% concluído</span>
-    </div>
-
-    <div class="row-value" *ngIf="meta.data_fim">
-      <span class="label-text">Data limite:</span>
-      <div class="custom-input-wrap value-pill date-pill-container">
-        <span>{{ formatarData(meta.data_fim) }}</span>
-        <span 
-          class="days-badge" 
-          [class.expired]="calcularDiasRestantes(meta.data_fim).expirado">
-          <ion-icon name="time-outline"></ion-icon>
-          {{ calcularDiasRestantes(meta.data_fim).texto }}
-        </span>
-      </div>
-    </div>
-
-    <div class="aporte-container">
-      <button type="button" class="btn-guardar" (click)="solicitarAporte(meta)">
-        <ion-icon name="wallet-outline"></ion-icon>
-        + Guardar valor
-      </button>
-    </div>
-  </div>
-
-  <!-- Metas Pendentes -->
-  <div class="section-divider" *ngIf="metasOutras.length > 0">
-    <h3>Pendentes ({{ metasOutras.length }})</h3>
-  </div>
-
-  <div class="blob-card goal-card" *ngFor="let meta of metasOutras">
-    <h2>Meta em andamento</h2>
-
-    <div class="goal-title-row">
-      <div class="custom-input-wrap title-pill">
-        <span>{{ meta.nome }}</span>
+    <!-- Em andamento -->
+    <ng-container *ngIf="!meta.concluida">
+      <div class="row-value">
+        <span class="label-text">Economizado:</span>
+        <div class="custom-input-wrap value-pill">
+          <span>R$ {{ formatarMoeda(meta.valor_atual || 0) }} de R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
+        </div>
       </div>
 
-      <div class="action-icons">
-        <ion-icon 
-          [name]="meta.favorita ? 'heart' : 'heart-outline'" 
-          [style.color]="meta.favorita ? '#ff4d4d' : '#ffffff'"
-          (click)="favoritar(meta)">
-        </ion-icon>
-        <ion-icon name="remove-circle-outline" (click)="excluirMeta(meta)"></ion-icon>
-        <ion-icon
-          name="square-outline"
-          (click)="marcarConcluida(meta)">
-        </ion-icon>
+      <div class="progress-bar-container">
+        <div
+          class="progress-bar-fill"
+          [ngClass]="'status-' + statusMeta(meta)"
+          [style.width.%]="meta.progresso || 0"
+        ></div>
       </div>
-    </div>
-
-    <div class="row-value">
-      <span class="label-text">Economizado:</span>
-      <div class="custom-input-wrap value-pill">
-        <span>R$ {{ formatarMoeda(meta.valor_atual || 0) }} de R$ {{ formatarMoeda(meta.valor_alvo) }}</span>
+      <div class="progress-label">
+        <span class="marco">{{ marco(meta) }}</span>
+        <span>{{ meta.progresso || 0 }}% concluído</span>
       </div>
-    </div>
+    </ng-container>
 
-    <div class="progress-bar-container">
-      <div class="progress-bar-fill" [style.width.%]="meta.progresso || 0"></div>
-    </div>
-    <div class="progress-label">
-      <span>{{ meta.progresso || 0 }}% concluído</span>
-    </div>
-
-    <div class="row-value" *ngIf="meta.data_fim">
-      <span class="label-text">Data limite:</span>
-      <div class="custom-input-wrap value-pill date-pill-container">
-        <span>{{ formatarData(meta.data_fim) }}</span>
-        <span 
-          class="days-badge" 
-          [class.expired]="calcularDiasRestantes(meta.data_fim).expirado">
-          <ion-icon name="time-outline"></ion-icon>
-          {{ calcularDiasRestantes(meta.data_fim).texto }}
-        </span>
-      </div>
-    </div>
-
-    <div class="aporte-container">
-      <button type="button" class="btn-guardar" (click)="solicitarAporte(meta)">
-        <ion-icon name="wallet-outline"></ion-icon>
-        + Guardar valor
-      </button>
-    </div>
-  </div>
-
-  <!-- Metas Concluídas -->
-  <div class="section-divider" *ngIf="metasConcluidas.length > 0">
-    <h3>Concluídas ({{ metasConcluidas.length }})</h3>
-  </div>
-
-  <div class="blob-card goal-card completed-card" *ngFor="let meta of metasConcluidas">
-    <h2>Meta alcançada 🎉</h2>
-
-    <div class="goal-title-row">
-      <div class="custom-input-wrap title-pill">
-        <span>{{ meta.nome }}</span>
-      </div>
-
-      <div class="action-icons">
-        <ion-icon 
-          [name]="meta.favorita ? 'heart' : 'heart-outline'" 
-          [style.color]="meta.favorita ? '#ff4d4d' : '#ffffff'"
-          (click)="favoritar(meta)">
-        </ion-icon>
-        <ion-icon name="remove-circle-outline" (click)="excluirMeta(meta)"></ion-icon>
-        <ion-icon
-          name="checkbox-outline"
-          (click)="marcarConcluida(meta)">
-        </ion-icon>
-      </div>
-    </div>
-
-    <div class="row-value">
+    <!-- Concluída -->
+    <div class="row-value" *ngIf="meta.concluida">
       <span class="label-text">Valor da meta:</span>
       <div class="custom-input-wrap value-pill">
         <span>R$ {{ formatarMoeda(meta.valor_alvo) }} (100%)</span>
@@ -196,10 +222,68 @@
 
     <div class="row-value" *ngIf="meta.data_fim">
       <span class="label-text">Data limite:</span>
-      <div class="custom-input-wrap value-pill">
+      <div class="custom-input-wrap value-pill date-pill-container">
         <span>{{ formatarData(meta.data_fim) }}</span>
+        <span
+          *ngIf="!meta.concluida"
+          class="days-badge"
+          [class.expired]="calcularDiasRestantes(meta.data_fim).expirado"
+        >
+          <ion-icon name="time-outline"></ion-icon>
+          {{ calcularDiasRestantes(meta.data_fim).texto }}
+        </span>
       </div>
     </div>
+
+    <p class="dica" *ngIf="sugestaoMensal(meta) as dica">
+      <ion-icon name="bulb-outline"></ion-icon>
+      <span>{{ dica }}</span>
+    </p>
+
+    <p class="sync-aviso" *ngIf="meta.pendente_sync">
+      <ion-icon name="cloud-offline-outline"></ion-icon>
+      <span>Salva só neste aparelho.</span>
+      <button type="button" (click)="tentarSincronizar(meta)">Tentar de novo</button>
+    </p>
+
+    <div class="aporte-container">
+      <button type="button" class="btn-secundario" (click)="alternarHistorico(meta)">
+        <ion-icon name="list-outline"></ion-icon>
+        Histórico
+      </button>
+
+      <div class="aporte-acoes" *ngIf="!meta.concluida">
+        <button
+          type="button"
+          class="btn-secundario"
+          *ngIf="(meta.valor_atual || 0) > 0"
+          (click)="solicitarRetirada(meta)"
+        >
+          <ion-icon name="remove-outline"></ion-icon>
+          Retirar
+        </button>
+        <button type="button" class="btn-guardar" (click)="solicitarAporte(meta)">
+          <ion-icon name="wallet-outline"></ion-icon>
+          + Guardar valor
+        </button>
+      </div>
+    </div>
+
+    <!-- Histórico de aportes -->
+    <div class="historico" *ngIf="historicoMetaId === meta.id_meta">
+      <p class="historico-vazio" *ngIf="carregandoHistorico">Carregando...</p>
+      <p class="historico-vazio" *ngIf="!carregandoHistorico && historico.length === 0">
+        Nenhum valor guardado ainda.
+      </p>
+      <ul *ngIf="historico.length > 0">
+        <li *ngFor="let a of historico">
+          <div class="h-info">
+            <span class="h-titulo">{{ tituloAporte(a) }}</span>
+            <span class="h-data">{{ formatarDataHora(a.criado_em) }}</span>
+          </div>
+          <strong class="h-valor" [class.negativo]="valorNegativo(a)">{{ valorAporteTexto(a) }}</strong>
+        </li>
+      </ul>
+    </div>
   </div>
-  </div>
-</ion-content>
+</ng-template>

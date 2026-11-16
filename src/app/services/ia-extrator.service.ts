@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { OPENROUTER_KEY } from '../iaecoa/segredo';
 
 export interface DadosTransacaoVoz {
   descricao: string;
@@ -14,7 +15,7 @@ export interface DadosTransacaoVoz {
 })
 export class IaExtratorService {
   private readonly OPENROUTER_API_KEY =
-    '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';
+    'OPENROUTER_KEY';
 
   readonly categoriasPermitidas = [
     'Alimentação',

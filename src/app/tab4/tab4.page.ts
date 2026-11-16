@@ -1,125 +1,146 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
-import { AlertController } from '@ionic/angular/lazy';
+import { Component, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { AlertController, ToastController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
 import { NotificacaoService } from '../services/notificacao.service';
+
+export type TipoAporte = 'deposito' | 'retirada' | 'ajuste';
+
+export interface Aporte {
+  id_aporte?: string;
+  id_meta: string;
+  valor: number;
+  tipo: TipoAporte;
+  criado_em: string;
+}
+
 export interface Meta {
   id_meta?: string;
   id_usuario?: string;
   nome: string;
+  icone?: string;
   valor_alvo?: number;
-  valor_meta?: number;
   valor_atual?: number;
   progresso?: number;
   data_fim?: string;
-  data_alvo?: string;
   concluida?: boolean;
   favorita?: boolean;
   status?: string;
+  /** true = ainda não foi salva no Supabase (só existe neste aparelho) */
+  pendente_sync?: boolean;
 }
+
+export interface ResumoMetas {
+  totalGuardado: number;
+  ativas: number;
+  atrasadas: number;
+  concluidas: number;
+  mensagem: string;
+}
+
+export type StatusMeta = 'ok' | 'warn' | 'late';
+
+export interface InsightGastos {
+  total: number;
+  texto: string;
+}
+
+// Humores que contam como "gasto emocional" (alegria fica de fora)
+const HUMORES_EMOCIONAIS = ['ansiedade', 'tedio', 'raiva', 'tristeza'];
+const NOMES_HUMOR: Record<string, string> = {
+  ansiedade: 'ansiedade',
+  tedio: 'tédio',
+  raiva: 'raiva',
+  tristeza: 'tristeza',
+};
+
+interface Confete {
+  left: number;
+  delay: number;
+  dur: number;
+  cor: string;
+}
+
 @Component({
   selector: 'app-tab4',
   templateUrl: './tab4.page.html',
   styleUrls: ['./tab4.page.scss'],
   standalone: false,
 })
-export class Tab4Page implements OnInit {
+export class Tab4Page implements OnDestroy {
+  readonly icones = ['🎯', '✈️', '📱', '🏠', '🚗', '🎓', '🛟', '🎁', '💻', '🎮'];
+
   novaMeta = {
     nome: '',
     valor: null as number | null,
     dataFim: '',
+    icone: '🎯',
   };
-  metas: Meta[] = [];
+
+  formAberto = false;
   carregando = false;
+
+  // Listas derivadas (recalculadas sempre que `metas` é atribuído)
+  metasFavoritas: Meta[] = [];
+  metasOutras: Meta[] = [];
+  metasConcluidas: Meta[] = [];
+  resumo: ResumoMetas = {
+    totalGuardado: 0,
+    ativas: 0,
+    atrasadas: 0,
+    concluidas: 0,
+    mensagem: '',
+  };
+
+  // Ligação com os gastos (tela de gastos / tabela movimentacao)
+  insightGastos: InsightGastos | null = null;
+  private gastosEmocionais: { total: number; humor: string | null; valorHumor: number } | null = null;
+
+  // Histórico de aportes (um card aberto por vez)
+  historicoMetaId: string | null = null;
+  historico: Aporte[] = [];
+  carregandoHistorico = false;
+
+  // Confete ao concluir uma meta
+  confetes: Confete[] = [];
+  private confeteTimer: any;
+
+  private _metas: Meta[] = [];
+  private primeiraCarga = true;
+  private sincronizando = new Set<string>();
+
   constructor(
     private supabaseService: SupabaseService,
-    private router: Router,
     private alertCtrl: AlertController,
+    private toastCtrl: ToastController,
     private notificacaoService: NotificacaoService,
     private cdr: ChangeDetectorRef
   ) {}
-  ngOnInit() {
-    this.carregarMetas();
+
+  get metas(): Meta[] {
+    return this._metas;
   }
+
+  set metas(valor: Meta[]) {
+    this._metas = valor || [];
+    this.recalcular();
+  }
+
   ionViewWillEnter() {
     this.carregarMetas();
   }
-  private async getActiveUserId(): Promise<string | null> {
-    try {
-      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
-      let user: any = sessionData?.session?.user;
-      if (!user) {
-        user = await this.supabaseService.getCurrentUser();
-      }
-      if (!user) {
-        return null;
-      }
-      return user.id;
-    } catch {
-      return null;
-    }
+
+  ngOnDestroy() {
+    clearTimeout(this.confeteTimer);
   }
-  private async salvarMetas(userId?: string) {
-    let id = userId;
-    if (!id) {
-      id = (await this.getActiveUserId()) || undefined;
-    }
-    if (id) {
-      localStorage.setItem(`metas_${id}`, JSON.stringify(this.metas));
-    }
-    try {
-      await this.supabaseService.client.auth.updateUser({
-        data: { metas: this.metas }
-      });
-    } catch {}
+
+  trackMeta(_: number, meta: Meta) {
+    return meta.id_meta;
   }
-  async carregarMetas() {
-    this.carregando = true;
-    const { data: sessionData } = await this.supabaseService.client.auth.getSession();
-    let user: any = sessionData?.session?.user;
-    if (!user) {
-      user = await this.supabaseService.getCurrentUser();
-    }
-    if (!user) {
-      this.carregando = false;
-      this.cdr.detectChanges();
-      return;
-    }
-    let metasCarregadas: Meta[] = [];
-    try {
-      const { data, error } = await this.supabaseService.client
-        .from('meta')
-        .select('*')
-        .eq('id_usuario', user.id)
-        .is('deletado_em', null);
-      if (!error && data && data.length > 0) {
-        metasCarregadas = data.map((m: any) => ({
-          ...m,
-          valor_alvo: Number(m.valor_alvo || m.valor_meta) || 0,
-          valor_atual: Number(m.valor_atual) || 0,
-          progresso: m.progresso !== undefined && m.progresso !== null 
-            ? Number(m.progresso) 
-            : Math.min(100, Math.round(((Number(m.valor_atual) || 0) / (Number(m.valor_alvo || m.valor_meta) || 1)) * 100)),
-        }));
-      }
-    } catch {}
-    if (metasCarregadas.length === 0) {
-      const metadata = user.user_metadata?.['metas'];
-      if (Array.isArray(metadata) && metadata.length > 0) {
-        metasCarregadas = metadata;
-      } else {
-        const local = localStorage.getItem(`metas_${user.id}`);
-        if (local) {
-          try {
-            metasCarregadas = JSON.parse(local);
-          } catch {}
-        }
-      }
-    }
-    this.metas = metasCarregadas;
-    this.carregando = false;
-    this.cdr.detectChanges();
-  }
+
+  // ---------------------------------------------------------------------------
+  // Derivados: listas por categoria + resumo do topo
+  // ---------------------------------------------------------------------------
+
   private ordenarPorData(a: Meta, b: Meta): number {
     if (a.data_fim && b.data_fim) {
       return new Date(a.data_fim).getTime() - new Date(b.data_fim).getTime();
@@ -128,82 +149,416 @@ export class Tab4Page implements OnInit {
     if (b.data_fim) return 1;
     return 0;
   }
-  get metasFavoritas(): Meta[] {
-    return this.metas
+
+  private recalcular() {
+    const lista = this._metas;
+    this.metasFavoritas = lista
       .filter((m) => !m.concluida && m.favorita)
       .sort(this.ordenarPorData);
-  }
-  get metasOutras(): Meta[] {
-    return this.metas
+    this.metasOutras = lista
       .filter((m) => !m.concluida && !m.favorita)
       .sort(this.ordenarPorData);
+    this.metasConcluidas = lista.filter((m) => m.concluida);
+
+    const ativas = lista.filter((m) => !m.concluida);
+    const atrasadas = ativas.filter((m) => (this.diasAteData(m.data_fim) ?? 0) < 0);
+    const totalGuardado = lista.reduce(
+      (soma, m) =>
+        soma + (m.concluida ? Math.max(m.valor_atual || 0, m.valor_alvo || 0) : m.valor_atual || 0),
+      0
+    );
+
+    this.resumo = {
+      totalGuardado,
+      ativas: ativas.length,
+      atrasadas: atrasadas.length,
+      concluidas: this.metasConcluidas.length,
+      mensagem: this.mensagemMascote(ativas, atrasadas.length, this.metasConcluidas.length),
+    };
+    this.atualizarInsight();
   }
-  get metasConcluidas(): Meta[] {
-    return this.metas.filter((m) => m.concluida);
+
+  /** Busca os gastos do mês feitos em momentos de ansiedade, tédio, raiva ou tristeza. */
+  private async carregarGastoEmocional(userId: string) {
+    const hoje = new Date();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const inicio = `${hoje.getFullYear()}-${mes}-01`;
+    const seguinte = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+    const fim = `${seguinte.getFullYear()}-${String(seguinte.getMonth() + 1).padStart(2, '0')}-01`;
+
+    try {
+      const { data, error } = await this.supabaseService.client
+        .from('movimentacao')
+        .select('valor, humor')
+        .eq('id_usuario', userId)
+        .eq('tipo', 'despesa')
+        .is('deletado_em', null)
+        .in('humor', HUMORES_EMOCIONAIS)
+        .gte('data_transacao', inicio)
+        .lt('data_transacao', fim);
+
+      if (error) {
+        console.warn('Não foi possível carregar gastos emocionais:', error.message);
+        return;
+      }
+
+      const porHumor = new Map<string, number>();
+      let total = 0;
+      (data || []).forEach((g: any) => {
+        const valor = Number(g.valor) || 0;
+        total += valor;
+        porHumor.set(g.humor, (porHumor.get(g.humor) || 0) + valor);
+      });
+
+      let humor: string | null = null;
+      let valorHumor = 0;
+      porHumor.forEach((v, h) => {
+        if (v > valorHumor) {
+          humor = h;
+          valorHumor = v;
+        }
+      });
+
+      this.gastosEmocionais = { total, humor, valorHumor };
+      this.atualizarInsight();
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.warn('Não foi possível carregar gastos emocionais:', e);
+    }
   }
+
+  private atualizarInsight() {
+    const g = this.gastosEmocionais;
+    const ref = [...this.metasFavoritas, ...this.metasOutras].find(
+      (m) => (m.valor_alvo || 0) - (m.valor_atual || 0) > 0
+    );
+    if (!g || !ref) {
+      this.insightGastos = null;
+      return;
+    }
+    if (g.total <= 0) {
+      this.insightGastos = {
+        total: 0,
+        texto: 'Nenhum gasto por impulso emocional neste mês. Continue assim!',
+      };
+      return;
+    }
+
+    const falta = (ref.valor_alvo || 0) - (ref.valor_atual || 0);
+    const pct = Math.round((g.total / falta) * 100);
+    const comparacao =
+      pct >= 100
+        ? `Esse valor seria suficiente para completar "${ref.nome}".`
+        : `Isso equivale a ${pct}% do que falta para "${ref.nome}".`;
+    const origem = g.humor
+      ? ` O maior peso veio de momentos de ${NOMES_HUMOR[g.humor] ?? g.humor} (R$ ${this.formatarMoeda(g.valorHumor)}).`
+      : '';
+    this.insightGastos = { total: g.total, texto: comparacao + origem };
+  }
+
+  private mensagemMascote(ativas: Meta[], atrasadas: number, concluidas: number): string {
+    if (atrasadas > 0) {
+      return atrasadas === 1
+        ? 'Uma meta passou do prazo. Guarde um valor hoje ou ajuste a data.'
+        : `${atrasadas} metas passaram do prazo. Guarde um valor hoje ou ajuste as datas.`;
+    }
+    if (ativas.length === 0) {
+      return concluidas > 0
+        ? 'Todas as metas alcançadas! Que tal criar a próxima?'
+        : 'Crie sua primeira meta.';
+    }
+    const maior = ativas.reduce((a, b) => ((b.progresso || 0) > (a.progresso || 0) ? b : a));
+    const p = maior.progresso || 0;
+    const falta = Math.max(0, (maior.valor_alvo || 0) - (maior.valor_atual || 0));
+    if (p >= 75) return `"${maior.nome}" está quase lá: faltam R$ ${this.formatarMoeda(falta)}.`;
+    if (p >= 50) return `Metade do caminho em "${maior.nome}". Continue assim!`;
+    if (p >= 25) return `Bom começo em "${maior.nome}". Cada valor guardado conta.`;
+    return 'Guardar um pouquinho de cada vez já faz diferença.';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Usuário, cache local e carregamento
+  // ---------------------------------------------------------------------------
+
+  private async getActiveUserId(): Promise<string | null> {
+    try {
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
+      if (!user) {
+        user = await this.supabaseService.getCurrentUser();
+      }
+      return user ? user.id : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizarMeta(m: any): Meta {
+    const alvo = Number(m.valor_alvo ?? m.valor_meta) || 0;
+    const atual = Number(m.valor_atual) || 0;
+    return {
+      id_meta: m.id_meta,
+      id_usuario: m.id_usuario,
+      nome: m.nome || '',
+      icone: m.icone || undefined,
+      valor_alvo: alvo,
+      valor_atual: atual,
+      progresso: this.calcProgresso(atual, alvo),
+      data_fim: m.data_fim ?? m.data_alvo ?? undefined,
+      concluida: !!m.concluida,
+      favorita: !!m.favorita,
+      status: m.status || (m.concluida ? 'concluida' : 'ativa'),
+      pendente_sync: !!m.pendente_sync,
+    };
+  }
+
+  private calcProgresso(atual: number, alvo: number): number {
+    return alvo > 0 ? Math.min(100, Math.round((atual / alvo) * 100)) : 0;
+  }
+
+  private lerCache(userId: string): Meta[] {
+    try {
+      const raw = localStorage.getItem(`metas_${userId}`);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.map((m) => this.normalizarMeta(m)) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private async salvarCache(userId?: string) {
+    const id = userId || (await this.getActiveUserId());
+    if (!id) return;
+    try {
+      localStorage.setItem(`metas_${id}`, JSON.stringify(this.metas));
+    } catch (e) {
+      console.error('Erro ao salvar cache de metas:', e);
+    }
+  }
+
+  async carregarMetas() {
+    if (this.carregando || this.sincronizando.size > 0) return;
+    this.carregando = true;
+
+    try {
+      const userId = await this.getActiveUserId();
+      if (!userId) return;
+
+      const locais = this.lerCache(userId);
+      let remotas: Meta[] | null = null;
+
+      try {
+        const { data, error } = await this.supabaseService.client
+          .from('meta')
+          .select('*')
+          .eq('id_usuario', userId)
+          .is('deletado_em', null);
+
+        if (error) {
+          console.error('Erro ao carregar metas:', error.message);
+        } else {
+          remotas = (data || []).map((m: any) => this.normalizarMeta(m));
+        }
+      } catch (e) {
+        console.error('Erro ao carregar metas:', e);
+      }
+
+      if (remotas) {
+        // Metas que só existem no aparelho (criadas offline ou com falha no insert)
+        const pendentes = locais
+          .filter(
+            (m) =>
+              !remotas!.some((r) => r.id_meta === m.id_meta) &&
+              (m.pendente_sync || remotas!.length === 0)
+          )
+          .map((m) => ({ ...m, pendente_sync: true }));
+        this.metas = [...remotas, ...pendentes];
+      } else {
+        this.metas = locais;
+      }
+
+      if (this.primeiraCarga) {
+        this.formAberto = this.metas.length === 0;
+        this.primeiraCarga = false;
+      }
+      await this.salvarCache(userId);
+      this.carregarGastoEmocional(userId);
+    } finally {
+      this.carregando = false;
+      this.cdr.detectChanges();
+    }
+
+    this.sincronizarPendentes();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sincronização com o Supabase
+  // ---------------------------------------------------------------------------
+
+  private async sincronizarPendentes() {
+    for (const meta of this.metas.filter((m) => m.pendente_sync)) {
+      await this.enviarNovaMeta(meta);
+    }
+  }
+
+  async tentarSincronizar(meta: Meta) {
+    const ok = await this.enviarNovaMeta(meta);
+    this.avisar(
+      ok ? 'Meta salva online.' : 'Ainda não deu para salvar online. Verifique a conexão.',
+      ok ? 'success' : 'warning'
+    );
+  }
+
+  /** Insere a meta no Supabase com o estado atual. Retorna true se deu certo. */
+  private async enviarNovaMeta(meta: Meta, userId?: string): Promise<boolean> {
+    const idLocal = meta.id_meta;
+    if (!idLocal || this.sincronizando.has(idLocal)) return false;
+    const uid = userId || (await this.getActiveUserId());
+    if (!uid) return false;
+
+    this.sincronizando.add(idLocal);
+    try {
+      const base = {
+        id_usuario: uid,
+        nome: meta.nome,
+        valor_alvo: meta.valor_alvo,
+        data_fim: meta.data_fim || null,
+        favorita: !!meta.favorita,
+        concluida: !!meta.concluida,
+        valor_atual: meta.valor_atual || 0,
+        progresso: meta.progresso || 0,
+        status: meta.status || 'ativa',
+      };
+
+      let res = await this.supabaseService.client
+        .from('meta')
+        .insert({ ...base, icone: meta.icone || null })
+        .select()
+        .single();
+
+      // Se a coluna "icone" ainda não existe no banco, tenta sem ela
+      if (res.error) {
+        res = await this.supabaseService.client.from('meta').insert(base).select().single();
+      }
+
+      if (res.error || !res.data) {
+        console.error('Erro ao salvar meta:', res.error?.message);
+        return false;
+      }
+
+      meta.id_meta = res.data.id_meta;
+      meta.id_usuario = uid;
+      meta.pendente_sync = false;
+      await this.migrarAportes(uid, idLocal, meta.id_meta as string);
+      await this.salvarCache(uid);
+      this.cdr.detectChanges();
+      return true;
+    } catch (e) {
+      console.error('Erro ao salvar meta:', e);
+      return false;
+    } finally {
+      this.sincronizando.delete(idLocal);
+    }
+  }
+
+  /** Atualiza campos no Supabase. Se a meta ainda não existe lá, tenta criá-la. */
+  private async persistirRemoto(
+    meta: Meta,
+    campos: Record<string, any>
+  ): Promise<'ok' | 'pendente' | 'erro'> {
+    if (!meta.id_meta) return 'erro';
+    if (meta.pendente_sync) {
+      return (await this.enviarNovaMeta(meta)) ? 'ok' : 'pendente';
+    }
+    try {
+      const { error } = await this.supabaseService.client
+        .from('meta')
+        .update(campos)
+        .eq('id_meta', meta.id_meta);
+      if (error) {
+        console.error('Erro ao atualizar meta:', error.message);
+        return 'erro';
+      }
+      return 'ok';
+    } catch (e) {
+      console.error('Erro ao atualizar meta:', e);
+      return 'erro';
+    }
+  }
+
+  private async salvarAlteracao(meta: Meta, campos: Record<string, any>) {
+    this.metas = [...this.metas];
+    this.cdr.detectChanges();
+    await this.salvarCache();
+    const resultado = await this.persistirRemoto(meta, campos);
+    if (resultado === 'erro') {
+      this.avisar('Não foi possível salvar online. Verifique a conexão e tente de novo.');
+    }
+    this.cdr.detectChanges();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Criar meta
+  // ---------------------------------------------------------------------------
+
   async adicionarMeta() {
-    if (!this.novaMeta.nome || !this.novaMeta.valor) return;
+    const nome = this.novaMeta.nome.trim();
+    const valor = Number(this.novaMeta.valor);
+    if (!nome || !(valor > 0)) {
+      this.avisar('Informe o nome da meta e um valor maior que zero.');
+      return;
+    }
     const userId = await this.getActiveUserId();
-    if (!userId) return;
+    if (!userId) {
+      this.avisar('Entre na sua conta para criar metas.');
+      return;
+    }
+
     const nova: Meta = {
-      id_meta: Date.now().toString(),
+      id_meta: `local_${Date.now()}`,
       id_usuario: userId,
-      nome: this.novaMeta.nome.trim(),
-      valor_alvo: Number(this.novaMeta.valor),
+      nome,
+      icone: this.novaMeta.icone,
+      valor_alvo: valor,
       data_fim: this.novaMeta.dataFim || undefined,
       favorita: false,
       concluida: false,
       valor_atual: 0,
       progresso: 0,
       status: 'ativa',
+      pendente_sync: true,
     };
+
     this.metas = [...this.metas, nova];
-    this.novaMeta = { nome: '', valor: null, dataFim: '' };
+    this.novaMeta = { nome: '', valor: null, dataFim: '', icone: '🎯' };
+    this.formAberto = false;
     this.cdr.detectChanges();
-    try {
-      const { data, error } = await this.supabaseService.client
-        .from('meta')
-        .insert({
-          id_usuario: userId,
-          nome: nova.nome,
-          valor_alvo: nova.valor_alvo,
-          data_fim: nova.data_fim || null,
-          favorita: false,
-          concluida: false,
-          valor_atual: 0,
-          progresso: 0,
-          status: 'ativa',
-        })
-        .select()
-        .single();
-      if (!error && data) {
-        nova.id_meta = data.id_meta;
-      }
-    } catch {}
-    await this.salvarMetas(userId);
+    await this.salvarCache(userId);
+
+    const ok = await this.enviarNovaMeta(nova, userId);
+    if (!ok) {
+      this.avisar('Meta salva neste aparelho. Vamos tentar salvar online de novo depois.');
+    }
     this.cdr.detectChanges();
   }
+
+  // ---------------------------------------------------------------------------
+  // Guardar e retirar valores
+  // ---------------------------------------------------------------------------
+
   async solicitarAporte(meta: Meta) {
     if (!meta.id_meta) return;
     const alert = await this.alertCtrl.create({
-      header: 'Guardar Dinheiro',
+      header: 'Guardar dinheiro',
       subHeader: meta.nome,
-      message: `Meta alvo: R$ ${this.formatarMoeda(meta.valor_alvo)} | Já guardado: R$ ${this.formatarMoeda(meta.valor_atual || 0)}`,
+      message: `Meta: R$ ${this.formatarMoeda(meta.valor_alvo)} | Já guardado: R$ ${this.formatarMoeda(meta.valor_atual || 0)}`,
       inputs: [
-        {
-          name: 'valor',
-          type: 'number',
-          placeholder: 'Quanto deseja guardar? (R$)',
-          min: 1,
-        },
+        { name: 'valor', type: 'number', placeholder: 'Quanto deseja guardar? (R$)', min: 1 },
       ],
       buttons: [
+        { text: 'Cancelar', role: 'cancel' },
         {
-          text: 'Cancelar',
-          role: 'cancel',
-        },
-        {
-          text: 'Confirmar',
+          text: 'Guardar',
           handler: (data) => {
             const valor = parseFloat(data.valor);
             if (!isNaN(valor) && valor > 0) {
@@ -215,96 +570,468 @@ export class Tab4Page implements OnInit {
     });
     await alert.present();
   }
+
   async adicionarAporte(meta: Meta, valorAporte: number) {
     if (!meta.id_meta) return;
-    const valorAlvo = meta.valor_alvo || 1;
+
+    const alvo = meta.valor_alvo || 0;
+    const jaConcluida = !!meta.concluida;
     const novoValorAtual = Number(meta.valor_atual || 0) + Number(valorAporte);
-    const progresso = Math.min(100, Math.round((novoValorAtual / valorAlvo) * 100));
-    const alcancada = novoValorAtual >= (meta.valor_alvo || 0);
+    const alcancada = alvo > 0 && novoValorAtual >= alvo;
+
     meta.valor_atual = novoValorAtual;
-    meta.progresso = progresso;
+    meta.progresso = this.calcProgresso(novoValorAtual, alvo);
     if (alcancada) {
       meta.concluida = true;
       meta.status = 'concluida';
+    }
+
+    await this.registrarAporte(meta, valorAporte, 'deposito');
+
+    if (alcancada && !jaConcluida) {
+      this.dispararConfete();
       this.notificacaoService.criarNotificacao({
         titulo: 'Meta Concluída! 🎯',
-        mensagem: `Parabéns! Você alcançou 100% da sua meta "${meta.nome}" (R$ ${this.formatarMoeda(meta.valor_alvo)}).`,
+        mensagem: `Parabéns! Você alcançou 100% da sua meta "${meta.nome}" (R$ ${this.formatarMoeda(alvo)}).`,
         tipo: 'meta',
         link: '/tabs/tab4',
       });
     }
-    this.metas = [...this.metas];
-    this.cdr.detectChanges();
+
+    await this.salvarAlteracao(meta, {
+      valor_atual: novoValorAtual,
+      progresso: meta.progresso,
+      concluida: !!meta.concluida,
+      status: meta.status || 'ativa',
+      atualizado_em: new Date().toISOString(),
+    });
+  }
+
+  async solicitarRetirada(meta: Meta) {
+    if (!meta.id_meta) return;
+    const guardado = meta.valor_atual || 0;
+    if (guardado <= 0) {
+      this.avisar('Essa meta ainda não tem valor guardado.');
+      return;
+    }
+    const alert = await this.alertCtrl.create({
+      header: 'Retirar dinheiro',
+      subHeader: meta.nome,
+      message: `Guardado agora: R$ ${this.formatarMoeda(guardado)}`,
+      inputs: [
+        { name: 'valor', type: 'number', placeholder: 'Quanto deseja retirar? (R$)', min: 1 },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Retirar',
+          handler: (data) => {
+            const valor = parseFloat(data.valor);
+            if (isNaN(valor) || valor <= 0) {
+              this.avisar('Informe um valor maior que zero.');
+              return false;
+            }
+            if (valor > guardado) {
+              this.avisar(`Você só tem R$ ${this.formatarMoeda(guardado)} guardados nessa meta.`);
+              return false;
+            }
+            this.retirarValor(meta, valor);
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async retirarValor(meta: Meta, valor: number) {
+    const alvo = meta.valor_alvo || 0;
+    const novoValorAtual = Math.max(0, Number(meta.valor_atual || 0) - valor);
+
+    meta.valor_atual = novoValorAtual;
+    meta.progresso = this.calcProgresso(novoValorAtual, alvo);
+    if (meta.concluida && novoValorAtual < alvo) {
+      meta.concluida = false;
+      meta.status = 'ativa';
+    }
+
+    await this.registrarAporte(meta, valor, 'retirada');
+    await this.salvarAlteracao(meta, {
+      valor_atual: novoValorAtual,
+      progresso: meta.progresso,
+      concluida: !!meta.concluida,
+      status: meta.status || 'ativa',
+      atualizado_em: new Date().toISOString(),
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Histórico de aportes (tabela aporte_meta + cópia local)
+  // ---------------------------------------------------------------------------
+
+  private lerAportesLocais(userId: string): Record<string, Aporte[]> {
     try {
-      await this.supabaseService.client
-        .from('meta')
-        .update({
-          valor_atual: novoValorAtual,
-          progresso: progresso,
-          concluida: alcancada || meta.concluida,
-          status: alcancada ? 'concluida' : (meta.status || 'ativa'),
-          atualizado_em: new Date().toISOString(),
-        })
-        .eq('id_meta', meta.id_meta);
-    } catch {}
-    await this.salvarMetas();
+      const raw = localStorage.getItem(`aportes_${userId}`);
+      const obj = raw ? JSON.parse(raw) : {};
+      return obj && typeof obj === 'object' ? obj : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private salvarAportesLocais(userId: string, mapa: Record<string, Aporte[]>) {
+    try {
+      localStorage.setItem(`aportes_${userId}`, JSON.stringify(mapa));
+    } catch (e) {
+      console.error('Erro ao salvar histórico local:', e);
+    }
+  }
+
+  private async registrarAporte(meta: Meta, valor: number, tipo: TipoAporte) {
+    if (!meta.id_meta) return;
+    const userId = await this.getActiveUserId();
+    const aporte: Aporte = {
+      id_meta: meta.id_meta,
+      valor,
+      tipo,
+      criado_em: new Date().toISOString(),
+    };
+
+    if (userId) {
+      const mapa = this.lerAportesLocais(userId);
+      mapa[meta.id_meta] = [aporte, ...(mapa[meta.id_meta] || [])];
+      this.salvarAportesLocais(userId, mapa);
+    }
+
+    if (this.historicoMetaId === meta.id_meta) {
+      this.historico = [aporte, ...this.historico];
+    }
+
+    // Metas ainda não sincronizadas enviam o histórico junto, quando forem salvas
+    if (userId && !meta.pendente_sync) {
+      try {
+        const { error } = await this.supabaseService.client.from('aporte_meta').insert({
+          id_meta: meta.id_meta,
+          id_usuario: userId,
+          valor,
+          tipo,
+          criado_em: aporte.criado_em,
+        });
+        if (error) console.warn('Aporte não salvo online (tabela aporte_meta existe?):', error.message);
+      } catch (e) {
+        console.warn('Aporte não salvo online:', e);
+      }
+    }
+  }
+
+  private async migrarAportes(userId: string, idAntigo: string, idNovo: string) {
+    const mapa = this.lerAportesLocais(userId);
+    const lista = mapa[idAntigo] || [];
+    if (lista.length === 0) return;
+
+    delete mapa[idAntigo];
+    lista.forEach((a) => (a.id_meta = idNovo));
+    mapa[idNovo] = [...(mapa[idNovo] || []), ...lista];
+    this.salvarAportesLocais(userId, mapa);
+    if (this.historicoMetaId === idAntigo) this.historicoMetaId = idNovo;
+
+    try {
+      const { error } = await this.supabaseService.client.from('aporte_meta').insert(
+        lista.map((a) => ({
+          id_meta: idNovo,
+          id_usuario: userId,
+          valor: a.valor,
+          tipo: a.tipo,
+          criado_em: a.criado_em,
+        }))
+      );
+      if (error) console.warn('Histórico não salvo online:', error.message);
+    } catch (e) {
+      console.warn('Histórico não salvo online:', e);
+    }
+  }
+
+  private async obterHistorico(meta: Meta): Promise<Aporte[]> {
+    if (!meta.id_meta) return [];
+    const userId = await this.getActiveUserId();
+    const locais = userId ? this.lerAportesLocais(userId)[meta.id_meta] || [] : [];
+    let remotos: Aporte[] = [];
+
+    if (!meta.pendente_sync) {
+      try {
+        const { data, error } = await this.supabaseService.client
+          .from('aporte_meta')
+          .select('*')
+          .eq('id_meta', meta.id_meta)
+          .order('criado_em', { ascending: false });
+        if (error) {
+          console.warn('Histórico online indisponível:', error.message);
+        } else {
+          remotos = (data || []).map((a: any) => ({
+            id_aporte: a.id_aporte,
+            id_meta: a.id_meta,
+            valor: Number(a.valor) || 0,
+            tipo: a.tipo as TipoAporte,
+            criado_em: a.criado_em,
+          }));
+        }
+      } catch (e) {
+        console.warn('Histórico online indisponível:', e);
+      }
+    }
+
+    const unicos = new Map<string, Aporte>();
+    [...remotos, ...locais].forEach((a) => {
+      const chave = `${a.tipo}|${a.valor}|${new Date(a.criado_em).getTime()}`;
+      if (!unicos.has(chave)) unicos.set(chave, a);
+    });
+    return [...unicos.values()].sort(
+      (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
+    );
+  }
+
+  async alternarHistorico(meta: Meta) {
+    if (!meta.id_meta) return;
+    if (this.historicoMetaId === meta.id_meta) {
+      this.historicoMetaId = null;
+      return;
+    }
+    this.historicoMetaId = meta.id_meta;
+    this.historico = [];
+    this.carregandoHistorico = true;
+    this.cdr.detectChanges();
+
+    const lista = await this.obterHistorico(meta);
+    if (this.historicoMetaId === meta.id_meta) {
+      this.historico = lista;
+    }
+    this.carregandoHistorico = false;
     this.cdr.detectChanges();
   }
+
+  tituloAporte(a: Aporte): string {
+    if (a.tipo === 'deposito') return 'Guardou';
+    if (a.tipo === 'retirada') return 'Retirou';
+    return a.valor >= 0 ? 'Ajuste ao concluir' : 'Ajuste ao reabrir';
+  }
+
+  valorNegativo(a: Aporte): boolean {
+    return a.tipo === 'retirada' || (a.tipo === 'ajuste' && a.valor < 0);
+  }
+
+  valorAporteTexto(a: Aporte): string {
+    const sinal = this.valorNegativo(a) ? '−' : '+';
+    return `${sinal} R$ ${this.formatarMoeda(Math.abs(a.valor))}`;
+  }
+
+  formatarDataHora(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Favoritar, editar, concluir e excluir
+  // ---------------------------------------------------------------------------
+
   async favoritar(meta: Meta) {
     if (!meta.id_meta) return;
     meta.favorita = !meta.favorita;
-    this.metas = [...this.metas];
-    this.cdr.detectChanges();
-    try {
-      await this.supabaseService.client
-        .from('meta')
-        .update({ favorita: meta.favorita })
-        .eq('id_meta', meta.id_meta);
-    } catch {}
-    await this.salvarMetas();
-    this.cdr.detectChanges();
+    await this.salvarAlteracao(meta, { favorita: meta.favorita });
   }
+
+  async editarMeta(meta: Meta) {
+    if (!meta.id_meta) return;
+    const alert = await this.alertCtrl.create({
+      header: 'Editar meta',
+      message: 'Deixe a data em branco para remover o prazo.',
+      inputs: [
+        { name: 'nome', type: 'text', placeholder: 'Nome da meta', value: meta.nome },
+        {
+          name: 'valor',
+          type: 'number',
+          placeholder: 'Valor da meta (R$)',
+          value: meta.valor_alvo,
+          min: 1,
+        },
+        {
+          name: 'dataFim',
+          type: 'date',
+          placeholder: 'Data limite',
+          value: (meta.data_fim || '').substring(0, 10),
+        },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Salvar',
+          handler: (data) => {
+            const nome = (data.nome || '').trim();
+            const valor = Number(data.valor);
+            if (!nome || !(valor > 0)) {
+              this.avisar('Informe um nome e um valor maior que zero.');
+              return false;
+            }
+            this.aplicarEdicao(meta, nome, valor, data.dataFim || undefined);
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async aplicarEdicao(meta: Meta, nome: string, valor: number, dataFim?: string) {
+    const alvoAnterior = meta.valor_alvo || 0;
+    const atual = meta.valor_atual || 0;
+    const atingiu = atual >= valor;
+
+    meta.nome = nome;
+    meta.valor_alvo = valor;
+    meta.data_fim = dataFim;
+    meta.progresso = this.calcProgresso(atual, valor);
+
+    if (!meta.concluida && atingiu) {
+      meta.concluida = true;
+      meta.status = 'concluida';
+      this.dispararConfete();
+    } else if (meta.concluida && valor > alvoAnterior && !atingiu) {
+      meta.concluida = false;
+      meta.status = 'ativa';
+    }
+
+    await this.salvarAlteracao(meta, {
+      nome,
+      valor_alvo: valor,
+      data_fim: dataFim || null,
+      progresso: meta.progresso,
+      concluida: !!meta.concluida,
+      status: meta.status || 'ativa',
+      atualizado_em: new Date().toISOString(),
+    });
+  }
+
   async marcarConcluida(meta: Meta) {
     if (!meta.id_meta) return;
-    meta.concluida = !meta.concluida;
-    meta.status = meta.concluida ? 'concluida' : 'ativa';
-    this.metas = [...this.metas];
-    this.cdr.detectChanges();
-    try {
-      await this.supabaseService.client
-        .from('meta')
-        .update({ 
-          concluida: meta.concluida,
-          status: meta.status 
-        })
-        .eq('id_meta', meta.id_meta);
-    } catch {}
-    await this.salvarMetas();
-    this.cdr.detectChanges();
+
+    if (meta.concluida) {
+      await this.reabrirMeta(meta);
+      return;
+    }
+
+    const falta = Math.max(0, (meta.valor_alvo || 0) - (meta.valor_atual || 0));
+    if (falta <= 0) {
+      await this.concluirMeta(meta, 0);
+      return;
+    }
+
+    const alert = await this.alertCtrl.create({
+      header: 'Concluir meta',
+      message: `Ainda faltam R$ ${this.formatarMoeda(falta)} para o valor da meta. Ao concluir, esse valor será registrado como guardado.`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Concluir',
+          handler: () => {
+            this.concluirMeta(meta, falta);
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
+
+  private async concluirMeta(meta: Meta, falta: number) {
+    meta.valor_atual = meta.valor_alvo || 0;
+    meta.progresso = 100;
+    meta.concluida = true;
+    meta.status = 'concluida';
+
+    if (falta > 0) {
+      await this.registrarAporte(meta, falta, 'ajuste');
+    }
+    this.dispararConfete();
+    await this.salvarAlteracao(meta, {
+      valor_atual: meta.valor_atual,
+      progresso: 100,
+      concluida: true,
+      status: 'concluida',
+      atualizado_em: new Date().toISOString(),
+    });
+  }
+
+  private async reabrirMeta(meta: Meta) {
+    // Desfaz o valor que foi lançado como "ajuste" ao concluir manualmente
+    const historico = await this.obterHistorico(meta);
+    const ajusteLiquido = historico
+      .filter((a) => a.tipo === 'ajuste')
+      .reduce((soma, a) => soma + a.valor, 0);
+
+    if (ajusteLiquido > 0) {
+      meta.valor_atual = Math.max(0, (meta.valor_atual || 0) - ajusteLiquido);
+      await this.registrarAporte(meta, -ajusteLiquido, 'ajuste');
+    }
+
+    meta.progresso = this.calcProgresso(meta.valor_atual || 0, meta.valor_alvo || 0);
+    meta.concluida = false;
+    meta.status = 'ativa';
+
+    await this.salvarAlteracao(meta, {
+      valor_atual: meta.valor_atual || 0,
+      progresso: meta.progresso,
+      concluida: false,
+      status: 'ativa',
+      atualizado_em: new Date().toISOString(),
+    });
+  }
+
   async excluirMeta(meta: Meta) {
     if (!meta.id_meta) return;
+
     const alert = await this.alertCtrl.create({
       header: 'Excluir meta',
       message: `Deseja realmente excluir a meta "${meta.nome}"?`,
       buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-        },
+        { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Excluir',
           role: 'destructive',
           handler: async () => {
-            try {
-              await this.supabaseService.client
-                .from('meta')
-                .update({ deletado_em: new Date().toISOString() })
-                .eq('id_meta', meta.id_meta);
-            } catch {}
-            this.metas = this.metas.filter((m) => m.id_meta !== meta.id_meta);
+            const id = meta.id_meta as string;
+            const pendente = !!meta.pendente_sync;
+
+            this.metas = this.metas.filter((m) => m.id_meta !== id);
+            if (this.historicoMetaId === id) this.historicoMetaId = null;
             this.cdr.detectChanges();
-            await this.salvarMetas();
+            await this.salvarCache();
+
+            const userId = await this.getActiveUserId();
+            if (userId) {
+              const mapa = this.lerAportesLocais(userId);
+              delete mapa[id];
+              this.salvarAportesLocais(userId, mapa);
+            }
+
+            if (!pendente) {
+              try {
+                const { error } = await this.supabaseService.client
+                  .from('meta')
+                  .update({ deletado_em: new Date().toISOString() })
+                  .eq('id_meta', id);
+                if (error) {
+                  console.error('Erro ao apagar meta:', error.message);
+                  this.avisar('Não foi possível excluir online. Ela pode voltar ao reabrir o app.');
+                }
+              } catch (e) {
+                console.error('Erro ao apagar meta:', e);
+              }
+            }
             this.cdr.detectChanges();
           },
         },
@@ -312,6 +1039,48 @@ export class Tab4Page implements OnInit {
     });
     await alert.present();
   }
+
+  // ---------------------------------------------------------------------------
+  // Dicas e estado visual de cada meta
+  // ---------------------------------------------------------------------------
+
+  /** Quanto guardar por mês para chegar no prazo (só para metas com data limite). */
+  sugestaoMensal(meta: Meta): string | null {
+    if (meta.concluida || !meta.data_fim) return null;
+    const falta = (meta.valor_alvo || 0) - (meta.valor_atual || 0);
+    if (falta <= 0) return null;
+    const dias = this.diasAteData(meta.data_fim);
+    if (dias === null) return null;
+
+    const faltaTexto = `R$ ${this.formatarMoeda(falta)}`;
+    if (dias < 0) return `Faltam ${faltaTexto} e o prazo já passou. Ajuste a data ou guarde o que puder.`;
+    if (dias === 0) return `O prazo é hoje e faltam ${faltaTexto}.`;
+    if (dias <= 30) return `Faltam ${faltaTexto} para o prazo, em ${dias} ${dias === 1 ? 'dia' : 'dias'}.`;
+
+    const meses = Math.ceil(dias / 30);
+    const porMes = Math.ceil((falta / meses) * 100) / 100;
+    return `Guarde cerca de R$ ${this.formatarMoeda(porMes)} por mês para chegar a tempo.`;
+  }
+
+  statusMeta(meta: Meta): StatusMeta {
+    const dias = this.diasAteData(meta.data_fim);
+    if (dias !== null && dias < 0) return 'late';
+    if (dias !== null && dias <= 7) return 'warn';
+    return 'ok';
+  }
+
+  marco(meta: Meta): string {
+    const p = meta.progresso || 0;
+    if (p >= 75) return 'Quase lá!';
+    if (p >= 50) return 'Metade do caminho';
+    if (p >= 25) return 'Bom começo';
+    return '';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Formatação e datas
+  // ---------------------------------------------------------------------------
+
   formatarMoeda(valor?: number): string {
     if (valor === null || valor === undefined) return '0,00';
     return valor.toLocaleString('pt-BR', {
@@ -319,36 +1088,62 @@ export class Tab4Page implements OnInit {
       maximumFractionDigits: 2,
     });
   }
+
   formatarData(dataString?: string): string {
     if (!dataString) return '';
-    try {
-      const parts = dataString.split('-');
-      if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-      return dataString;
-    } catch {
-      return dataString;
+    const parts = dataString.substring(0, 10).split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
+    return dataString;
   }
+
+  private diasAteData(dataString?: string): number | null {
+    if (!dataString) return null;
+    const parts = dataString.substring(0, 10).split('-').map(Number);
+    if (parts.length !== 3 || parts.some((p) => isNaN(p))) return null;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const alvo = new Date(parts[0], parts[1] - 1, parts[2]);
+    return Math.round((alvo.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
+  }
+
   calcularDiasRestantes(dataString?: string): { texto: string; expirado: boolean } {
-    if (!dataString) return { texto: '', expirado: false };
-    try {
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      const parts = dataString.split('-').map(Number);
-      const dataAlvo = new Date(parts[0], parts[1] - 1, parts[2]);
-      const diferencaTempo = dataAlvo.getTime() - hoje.getTime();
-      const diferencaDias = Math.ceil(diferencaTempo / (1000 * 3600 * 24));
-      if (diferencaDias < 0) {
-        return { texto: `Atrasado ${Math.abs(diferencaDias)}d`, expirado: true };
-      } else if (diferencaDias === 0) {
-        return { texto: 'Vence hoje', expirado: false };
-      } else {
-        return { texto: `${diferencaDias} dias`, expirado: false };
-      }
-    } catch {
-      return { texto: '', expirado: false };
-    }
+    const dias = this.diasAteData(dataString);
+    if (dias === null) return { texto: '', expirado: false };
+    if (dias < 0) return { texto: `Atrasado ${Math.abs(dias)}d`, expirado: true };
+    if (dias === 0) return { texto: 'Vence hoje', expirado: false };
+    return { texto: dias === 1 ? '1 dia' : `${dias} dias`, expirado: false };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Feedback: toast e confete
+  // ---------------------------------------------------------------------------
+
+  private async avisar(mensagem: string, cor: 'success' | 'warning' | 'danger' = 'warning') {
+    const toast = await this.toastCtrl.create({
+      message: mensagem,
+      duration: 3000,
+      position: 'top',
+      color: cor,
+    });
+    await toast.present();
+  }
+
+  private dispararConfete() {
+    const cores = ['#ffffff', '#ece7f6', '#ffd166', '#6fd39b', '#ff8fa3', '#9d8bc9'];
+    this.confetes = Array.from({ length: 36 }, (_, i) => ({
+      left: Math.random() * 100,
+      delay: Math.random() * 0.4,
+      dur: 1.8 + Math.random() * 1.2,
+      cor: cores[i % cores.length],
+    }));
+    this.cdr.detectChanges();
+
+    clearTimeout(this.confeteTimer);
+    this.confeteTimer = setTimeout(() => {
+      this.confetes = [];
+      this.cdr.detectChanges();
+    }, 3500);
   }
 }

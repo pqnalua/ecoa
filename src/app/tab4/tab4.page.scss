@@ -9,6 +9,7 @@
   --ecoa-card-bg: #ffffff;
   --ecoa-border: #e3dfd8;
   --ecoa-success: #52a47a;
+  --ecoa-danger: #d93838;
 }
 
 .metas-content {
@@ -35,6 +36,126 @@
   .mascot-head {
     width: 80px;
     height: auto;
+  }
+}
+
+// Resumo no topo
+.resumo-card {
+  background: var(--ecoa-card-bg);
+  border: 1px solid var(--ecoa-border);
+  border-radius: 20px;
+  margin: 0 16px 16px 16px;
+  padding: 18px 20px;
+
+  .resumo-total {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .resumo-label {
+      color: var(--ecoa-text-muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .resumo-valor {
+      color: var(--ecoa-primary-dark);
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+  }
+
+  .resumo-stats {
+    display: flex;
+    margin-top: 14px;
+
+    .stat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 0;
+
+      & + .stat {
+        border-left: 1px solid var(--ecoa-border);
+      }
+
+      strong {
+        color: var(--ecoa-text);
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      span {
+        color: var(--ecoa-text-muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      &.alerta strong {
+        color: var(--ecoa-danger);
+      }
+    }
+  }
+
+  .resumo-mascote {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: var(--ecoa-primary-light);
+    border-radius: 14px;
+
+    img {
+      width: 38px;
+      height: auto;
+      flex-shrink: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--ecoa-primary-dark);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+  }
+}
+
+// Gastos emocionais x metas
+.insight-gastos {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 16px 16px 16px;
+  padding: 14px 16px;
+  background: var(--ecoa-card-bg);
+  border: 1px solid var(--ecoa-border);
+  border-left: 4px solid var(--ecoa-primary);
+  border-radius: 16px;
+
+  ion-icon {
+    font-size: 22px;
+    color: var(--ecoa-primary-dark);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    color: var(--ecoa-text);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 4px 0 0 0;
+    color: var(--ecoa-text-muted);
+    font-size: 13px;
+    line-height: 1.4;
   }
 }
 
@@ -72,6 +193,69 @@
 .completed-card {
   opacity: 0.9;
   background: #7361a3;
+}
+
+// Formulário "Nova meta" recolhível
+.new-goal {
+  .form-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    text-align: left;
+
+    h2 {
+      margin: 0;
+    }
+
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+
+  .form-body {
+    margin-top: 16px;
+    animation: abrir-form 0.2s ease;
+  }
+}
+
+@keyframes abrir-form {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Seletor de ícone da meta
+.icone-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .icone-opt {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    line-height: 1;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.28);
+    cursor: pointer;
+
+    &.ativo {
+      background: #ffffff;
+      border-color: var(--ecoa-primary-dark);
+    }
+  }
 }
 
 // Rótulos e Grupos
@@ -145,6 +329,46 @@
   }
 }
 
+// Estado vazio
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 32px;
+
+  img {
+    width: 110px;
+    height: auto;
+    margin-bottom: 8px;
+  }
+
+  h3 {
+    margin: 0 0 6px 0;
+    color: var(--ecoa-primary-dark);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0 0 16px 0;
+    color: var(--ecoa-text-muted);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .btn-guardar {
+    background: var(--ecoa-primary);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+}
+
 // Cartões de Metas Criadas
 .goal-card {
   .goal-title-row {
@@ -154,15 +378,37 @@
     margin-bottom: 16px;
 
     .title-pill {
-      min-width: 110px;
-      justify-content: center;
+      flex: 1;
+      min-width: 0;
+      justify-content: flex-start;
+      gap: 8px;
       background: #ffffff;
+
+      .meta-icone {
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .meta-nome {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
 
     .action-icons {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-shrink: 0;
+
+      .icon-btn {
+        display: flex;
+        padding: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
 
       ion-icon {
         font-size: 24px;
@@ -227,17 +473,17 @@
 
         &.expired {
           background: #ffe5e5;
-          color: #d93838;
+          color: var(--ecoa-danger);
 
           ion-icon {
-            color: #d93838;
+            color: var(--ecoa-danger);
           }
         }
       }
     }
   }
 
-  // Barra de Progresso
+  // Barra de Progresso (cor muda conforme o prazo)
   .progress-bar-container {
     width: 100%;
     height: 10px;
@@ -250,13 +496,25 @@
       height: 100%;
       background: #ffffff;
       border-radius: 20px;
-      transition: width 0.4s ease;
+      transition: width 0.4s ease, background-color 0.3s ease;
+
+      &.status-ok {
+        background: #7ee2a8;
+      }
+
+      &.status-warn {
+        background: #ffd166;
+      }
+
+      &.status-late {
+        background: #ff8a8a;
+      }
     }
   }
 
   .progress-label {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     margin-top: 4px;
 
     span {
@@ -267,11 +525,76 @@
     }
   }
 
+  // Dica de quanto guardar por mês
+  .dica {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 12px 0 0 0;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+
+    ion-icon {
+      font-size: 16px;
+      color: #ffffff;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    span {
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+  }
+
+  // Aviso de meta que só existe no aparelho
+  .sync-aviso {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 0 0;
+
+    ion-icon {
+      font-size: 15px;
+      color: #ffffff;
+    }
+
+    span {
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    button {
+      background: none;
+      border: none;
+      padding: 0;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  }
+
   // Aporte / Guardar valor
   .aporte-container {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: 14px;
+
+    .aporte-acoes {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .btn-guardar {
       display: inline-flex;
@@ -297,6 +620,134 @@
         opacity: 0.9;
       }
     }
+
+    .btn-secundario {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+
+      ion-icon {
+        font-size: 16px;
+      }
+
+      &:active {
+        opacity: 0.8;
+      }
+    }
+  }
+
+  // Histórico de aportes
+  .historico {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border-radius: 14px;
+    max-height: 200px;
+    overflow-y: auto;
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0;
+
+      & + li {
+        border-top: 1px solid var(--ecoa-border);
+      }
+    }
+
+    .h-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .h-titulo {
+      color: var(--ecoa-text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .h-data {
+      color: var(--ecoa-text-muted);
+      font-size: 11px;
+    }
+
+    .h-valor {
+      color: var(--ecoa-success);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+
+      &.negativo {
+        color: var(--ecoa-danger);
+      }
+    }
+
+    .historico-vazio {
+      margin: 0;
+      color: var(--ecoa-text-muted);
+      font-size: 13px;
+      text-align: center;
+    }
+  }
+}
+
+// Confete (concluir meta)
+.confete-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 20;
+
+  .confete {
+    position: absolute;
+    top: -16px;
+    width: 8px;
+    height: 14px;
+    border-radius: 2px;
+    opacity: 0;
+    animation: confete-cair 2.4s ease-in forwards;
+  }
+}
+
+@keyframes confete-cair {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateY(105vh) rotate(540deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confete-layer {
+    display: none;
+  }
+
+  .new-goal .form-body {
+    animation: none;
   }
 }
 
