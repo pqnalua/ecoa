@@ -24,3 +24,64 @@
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
+
+/* ----------------------------------------------------------------------------
+ * Otimizações de Toque, Responsividade e Feedback Visual para Apresentação
+ * ------------------------------------------------------------------------- */
+
+/* Elimina o delay nativo de 300ms de toque em tablets e smartphones */
+button,
+a,
+ion-button,
+ion-item[button],
+.btn,
+.clickable,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.12s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &[disabled] {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+}
+
+/* Tipografia e Renderização de Texto Nítida */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+/* Scrollbars Minimalistas e Modernas */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(157, 139, 201, 0.25);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(157, 139, 201, 0.5);
+}
+
+/* Padronização de Containers Centrais em Tablets e Telas Maiores */
+.home__container,
+.tab2-content,
+.voz-container,
+.metas-container {
+  max-width: 580px;
+  margin-left: auto;
+  margin-right: auto;
+}

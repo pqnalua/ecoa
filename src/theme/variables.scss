@@ -1,2 +1,40 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+:root {
+  /** ECOA Brand Colors **/
+  --ion-color-primary: #9d8bc9;
+  --ion-color-primary-rgb: 157, 139, 201;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #816eb3;
+  --ion-color-primary-tint: #a797ce;
+
+  --ion-color-secondary: #816eb3;
+  --ion-color-secondary-rgb: 129, 110, 179;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #6d5b99;
+  --ion-color-secondary-tint: #917fbf;
+
+  --ion-color-success: #2e8b57;
+  --ion-color-success-rgb: 46, 139, 87;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #287a4d;
+  --ion-color-success-tint: #439768;
+
+  --ion-color-warning: #c9a44c;
+  --ion-color-warning-rgb: 201, 164, 76;
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-contrast-rgb: 255, 255, 255;
+  --ion-color-warning-shade: #b19043;
+  --ion-color-warning-tint: #cead5e;
+
+  --ion-color-danger: #c15c5c;
+  --ion-color-danger-rgb: 193, 92, 92;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #aa5151;
+  --ion-color-danger-tint: #c76c6c;
+
+  --ion-background-color: #f5f2ee;
+  --ion-font-family: 'Red Hat Display', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}

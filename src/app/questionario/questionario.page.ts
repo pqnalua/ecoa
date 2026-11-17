@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
 
@@ -208,7 +208,9 @@ export class QuestionarioPage implements OnInit {
 
   constructor(
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   async ngOnInit() {
@@ -227,20 +229,23 @@ export class QuestionarioPage implements OnInit {
         .maybeSingle();
 
       if (data) {
-        this.jaTemPerfil = true;
-        if (data.dia_pagamento) {
-          this.respostas['diaPagamento'] = String(data.dia_pagamento);
-          if (data.dia_pagamento !== 'variavel') {
-            this.diaDigitado = Number(data.dia_pagamento);
+        this.ngZone.run(() => {
+          this.jaTemPerfil = true;
+          if (data.dia_pagamento) {
+            this.respostas['diaPagamento'] = String(data.dia_pagamento);
+            if (data.dia_pagamento !== 'variavel') {
+              this.diaDigitado = Number(data.dia_pagamento);
+            }
           }
-        }
-        if (data.faixa_renda) this.respostas['renda'] = data.faixa_renda;
-        if (data.sustenta_alguem !== null && data.sustenta_alguem !== undefined) {
-          this.respostas['sustentaAlguem'] = data.sustenta_alguem ? 'sim' : 'nao';
-        }
-        if (data.qtd_dependentes) this.respostas['qtdDependentes'] = data.qtd_dependentes;
-        if (data.moradia) this.respostas['moradia'] = data.moradia;
-        if (data.objetivo_principal) this.respostas['objetivo'] = data.objetivo_principal;
+          if (data.faixa_renda) this.respostas['renda'] = data.faixa_renda;
+          if (data.sustenta_alguem !== null && data.sustenta_alguem !== undefined) {
+            this.respostas['sustentaAlguem'] = data.sustenta_alguem ? 'sim' : 'nao';
+          }
+          if (data.qtd_dependentes) this.respostas['qtdDependentes'] = data.qtd_dependentes;
+          if (data.moradia) this.respostas['moradia'] = data.moradia;
+          if (data.objetivo_principal) this.respostas['objetivo'] = data.objetivo_principal;
+          this.cdr.detectChanges();
+        });
       }
     } catch (e) {
       console.warn('Erro ao carregar perfil financeiro existente:', e);
@@ -329,12 +334,17 @@ export class QuestionarioPage implements OnInit {
             atualizado_em: new Date().toISOString(),
           }, { onConflict: 'id_usuario' });
 
-        this.router.navigateByUrl('/tabs/tab2', { replaceUrl: true });
+        this.ngZone.run(() => {
+          this.router.navigateByUrl('/tabs/tab2', { replaceUrl: true });
+        });
       }
     } catch (e) {
       console.error('Erro ao salvar alterações no perfil financeiro:', e);
     } finally {
-      this.salvando = false;
+      this.ngZone.run(() => {
+        this.salvando = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -402,6 +412,8 @@ export class QuestionarioPage implements OnInit {
   }
 
   concluir() {
-    this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+    this.ngZone.run(() => {
+      this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+    });
   }
 }

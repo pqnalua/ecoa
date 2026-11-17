@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ModalController } from '@ionic/angular/lazy';
 import { Router } from '@angular/router';
 import { NotificacaoService, NotificacaoItem } from '../../services/notificacao.service';
@@ -16,7 +16,8 @@ export class NotificacoesModalComponent implements OnInit {
   constructor(
     private modalCtrl: ModalController,
     private notificacaoService: NotificacaoService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -25,19 +26,39 @@ export class NotificacoesModalComponent implements OnInit {
 
   async carregar() {
     this.carregando = true;
-    this.notificacoes = await this.notificacaoService.carregarNotificacoes();
-    this.carregando = false;
+    this.cdr.detectChanges();
+
+    // Trava de segurança para nunca travar na tela de carregamento
+    const timer = setTimeout(() => {
+      if (this.carregando) {
+        this.carregando = false;
+        this.cdr.detectChanges();
+      }
+    }, 4000);
+
+    try {
+      this.notificacoes = await this.notificacaoService.carregarNotificacoes();
+    } catch (e) {
+      console.warn('Erro ao carregar notificações no modal:', e);
+      this.notificacoes = [];
+    } finally {
+      clearTimeout(timer);
+      this.carregando = false;
+      this.cdr.detectChanges();
+    }
   }
 
   async marcarComoLida(n: NotificacaoItem) {
     if (!n.lida) {
       n.lida = true;
+      this.cdr.detectChanges();
       await this.notificacaoService.marcarComoLida(n.id_notificacao);
     }
   }
 
   async marcarTodasComoLidas() {
     this.notificacoes.forEach((n) => (n.lida = true));
+    this.cdr.detectChanges();
     await this.notificacaoService.marcarTodasComoLidas();
   }
 
@@ -46,6 +67,7 @@ export class NotificacoesModalComponent implements OnInit {
     this.notificacoes = this.notificacoes.filter(
       (item) => item.id_notificacao !== n.id_notificacao
     );
+    this.cdr.detectChanges();
     await this.notificacaoService.excluirNotificacao(n.id_notificacao);
   }
 

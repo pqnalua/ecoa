@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
@@ -40,7 +40,8 @@ export class EditarperfilPage implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private supabaseService: SupabaseService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     this.form = this.fb.group(
       {
@@ -64,32 +65,36 @@ export class EditarperfilPage implements OnInit {
   }
 
   async carregarDados() {
-    const { data: sessionData } = await this.supabaseService.client.auth.getSession();
-    let user: any = sessionData?.session?.user;
+    try {
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
 
-    if (!user) {
-      user = await this.supabaseService.getCurrentUser();
-    }
+      if (!user) {
+        user = await this.supabaseService.getCurrentUser();
+      }
 
-    if (!user) {
-      return;
-    }
+      if (!user) {
+        return;
+      }
 
-    const metadata = user.user_metadata || {};
-    const nome = metadata['full_name'] || metadata['name'] || metadata['nome'] || (user.email ? user.email.split('@')[0] : '');
+      const metadata = user.user_metadata || {};
+      const nome = metadata['full_name'] || metadata['name'] || metadata['nome'] || (user.email ? user.email.split('@')[0] : '');
 
-    this.form.patchValue({
-      nome: nome,
-      email: user.email || '',
-      cpf: metadata['cpf'] || '',
-      idade: metadata['idade'] || '',
-    });
+      this.ngZone.run(() => {
+        this.form.patchValue({
+          nome: nome,
+          email: user.email || '',
+          cpf: metadata['cpf'] || '',
+          idade: metadata['idade'] || '',
+        });
 
-    if (metadata['avatar_url'] || metadata['picture']) {
-      this.foto = metadata['avatar_url'] || metadata['picture'];
-    }
+        if (metadata['avatar_url'] || metadata['picture']) {
+          this.foto = metadata['avatar_url'] || metadata['picture'];
+        }
 
-    this.cdr.detectChanges();
+        this.cdr.detectChanges();
+      });
+    } catch {}
   }
 
   mostrarErro(campo: string): boolean {
@@ -214,17 +219,26 @@ export class EditarperfilPage implements OnInit {
         }
       }
 
-      this.sucesso = 'Perfil atualizado com sucesso!';
-      this.cdr.detectChanges();
+      this.ngZone.run(() => {
+        this.sucesso = 'Perfil atualizado com sucesso!';
+        this.cdr.detectChanges();
+      });
 
       setTimeout(() => {
-        this.router.navigateByUrl('/tabs/tab2');
-      }, 400);
+        this.ngZone.run(() => {
+          this.router.navigateByUrl('/tabs/tab2', { replaceUrl: true });
+        });
+      }, 350);
     } catch (e: any) {
-      this.erro = e?.message || 'Não foi possível atualizar o perfil. Tente novamente.';
+      this.ngZone.run(() => {
+        this.erro = e?.message || 'Não foi possível atualizar o perfil. Tente novamente.';
+        this.cdr.detectChanges();
+      });
     } finally {
-      this.carregando = false;
-      this.cdr.detectChanges();
+      this.ngZone.run(() => {
+        this.carregando = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 }

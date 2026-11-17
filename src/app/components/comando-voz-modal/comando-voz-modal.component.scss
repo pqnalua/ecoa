@@ -475,7 +475,102 @@
 .mensagem-erro {
   font-size: 14px;
   color: var(--ecoa-vermelho);
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   line-height: 1.5;
-  max-width: 320px;
+  max-width: 340px;
+}
+
+.dica-http {
+  background: #fdf5e6;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  text-align: left;
+  max-width: 360px;
+  width: 100%;
+
+  .dica-http-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #9a3412;
+    font-size: 13px;
+    margin-bottom: 6px;
+
+    ion-icon {
+      font-size: 18px;
+    }
+  }
+
+  .dica-http-texto {
+    font-size: 12px;
+    color: #7c2d12;
+    line-height: 1.4;
+    margin: 0;
+
+    code {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+  }
+}
+
+.caixa-teste-manual {
+  width: 100%;
+  max-width: 360px;
+  margin-bottom: 24px;
+  text-align: left;
+
+  .label-manual {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ecoa-roxo-escuro);
+    margin-bottom: 8px;
+  }
+
+  .input-manual-wrap {
+    display: flex;
+    gap: 8px;
+
+    input {
+      flex: 1;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #d5cec5;
+      background: #ffffff;
+      padding: 0 14px;
+      font-size: 14px;
+      color: var(--ecoa-texto);
+      outline: none;
+
+      &:focus {
+        border-color: var(--ecoa-roxo-primario);
+      }
+    }
+
+    .btn-processar-manual {
+      height: 44px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--ecoa-roxo-primario), var(--ecoa-roxo-escuro));
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
 }

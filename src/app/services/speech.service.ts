@@ -30,6 +30,27 @@ export class SpeechService {
     );
   }
 
+  isSecureContext(): boolean {
+    if (typeof window === 'undefined') return true;
+    if (window.isSecureContext) return true;
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1';
+  }
+
+  async checkOrRequestMicrophonePermission(): Promise<boolean> {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      return true; // Deixa o SpeechRecognition gerenciar
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Para as faixas do stream de teste para liberar o hardware imediatamente
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   startListening(callbacks: {
     onInterim?: (text: string) => void;
     onFinal?: (text: string) => void;
@@ -41,6 +62,17 @@ export class SpeechService {
         callbacks.onError({
           error: 'not-supported',
           message: 'Seu navegador não suporta reconhecimento de voz.',
+        });
+      }
+      return false;
+    }
+
+    if (!this.isSecureContext()) {
+      if (callbacks.onError) {
+        callbacks.onError({
+          error: 'insecure-http',
+          message:
+            'Navegadores bloqueiam o microfone fora de HTTPS. No tablet ou celular, acesse via HTTPS ou configure o Chrome.',
         });
       }
       return false;

@@ -19,6 +19,8 @@ export class ComandoVozModalComponent implements OnInit, OnDestroy {
   textoInterim = '';
   mensagemErro = '';
   salvando = false;
+  isHttpInseguro = false;
+  textoManual = '';
 
   dados: DadosTransacaoVoz = {
     descricao: '',
@@ -80,12 +82,22 @@ export class ComandoVozModalComponent implements OnInit, OnDestroy {
     this.transcricao = '';
     this.textoInterim = '';
     this.mensagemErro = '';
+    this.isHttpInseguro = false;
     this.cdr.detectChanges();
 
     if (!this.speechService.isSupported()) {
       this.estado = 'erro';
       this.mensagemErro =
         'Seu navegador não possui suporte ao reconhecimento de voz da Web Speech API. Recomendamos usar o Google Chrome ou Edge.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (!this.speechService.isSecureContext()) {
+      this.estado = 'erro';
+      this.isHttpInseguro = true;
+      this.mensagemErro =
+        'Navegadores no tablet ou celular bloqueiam o microfone fora de HTTPS. Para usar voz no tablet, ative o flag do Chrome ou teste com a caixa de texto abaixo.';
       this.cdr.detectChanges();
       return;
     }
@@ -103,9 +115,15 @@ export class ComandoVozModalComponent implements OnInit, OnDestroy {
       },
       onError: (err) => {
         console.warn('Erro de reconhecimento de voz:', err);
-        if (err.error === 'not-allowed') {
-          this.mensagemErro =
-            'Permissão do microfone negada. Autorize o microfone no navegador para gravar por voz.';
+        if (err.error === 'not-allowed' || err.error === 'insecure-http') {
+          if (!this.speechService.isSecureContext()) {
+            this.isHttpInseguro = true;
+            this.mensagemErro =
+              'O navegador bloqueou o microfone porque a conexão não é HTTPS. No tablet/celular, use HTTPS ou teste digitando a frase abaixo.';
+          } else {
+            this.mensagemErro =
+              'Permissão do microfone negada. Autorize o microfone no navegador para gravar por voz.';
+          }
           this.estado = 'erro';
         } else if (err.error === 'no-speech') {
           // Apenas não ouviu nada, permanece ouvindo
@@ -124,9 +142,16 @@ export class ComandoVozModalComponent implements OnInit, OnDestroy {
 
     if (!iniciado) {
       this.estado = 'erro';
-      this.mensagemErro = 'Não foi possível inicializar o microfone.';
+      this.mensagemErro = this.mensagemErro || 'Não foi possível inicializar o microfone.';
       this.cdr.detectChanges();
     }
+  }
+
+  processarTextoManual() {
+    const texto = this.textoManual.trim();
+    if (!texto) return;
+    this.transcricao = texto;
+    this.processarComIa(texto);
   }
 
   pararGravacaoManual() {

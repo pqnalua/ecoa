@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModalController, AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
@@ -12,13 +12,15 @@ import { TermosModalComponent } from '../components/termos-modal/termos-modal.co
 })
 export class Tab2Page implements OnInit {
   foto = '../../assets/icon/avatar.jpg';
+  deslogando = false;
 
   constructor(
     private router: Router,
     private supabaseService: SupabaseService,
     private cdr: ChangeDetectorRef,
     private modalCtrl: ModalController,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private ngZone: NgZone
   ) {}
 
   async ngOnInit() {
@@ -30,28 +32,34 @@ export class Tab2Page implements OnInit {
   }
 
   async carregarPerfil() {
-    const { data: sessionData } = await this.supabaseService.client.auth.getSession();
-    let user: any = sessionData?.session?.user;
+    try {
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
 
-    if (!user) {
-      user = await this.supabaseService.getCurrentUser();
-    }
-
-    if (user?.user_metadata) {
-      const meta = user.user_metadata;
-      if (meta['avatar_url'] || meta['picture']) {
-        this.foto = meta['avatar_url'] || meta['picture'];
-        this.cdr.detectChanges();
+      if (!user) {
+        user = await this.supabaseService.getCurrentUser();
       }
-    }
+
+      if (user?.user_metadata) {
+        const meta = user.user_metadata;
+        if (meta['avatar_url'] || meta['picture']) {
+          this.ngZone.run(() => {
+            this.foto = meta['avatar_url'] || meta['picture'];
+            this.cdr.detectChanges();
+          });
+        }
+      }
+    } catch {}
   }
 
   goTo(route: string) {
-    if (route === 'atividades') {
-      this.router.navigateByUrl('/tabs/tab3');
-      return;
-    }
-    this.router.navigateByUrl(`/${route}`);
+    this.ngZone.run(() => {
+      if (route === 'atividades') {
+        this.router.navigateByUrl('/tabs/tab3');
+        return;
+      }
+      this.router.navigateByUrl(`/${route}`);
+    });
   }
 
   async abrirTermos() {
@@ -116,8 +124,7 @@ export class Tab2Page implements OnInit {
           .eq('id_usuario', user.id);
       }
 
-      await this.supabaseService.signOut();
-      await this.router.navigateByUrl('/login', { replaceUrl: true });
+      await this.logout();
     } catch (e: any) {
       console.error('Erro ao excluir conta:', e);
       alert('Erro ao excluir conta. Tente novamente mais tarde.');
@@ -125,7 +132,22 @@ export class Tab2Page implements OnInit {
   }
 
   async logout() {
-    await this.supabaseService.signOut();
-    await this.router.navigateByUrl('/login', { replaceUrl: true });
+    if (this.deslogando) return;
+    this.deslogando = true;
+    this.cdr.detectChanges();
+
+    try {
+      // Timeout defensivo de 2s para logout nunca travar
+      const signOutPromise = this.supabaseService.signOut();
+      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 2000));
+      await Promise.race([signOutPromise, timeoutPromise]);
+    } catch (e) {
+      console.warn('Aviso no signOut:', e);
+    } finally {
+      this.ngZone.run(() => {
+        this.deslogando = false;
+        this.router.navigateByUrl('/login', { replaceUrl: true });
+      });
+    }
   }
 }

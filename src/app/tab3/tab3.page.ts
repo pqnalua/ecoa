@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
@@ -108,7 +108,8 @@ export class Tab3Page implements OnInit, OnDestroy {
     private alertCtrl: AlertController,
     private planoService: PlanoService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   async ngOnInit() {
@@ -156,7 +157,11 @@ export class Tab3Page implements OnInit, OnDestroy {
   async carregarOrcamento() {
     const mes = this.mesRef.getMonth() + 1;
     const ano = this.mesRef.getFullYear();
-    this.orcamento = await this.orcamentoService.carregarOrcamentoMes(mes, ano);
+    const orc = await this.orcamentoService.carregarOrcamentoMes(mes, ano);
+    this.ngZone.run(() => {
+      this.orcamento = orc;
+      this.cdr.detectChanges();
+    });
   }
 
   async definirOuEditarOrcamento() {
@@ -248,15 +253,18 @@ export class Tab3Page implements OnInit, OnDestroy {
     if (req !== this.requisicao) {
       return;
     }
-    this.carregando = false;
 
     if (error) {
       console.error('Erro ao carregar movimentações:', error);
-      this.erro = 'Não foi possível carregar as movimentações.';
+      this.ngZone.run(() => {
+        this.erro = 'Não foi possível carregar as movimentações.';
+        this.carregando = false;
+        this.cdr.detectChanges();
+      });
       return;
     }
 
-    this.movimentacoes = ((data ?? []) as any[]).map((r) => ({
+    const lista = ((data ?? []) as any[]).map((r) => ({
       id: r.id_movimentacao,
       descricao: r.descricao ?? '',
       valor: Number(r.valor),
@@ -266,6 +274,12 @@ export class Tab3Page implements OnInit, OnDestroy {
       natureza: (r.natureza ?? 'variavel') as Natureza,
       humor: r.humor ?? null,
     }));
+
+    this.ngZone.run(() => {
+      this.movimentacoes = lista;
+      this.carregando = false;
+      this.cdr.detectChanges();
+    });
   }
 
   get mesLabel(): string {
@@ -277,6 +291,7 @@ export class Tab3Page implements OnInit, OnDestroy {
     this.carregarMovimentacoes();
     this.carregarOrcamento();
     this.iniciarHistoricoIa();
+    this.ngZone.run(() => this.cdr.detectChanges());
   }
 
   proximoMes() {
@@ -284,6 +299,7 @@ export class Tab3Page implements OnInit, OnDestroy {
     this.carregarMovimentacoes();
     this.carregarOrcamento();
     this.iniciarHistoricoIa();
+    this.ngZone.run(() => this.cdr.detectChanges());
   }
 
   get movimentacoesDoMes(): MovimentacaoItem[] {

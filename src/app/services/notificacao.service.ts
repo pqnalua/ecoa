@@ -22,20 +22,42 @@ export class NotificacaoService {
 
   constructor(private supabase: SupabaseService) {}
 
+  private async getUserId(): Promise<string | null> {
+    try {
+      const { data: sessionData } = await this.supabase.client.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        return sessionData.session.user.id;
+      }
+      const user = await this.supabase.getCurrentUser();
+      return user?.id || null;
+    } catch {
+      return null;
+    }
+  }
+
   async carregarNotificacoes(): Promise<NotificacaoItem[]> {
     try {
-      const user = await this.supabase.getCurrentUser();
-      if (!user) return [];
+      const userId = await this.getUserId();
+      if (!userId) return [];
 
-      const { data, error } = await this.supabase.client
+      const queryPromise = this.supabase.client
         .from('notificacao')
         .select('*')
-        .eq('id_usuario', user.id)
+        .eq('id_usuario', userId)
         .order('criado_em', { ascending: false });
 
+      // Timeout de segurança de 3.5s para evitar carregamento infinito
+      const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
+        setTimeout(
+          () => resolve({ data: [], error: { message: 'Timeout ao consultar notificacoes' } }),
+          3500
+        )
+      );
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+
       if (error) {
-        console.warn('Erro ao carregar notificações:', error.message);
-        return [];
+        console.warn('Aviso ao carregar notificações:', error.message);
       }
 
       const lista = data || [];
@@ -51,15 +73,20 @@ export class NotificacaoService {
 
   async contarNaoLidas(): Promise<number> {
     try {
-      const user = await this.supabase.getCurrentUser();
-      if (!user) return 0;
+      const userId = await this.getUserId();
+      if (!userId) return 0;
 
-      const { count, error } = await this.supabase.client
+      const queryPromise = this.supabase.client
         .from('notificacao')
         .select('*', { count: 'exact', head: true })
-        .eq('id_usuario', user.id)
+        .eq('id_usuario', userId)
         .eq('lida', false);
 
+      const timeoutPromise = new Promise<{ count: number | null; error: any }>((resolve) =>
+        setTimeout(() => resolve({ count: 0, error: null }), 3000)
+      );
+
+      const { count } = await Promise.race([queryPromise, timeoutPromise]);
       const total = count || 0;
       this.naoLidasSubject.next(total);
       return total;

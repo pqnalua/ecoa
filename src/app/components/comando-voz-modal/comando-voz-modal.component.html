@@ -203,10 +203,43 @@
       <h2 class="titulo-status">Não conseguimos ouvir</h2>
       <p class="mensagem-erro">{{ mensagemErro }}</p>
 
+      <!-- Dica para conexão HTTP no Tablet -->
+      <div class="dica-http" *ngIf="isHttpInseguro">
+        <div class="dica-http-header">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <strong>Dica para o microfone no tablet:</strong>
+        </div>
+        <p class="dica-http-texto">
+          Navegadores bloqueiam microfone em <code>http://</code>. Para liberar no Chrome do tablet, acesse <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>, adicione este endereço e reinicie o Chrome.
+        </p>
+      </div>
+
+      <!-- Alternativa para testar a IA digitando -->
+      <div class="caixa-teste-manual">
+        <span class="label-manual">💬 Você também pode digitar a frase para a IA interpretar:</span>
+        <div class="input-manual-wrap">
+          <input
+            type="text"
+            [(ngModel)]="textoManual"
+            placeholder="Ex: Gastei 25 no lanche e estava alegre"
+            (keyup.enter)="processarTextoManual()"
+          />
+          <button
+            type="button"
+            class="btn-processar-manual"
+            (click)="processarTextoManual()"
+            [disabled]="!textoManual.trim()"
+          >
+            <ion-icon name="sparkles"></ion-icon>
+            Processar
+          </button>
+        </div>
+      </div>
+
       <div class="acoes-inferiores">
         <button class="btn-tentar-novamente" (click)="iniciarGravacao()">
           <ion-icon name="mic-outline"></ion-icon>
-          Tentar Novamente
+          Tentar Microfone Novamente
         </button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModalController, AlertController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
@@ -72,7 +72,8 @@ export class Tab1Page implements OnInit {
     private alertCtrl: AlertController,
     private notificacaoService: NotificacaoService,
     private orcamentoService: OrcamentoService,
-    private planoService: PlanoService
+    private planoService: PlanoService,
+    private ngZone: NgZone
   ) {
     const hoje = new Date();
     this.mesNomeAtual = this.mesesNomes[hoje.getMonth()];
@@ -80,8 +81,10 @@ export class Tab1Page implements OnInit {
 
   async ngOnInit() {
     this.notificacaoService.naoLidas$.subscribe((total) => {
-      this.notificacoesNaoLidas = total;
-      this.cdr.detectChanges();
+      this.ngZone.run(() => {
+        this.notificacoesNaoLidas = total;
+        this.cdr.detectChanges();
+      });
     });
 
     await this.carregarDados();
@@ -91,16 +94,38 @@ export class Tab1Page implements OnInit {
     await this.carregarDados();
     await this.notificacaoService.contarNaoLidas();
     await this.planoService.carregarPlanoAtivo();
+    this.ngZone.run(() => {
+      this.cdr.detectChanges();
+    });
   }
 
   async carregarDados() {
-    await Promise.all([
-      this.carregarUsuario(),
-      this.carregarSaldoBancario(),
-      this.carregarResumoMes(),
-      this.carregarOrcamento(),
-      this.notificacaoService.contarNaoLidas(),
-    ]);
+    try {
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      let user: any = sessionData?.session?.user;
+
+      if (!user) {
+        user = await this.supabaseService.getCurrentUser();
+      }
+
+      if (!user) {
+        return;
+      }
+
+      await Promise.all([
+        this.carregarUsuario(user),
+        this.carregarSaldoBancario(user),
+        this.carregarResumoMes(user.id),
+        this.carregarOrcamento(),
+        this.notificacaoService.contarNaoLidas(),
+      ]);
+
+      this.ngZone.run(() => {
+        this.cdr.detectChanges();
+      });
+    } catch (e) {
+      console.warn('Erro ao carregar dados gerais tab1:', e);
+    }
   }
 
   async carregarOrcamento() {
@@ -108,8 +133,11 @@ export class Tab1Page implements OnInit {
       const hoje = new Date();
       const mes = hoje.getMonth() + 1;
       const ano = hoje.getFullYear();
-      this.orcamentoMes = await this.orcamentoService.carregarOrcamentoMes(mes, ano);
-      this.cdr.detectChanges();
+      const orc = await this.orcamentoService.carregarOrcamentoMes(mes, ano);
+      this.ngZone.run(() => {
+        this.orcamentoMes = orc;
+        this.cdr.detectChanges();
+      });
     } catch (e) {
       console.warn('Erro ao carregar orçamento:', e);
     }
@@ -125,14 +153,19 @@ export class Tab1Page implements OnInit {
     await modal.present();
     await modal.onWillDismiss();
     await this.notificacaoService.contarNaoLidas();
+    this.ngZone.run(() => {
+      this.cdr.detectChanges();
+    });
   }
 
-  async carregarUsuario() {
-    const { data: sessionData } = await this.supabaseService.client.auth.getSession();
-    let user: any = sessionData?.session?.user;
-
+  async carregarUsuario(userParam?: any) {
+    let user = userParam;
     if (!user) {
-      user = await this.supabaseService.getCurrentUser();
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      user = sessionData?.session?.user;
+      if (!user) {
+        user = await this.supabaseService.getCurrentUser();
+      }
     }
 
     if (!user) {
@@ -150,30 +183,13 @@ export class Tab1Page implements OnInit {
       primeiroNome = parteEmail.split('.')[0];
     }
 
-    if (primeiroNome) {
-      this.usuario.nome = primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+    let humorAtual = metadata['humor'] || null;
+    if (!humorAtual && user.id) {
+      humorAtual = localStorage.getItem(`humor_${user.id}`);
     }
 
-    if (metadata['avatar_url'] || metadata['picture']) {
-      this.usuario.foto = metadata['avatar_url'] || metadata['picture'];
-    }
-
-    if (metadata['humor']) {
-      this.humorSelecionado = metadata['humor'];
-    } else if (user.id) {
-      const humorLocal = localStorage.getItem(`humor_${user.id}`);
-      if (humorLocal) {
-        this.humorSelecionado = humorLocal;
-      }
-    }
-
-    if (metadata['tipo_consumidor']) {
-      this.tipoConsumidor = metadata['tipo_consumidor'];
-      this.perfilDiagnostico = metadata['tipo_consumidor'];
-    } else if (metadata['perfil_diagnostico']) {
-      this.tipoConsumidor = metadata['perfil_diagnostico'];
-      this.perfilDiagnostico = metadata['perfil_diagnostico'];
-    }
+    let tipoCons = metadata['tipo_consumidor'] || metadata['perfil_diagnostico'] || null;
+    let temQ = !!metadata['tipo_consumidor'] || !!metadata['perfil_diagnostico'];
 
     try {
       const { data: perfil } = await this.supabaseService.client
@@ -182,18 +198,42 @@ export class Tab1Page implements OnInit {
         .eq('id_usuario', user.id)
         .maybeSingle();
 
-      this.temQuestionario = !!perfil || !!metadata['tipo_consumidor'] || !!metadata['perfil_diagnostico'];
+      temQ = !!perfil || temQ;
     } catch {
-      this.temQuestionario = !!metadata['tipo_consumidor'] || !!metadata['perfil_diagnostico'];
+      // Mantém valor baseado em metadados
     }
 
-    this.cdr.detectChanges();
+    this.ngZone.run(() => {
+      if (primeiroNome) {
+        this.usuario.nome = primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase();
+      }
+      if (metadata['avatar_url'] || metadata['picture']) {
+        this.usuario.foto = metadata['avatar_url'] || metadata['picture'];
+      }
+      if (humorAtual) {
+        this.humorSelecionado = humorAtual;
+      }
+      if (tipoCons) {
+        this.tipoConsumidor = tipoCons;
+        this.perfilDiagnostico = tipoCons;
+      }
+      this.temQuestionario = temQ;
+      this.cdr.detectChanges();
+    });
   }
 
-  async carregarSaldoBancario() {
+  async carregarSaldoBancario(userParam?: any) {
     try {
-      const user = await this.supabaseService.getCurrentUser();
-      if (!user) return;
+      let user = userParam;
+      if (!user) {
+        const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+        user = sessionData?.session?.user;
+        if (!user) {
+          user = await this.supabaseService.getCurrentUser();
+        }
+      }
+
+      if (!user?.id) return;
 
       const { data: contas } = await this.supabaseService.client
         .from('conta_bancaria')
@@ -201,25 +241,39 @@ export class Tab1Page implements OnInit {
         .eq('id_usuario', user.id)
         .is('deletado_em', null);
 
+      let saldoCalculado = 0;
       if (contas && contas.length > 0) {
-        this.saldo = contas.reduce((acc: number, c: any) => acc + (Number(c.saldo_atual) || 0), 0);
+        saldoCalculado = contas.reduce((acc: number, c: any) => acc + (Number(c.saldo_atual) || 0), 0);
       } else {
         const bancos = user?.user_metadata?.['bancos_conectados'] || [];
         if (bancos.length > 0) {
-          this.saldo = bancos.reduce((acc: number, b: any) => acc + (Number(b.saldo) || 0), 0);
+          saldoCalculado = bancos.reduce((acc: number, b: any) => acc + (Number(b.saldo) || 0), 0);
         } else {
-          this.saldo = 0.0;
+          saldoCalculado = 0.0;
         }
       }
-      this.atualizadoEm = new Date();
-      this.cdr.detectChanges();
+
+      this.ngZone.run(() => {
+        this.saldo = saldoCalculado;
+        this.atualizadoEm = new Date();
+        this.cdr.detectChanges();
+      });
     } catch {}
   }
 
-  async carregarResumoMes() {
+  async carregarResumoMes(userIdParam?: string) {
     try {
-      const user = await this.supabaseService.getCurrentUser();
-      if (!user) return;
+      let userId = userIdParam;
+      if (!userId) {
+        const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+        userId = sessionData?.session?.user?.id;
+        if (!userId) {
+          const user = await this.supabaseService.getCurrentUser();
+          userId = user?.id;
+        }
+      }
+
+      if (!userId) return;
 
       const agora = new Date();
       const ano = agora.getFullYear();
@@ -233,7 +287,7 @@ export class Tab1Page implements OnInit {
       const { data, error } = await this.supabaseService.client
         .from('movimentacao')
         .select('valor, tipo, natureza')
-        .eq('id_usuario', user.id)
+        .eq('id_usuario', userId)
         .is('deletado_em', null)
         .gte('data_transacao', inicio)
         .lt('data_transacao', fim);
@@ -255,8 +309,10 @@ export class Tab1Page implements OnInit {
           }
         }
 
-        this.resumoMes = { fixos, variaveis, extras, receitas };
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.resumoMes = { fixos, variaveis, extras, receitas };
+          this.cdr.detectChanges();
+        });
       }
     } catch (e) {
       console.warn('Erro ao carregar resumo do mês:', e);
@@ -293,7 +349,9 @@ export class Tab1Page implements OnInit {
   }
 
   irParaGastos() {
-    this.router.navigateByUrl('/tabs/tab3');
+    this.ngZone.run(() => {
+      this.router.navigateByUrl('/tabs/tab3');
+    });
   }
 
   async registrarPorVoz() {
@@ -303,7 +361,12 @@ export class Tab1Page implements OnInit {
         message: 'O registro de gastos por comando de voz com IA é exclusivo dos planos Duo, Especial e Família VIP.',
         buttons: [
           { text: 'Agora não', role: 'cancel' },
-          { text: 'Ver Planos', handler: () => this.router.navigateByUrl('/planos') },
+          {
+            text: 'Ver Planos',
+            handler: () => {
+              this.ngZone.run(() => this.router.navigateByUrl('/planos'));
+            },
+          },
         ],
       });
       await alert.present();
@@ -324,7 +387,9 @@ export class Tab1Page implements OnInit {
   }
 
   irParaGraficos() {
-    this.router.navigateByUrl('/tabs/tab3');
+    this.ngZone.run(() => {
+      this.router.navigateByUrl('/tabs/tab3');
+    });
   }
 
   async irParaChat() {
@@ -334,17 +399,26 @@ export class Tab1Page implements OnInit {
         message: 'O Chatbot ECO é exclusivo para assinantes dos planos Comum, Família, Especial ou Família VIP.',
         buttons: [
           { text: 'Agora não', role: 'cancel' },
-          { text: 'Ver Planos', handler: () => this.router.navigateByUrl('/planos') },
+          {
+            text: 'Ver Planos',
+            handler: () => {
+              this.ngZone.run(() => this.router.navigateByUrl('/planos'));
+            },
+          },
         ],
       });
       await alert.present();
       return;
     }
 
-    this.router.navigateByUrl('/iaecoa');
+    this.ngZone.run(() => {
+      this.router.navigateByUrl('/iaecoa');
+    });
   }
 
   irParaQuestionario() {
-    this.router.navigateByUrl('/questionario');
+    this.ngZone.run(() => {
+      this.router.navigateByUrl('/questionario');
+    });
   }
 }

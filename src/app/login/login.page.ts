@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
@@ -21,7 +21,9 @@ export class LoginPage implements OnInit {
     private router: Router,
     private supabaseService: SupabaseService,
     private alertCtrl: AlertController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -72,16 +74,23 @@ export class LoginPage implements OnInit {
           .maybeSingle();
 
         if (!perfil) {
-          await this.router.navigateByUrl('/questionario', { replaceUrl: true });
+          this.ngZone.run(() => {
+            this.router.navigateByUrl('/questionario', { replaceUrl: true });
+          });
           return;
         }
       }
 
-      await this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+      this.ngZone.run(() => {
+        this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+      });
     } catch (e: any) {
       this.erro = e?.message || 'Email ou senha incorretos. Confira e tente de novo.';
     } finally {
-      this.carregando = false;
+      this.ngZone.run(() => {
+        this.carregando = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 

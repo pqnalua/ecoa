@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular/lazy';
 import { SupabaseService } from '../services/supabase.service';
@@ -114,7 +114,8 @@ export class Tab4Page implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private notificacaoService: NotificacaoService,
     private planoService: PlanoService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   get metas(): Meta[] {
@@ -386,8 +387,10 @@ export class Tab4Page implements OnInit, OnDestroy {
       await this.salvarCache(userId);
       this.carregarGastoEmocional(userId);
     } finally {
-      this.carregando = false;
-      this.cdr.detectChanges();
+      this.ngZone.run(() => {
+        this.carregando = false;
+        this.cdr.detectChanges();
+      });
     }
 
     this.sincronizarPendentes();
