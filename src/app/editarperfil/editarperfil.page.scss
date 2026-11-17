@@ -35,11 +35,9 @@ ion-content.editar {
 
 .editar__wrap {
   min-height: 100%;
-  width: 100%;
   max-width: 440px;
   margin: 0 auto;
   padding: 16px 24px 32px;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -238,4 +236,13 @@ ion-content.editar {
       background: var(--ecoa-roxo-hover);
     }
   }
+  ion-content.editar::part(scroll) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.editar__wrap {
+  width: 100%;
+}
 }
