@@ -236,13 +236,4 @@ ion-content.editar {
       background: var(--ecoa-roxo-hover);
     }
   }
-  ion-content.editar::part(scroll) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.editar__wrap {
-  width: 100%;
-}
 }
