@@ -60,18 +60,20 @@ export class IntegracaoPage implements OnInit {
 
   async carregarEstadoSalvo() {
     try {
-      const user = await this.supabaseService.getCurrentUser();
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      const user = sessionData?.session?.user;
       if (!user) return;
 
-      const { data: contas, error } = await this.supabaseService.client
+      const { data: contas } = await this.supabaseService.client
         .from('conta_bancaria')
         .select('*')
         .eq('id_usuario', user.id)
         .is('deletado_em', null);
 
-      if (!error && contas && contas.length > 0) {
+      if (contas && contas.length > 0) {
+        const contasMap = new Map(contas.map((c: any) => [(c.banco || '').toLowerCase(), c]));
         this.bancos = this.bancos.map(b => {
-          const conta = contas.find(c => (c.banco || '').toLowerCase() === b.nome.toLowerCase());
+          const conta: any = contasMap.get(b.nome.toLowerCase());
           if (conta) {
             return {
               ...b,
@@ -92,8 +94,9 @@ export class IntegracaoPage implements OnInit {
       } else {
         const salvos: Banco[] = user?.user_metadata?.['bancos_conectados'];
         if (salvos && Array.isArray(salvos) && salvos.length > 0) {
+          const salvosMap = new Map(salvos.map(s => [s.id, s]));
           this.bancos = this.bancos.map(b => {
-            const salvo = salvos.find(s => s.id === b.id);
+            const salvo = salvosMap.get(b.id);
             if (salvo && salvo.conectado) {
               return {
                 ...b,
@@ -172,56 +175,54 @@ export class IntegracaoPage implements OnInit {
     this.cdr.detectChanges();
 
     const banco = this.bancoSelecionado;
-    if (banco) {
-      banco.conectado = true;
-      banco.saldo = Number(this.inputSaldo) || 1500.0;
-      banco.contaInfo = `Ag: 0001 • C/C: ${this.inputUsuario}`;
-      banco.atualizadoEm = 'Hoje às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
+    if (!banco) return;
+
+    banco.conectado = true;
+    banco.saldo = Number(this.inputSaldo) || 1500.0;
+    banco.contaInfo = `Ag: 0001 • C/C: ${this.inputUsuario}`;
+    banco.atualizadoEm = 'Hoje às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
     try {
-      if (banco) {
-        const user = await this.supabaseService.getCurrentUser();
-        if (user) {
-          const { data: contasExistentes } = await this.supabaseService.client
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+
+      if (userId) {
+        const { data: existentes } = await this.supabaseService.client
+          .from('conta_bancaria')
+          .select('id_conta')
+          .eq('id_usuario', userId)
+          .eq('banco', banco.nome)
+          .limit(1);
+
+        if (existentes && existentes.length > 0) {
+          await this.supabaseService.client
             .from('conta_bancaria')
-            .select('id_conta')
-            .eq('id_usuario', user.id)
-            .ilike('banco', banco.nome)
-            .limit(1);
-
-          const existente = contasExistentes && contasExistentes.length > 0 ? contasExistentes[0] : null;
-
-          const salvarDb = existente
-            ? this.supabaseService.client
-                .from('conta_bancaria')
-                .update({
-                  saldo_atual: banco.saldo || 0,
-                  deletado_em: null,
-                  ativa: true,
-                  atualizado_em: new Date().toISOString()
-                })
-                .eq('id_conta', existente.id_conta)
-            : this.supabaseService.client
-                .from('conta_bancaria')
-                .insert({
-                  id_usuario: user.id,
-                  banco: banco.nome,
-                  tipo_conta: 'corrente',
-                  saldo_atual: banco.saldo || 0,
-                  saldo_inicial: banco.saldo || 0,
-                  cor: banco.cor,
-                  ativa: true
-                });
-
-          await salvarDb;
-
-          this.supabaseService.client.auth.updateUser({
-            data: {
-              bancos_conectados: this.bancos.filter(b => b.conectado),
-            },
-          }).then();
+            .update({
+              saldo_atual: banco.saldo || 0,
+              deletado_em: null,
+              ativa: true,
+              atualizado_em: new Date().toISOString()
+            })
+            .eq('id_conta', existentes[0].id_conta);
+        } else {
+          await this.supabaseService.client
+            .from('conta_bancaria')
+            .insert({
+              id_usuario: userId,
+              banco: banco.nome,
+              tipo_conta: 'corrente',
+              saldo_atual: banco.saldo || 0,
+              saldo_inicial: banco.saldo || 0,
+              cor: banco.cor,
+              ativa: true
+            });
         }
+
+        this.supabaseService.client.auth.updateUser({
+          data: {
+            bancos_conectados: this.bancos.filter(b => b.conectado),
+          },
+        }).then();
       }
     } catch (e: any) {
       console.warn('Erro ao salvar conta:', e);
@@ -241,8 +242,9 @@ export class IntegracaoPage implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const user = await this.supabaseService.getCurrentUser();
-      if (!user) return;
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) return;
 
       await this.supabaseService.client
         .from('conta_bancaria')
@@ -250,8 +252,8 @@ export class IntegracaoPage implements OnInit {
           deletado_em: new Date().toISOString(),
           ativa: false
         })
-        .eq('id_usuario', user.id)
-        .ilike('banco', banco.nome);
+        .eq('id_usuario', userId)
+        .eq('banco', banco.nome);
 
       this.supabaseService.client.auth.updateUser({
         data: {
@@ -269,16 +271,17 @@ export class IntegracaoPage implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const user = await this.supabaseService.getCurrentUser();
-      if (!user) return;
+      const { data: sessionData } = await this.supabaseService.client.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) return;
 
       await this.supabaseService.client
         .from('conta_bancaria')
         .update({
           atualizado_em: new Date().toISOString()
         })
-        .eq('id_usuario', user.id)
-        .ilike('banco', banco.nome);
+        .eq('id_usuario', userId)
+        .eq('banco', banco.nome);
 
       this.supabaseService.client.auth.updateUser({
         data: {
