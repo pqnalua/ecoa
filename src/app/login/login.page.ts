@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
@@ -10,11 +10,12 @@ import { SupabaseService } from '../services/supabase.service';
   styleUrls: ['./login.page.scss'],
   standalone: false,
 })
-export class LoginPage implements OnInit {
+export class LoginPage implements OnInit, OnDestroy {
   verSenha = false;
   carregando = false;
   erro = '';
   form: FormGroup;
+  private authSubscription?: { unsubscribe: () => void };
 
   constructor(
     private fb: FormBuilder,
@@ -32,11 +33,16 @@ export class LoginPage implements OnInit {
   }
 
   ngOnInit() {
-    this.supabaseService.client.auth.onAuthStateChange(async (event) => {
+    const { data } = this.supabaseService.client.auth.onAuthStateChange(async (event) => {
       if (event === 'PASSWORD_RECOVERY') {
         await this.abrirModalNovaSenha();
       }
     });
+    this.authSubscription = data?.subscription;
+  }
+
+  ngOnDestroy() {
+    this.authSubscription?.unsubscribe();
   }
 
   mostrarErro(campo: 'email' | 'senha'): boolean {
@@ -52,8 +58,10 @@ export class LoginPage implements OnInit {
     }
 
     this.carregando = true;
+    this.cdr.detectChanges();
+
     try {
-      const email = this.form.value.email || '';
+      const email = (this.form.value.email || '').trim().toLowerCase();
       const password = this.form.value.senha || '';
 
       const { data, error } = await this.supabaseService.client.auth.signInWithPassword({
@@ -65,29 +73,28 @@ export class LoginPage implements OnInit {
         throw error;
       }
 
+      let rota = '/tabs/tab1';
       const userId = data?.user?.id;
+
       if (userId) {
         const { data: perfil } = await this.supabaseService.client
           .from('perfil_financeiro')
           .select('id_perfil')
           .eq('id_usuario', userId)
+          .limit(1)
           .maybeSingle();
 
         if (!perfil) {
-          this.ngZone.run(() => {
-            this.router.navigateByUrl('/questionario', { replaceUrl: true });
-          });
-          return;
+          rota = '/questionario';
         }
       }
 
       this.ngZone.run(() => {
-        this.router.navigateByUrl('/tabs/tab1', { replaceUrl: true });
+        this.router.navigateByUrl(rota, { replaceUrl: true });
       });
     } catch (e: any) {
-      this.erro = e?.message || 'Email ou senha incorretos. Confira e tente de novo.';
-    } finally {
       this.ngZone.run(() => {
+        this.erro = e?.message || 'Email ou senha incorretos. Confira e tente de novo.';
         this.carregando = false;
         this.cdr.detectChanges();
       });
@@ -97,6 +104,8 @@ export class LoginPage implements OnInit {
   async entrarComGoogle() {
     this.erro = '';
     this.carregando = true;
+    this.cdr.detectChanges();
+
     try {
       const { error } = await this.supabaseService.client.auth.signInWithOAuth({
         provider: 'google',
@@ -109,9 +118,11 @@ export class LoginPage implements OnInit {
         throw error;
       }
     } catch (e: any) {
-      this.erro = e?.message || 'Não foi possível entrar com o Google. Tente novamente.';
-    } finally {
-      this.carregando = false;
+      this.ngZone.run(() => {
+        this.erro = e?.message || 'Não foi possível entrar com o Google. Tente novamente.';
+        this.carregando = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -135,7 +146,7 @@ export class LoginPage implements OnInit {
         {
           text: 'Enviar link',
           handler: async (dados) => {
-            const email = (dados.email || '').trim();
+            const email = (dados.email || '').trim().toLowerCase();
             if (!email) {
               await this.mostrarToast('Por favor, informe seu e-mail.', 'warning');
               return false;

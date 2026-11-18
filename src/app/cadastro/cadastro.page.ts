@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, NgZone, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular/lazy';
@@ -32,7 +32,9 @@ export class CadastroPage {
     private fb: FormBuilder,
     private router: Router,
     private supabaseService: SupabaseService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {
     this.form = this.fb.group(
       {
@@ -94,19 +96,21 @@ export class CadastroPage {
     }
 
     this.carregando = true;
+    this.cdr.detectChanges();
+
     try {
-      const email = this.form.value.email || '';
+      const email = (this.form.value.email || '').trim().toLowerCase();
       const senha = this.form.value.senha || '';
-      const cpf = this.form.value.cpf || '';
-      const idade = this.form.value.idade || '';
+      const cpfLimpo = (this.form.value.cpf || '').replace(/\D/g, '');
+      const idadeNum = Number(this.form.value.idade);
 
       const { data, error } = await this.supabaseService.client.auth.signUp({
         email,
         password: senha,
         options: {
           data: {
-            cpf,
-            idade: Number(idade),
+            cpf: cpfLimpo,
+            idade: idadeNum,
             aceitou_termos_em: new Date().toISOString(),
           },
         },
@@ -116,32 +120,28 @@ export class CadastroPage {
         throw error;
       }
 
-      // Sincroniza também na tabela public.usuario se o usuário foi retornado
       if (data?.user) {
-        try {
-          await this.supabaseService.client.from('usuario').upsert({
-            id_usuario: data.user.id,
-            nome: email.split('@')[0],
-            email: email,
-            cpf: cpf.replace(/\D/g, ''),
-            idade: Number(idade),
-            atualizado_em: new Date().toISOString(),
-          });
-        } catch (dbErr) {
-          console.warn('Registro na tabela usuario será concluído posteriormente:', dbErr);
-        }
+        this.supabaseService.client.from('usuario').upsert({
+          id_usuario: data.user.id,
+          nome: email.split('@')[0],
+          email: email,
+          cpf: cpfLimpo,
+          idade: idadeNum,
+          atualizado_em: new Date().toISOString(),
+        }).then();
       }
 
-      // Se já criou sessão ativa, vai direto para o questionário; senão, vai para login
-      if (data?.session) {
-        await this.router.navigateByUrl('/questionario', { replaceUrl: true });
-      } else {
-        await this.router.navigateByUrl('/login', { replaceUrl: true });
-      }
+      const rotaDestino = data?.session ? '/questionario' : '/login';
+
+      this.ngZone.run(() => {
+        this.router.navigateByUrl(rotaDestino, { replaceUrl: true });
+      });
     } catch (e: any) {
-      this.erro = e?.message || 'Não foi possível criar sua conta. Confira os dados e tente de novo.';
-    } finally {
-      this.carregando = false;
+      this.ngZone.run(() => {
+        this.erro = e?.message || 'Não foi possível criar sua conta. Confira os dados e tente de novo.';
+        this.carregando = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 }
