@@ -41,6 +41,7 @@ export class IntegracaoPage implements OnInit {
   inputSenha = '';
   inputSaldo = 1500.0;
   erroConexao = '';
+  private carregandoDados = false;
 
   constructor(
     private router: Router,
@@ -59,11 +60,13 @@ export class IntegracaoPage implements OnInit {
   }
 
   async carregarEstadoSalvo() {
+    if (this.carregandoDados) return;
+    this.carregandoDados = true;
+
     try {
       const user = await this.supabaseService.getCurrentUser();
       if (!user) return;
 
-      // 1. Tenta carregar da tabela relacional conta_bancaria
       const { data: contas } = await this.supabaseService.client
         .from('conta_bancaria')
         .select('*')
@@ -71,8 +74,9 @@ export class IntegracaoPage implements OnInit {
         .is('deletado_em', null);
 
       if (contas && contas.length > 0) {
+        const mapaContas = new Map(contas.map((c: any) => [c.banco.toLowerCase(), c]));
         this.bancos = this.bancos.map(b => {
-          const conta = contas.find(c => c.banco.toLowerCase() === b.nome.toLowerCase());
+          const conta: any = mapaContas.get(b.nome.toLowerCase());
           if (conta) {
             return {
               ...b,
@@ -85,11 +89,11 @@ export class IntegracaoPage implements OnInit {
           return b;
         });
       } else {
-        // 2. Fallback caso use metadados
         const salvos: Banco[] = user?.user_metadata?.['bancos_conectados'];
         if (salvos && Array.isArray(salvos) && salvos.length > 0) {
+          const mapaSalvos = new Map(salvos.map(s => [s.id, s]));
           this.bancos = this.bancos.map(b => {
-            const salvo = salvos.find(s => s.id === b.id);
+            const salvo = mapaSalvos.get(b.id);
             if (salvo) {
               return {
                 ...b,
@@ -106,6 +110,7 @@ export class IntegracaoPage implements OnInit {
     } catch (e) {
       console.warn('Erro ao carregar estado de contas:', e);
     } finally {
+      this.carregandoDados = false;
       this.filtrar();
     }
   }
@@ -161,70 +166,82 @@ export class IntegracaoPage implements OnInit {
     this.erroConexao = '';
     this.cdr.detectChanges();
 
-    setTimeout(async () => {
+    try {
       if (this.bancoSelecionado) {
         this.bancoSelecionado.conectado = true;
         this.bancoSelecionado.saldo = Number(this.inputSaldo) || 1500.0;
         this.bancoSelecionado.contaInfo = `Ag: 0001 • C/C: ${this.inputUsuario}`;
         this.bancoSelecionado.atualizadoEm = 'Hoje às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-        await this.salvarNoSupabase();
+        await this.salvarNoSupabase(this.bancoSelecionado);
       }
-
+    } finally {
       this.carregando = false;
       this.fecharModal();
       this.filtrar();
-    }, 1800);
+    }
   }
 
   async desconectar(banco: Banco) {
-    banco.conectado = false;
-    banco.saldo = undefined;
-    banco.contaInfo = undefined;
-    banco.atualizadoEm = undefined;
+    this.carregando = true;
+    this.cdr.detectChanges();
 
-    await this.salvarNoSupabase();
-    this.filtrar();
+    try {
+      banco.conectado = false;
+      banco.saldo = undefined;
+      banco.contaInfo = undefined;
+      banco.atualizadoEm = undefined;
+
+      await this.salvarNoSupabase(banco);
+    } finally {
+      this.carregando = false;
+      this.filtrar();
+    }
   }
 
   async sincronizar(banco: Banco) {
     this.carregando = true;
     this.cdr.detectChanges();
 
-    setTimeout(async () => {
+    try {
       banco.atualizadoEm = 'Agora mesmo';
-      await this.salvarNoSupabase();
+      await this.salvarNoSupabase(banco);
+    } finally {
       this.carregando = false;
       this.filtrar();
-    }, 800);
+    }
   }
 
-  private async salvarNoSupabase() {
+  private async salvarNoSupabase(bancoAlvo?: Banco) {
     try {
       const user = await this.supabaseService.getCurrentUser();
       if (!user) return;
 
       const conectados = this.bancos.filter(b => b.conectado);
 
-      // 1. Atualiza user_metadata como cache
-      await this.supabaseService.client.auth.updateUser({
+      const authPromise = this.supabaseService.client.auth.updateUser({
         data: {
           bancos_conectados: conectados,
         },
       });
 
-      // 2. Sincroniza diretamente na tabela conta_bancaria para que a Home reflita o saldo
-      for (const b of this.bancos) {
-        const { data: existente } = await this.supabaseService.client
-          .from('conta_bancaria')
-          .select('id_conta')
-          .eq('id_usuario', user.id)
-          .eq('banco', b.nome)
-          .maybeSingle();
+      const bancosParaProcessar = bancoAlvo ? [bancoAlvo] : this.bancos;
+
+      const { data: contasExistentes } = await this.supabaseService.client
+        .from('conta_bancaria')
+        .select('id_conta, banco')
+        .eq('id_usuario', user.id);
+
+      const mapaExistentes = new Map(
+        (contasExistentes || []).map((c: any) => [c.banco.toLowerCase(), c.id_conta])
+      );
+
+      const operacoesBanco = bancosParaProcessar.map(b => {
+        const idExistente = mapaExistentes.get(b.nome.toLowerCase());
 
         if (b.conectado) {
-          if (existente) {
-            await this.supabaseService.client
+          if (idExistente) {
+            return this.supabaseService.client
               .from('conta_bancaria')
               .update({
                 saldo_atual: b.saldo || 0,
@@ -232,9 +249,9 @@ export class IntegracaoPage implements OnInit {
                 ativa: true,
                 atualizado_em: new Date().toISOString()
               })
-              .eq('id_conta', existente.id_conta);
+              .eq('id_conta', idExistente);
           } else {
-            await this.supabaseService.client
+            return this.supabaseService.client
               .from('conta_bancaria')
               .insert({
                 id_usuario: user.id,
@@ -246,17 +263,20 @@ export class IntegracaoPage implements OnInit {
                 ativa: true
               });
           }
-        } else if (existente) {
-          // Desconectado: desativa na tabela para não somar no saldo da Home
-          await this.supabaseService.client
+        } else if (idExistente) {
+          return this.supabaseService.client
             .from('conta_bancaria')
             .update({
               deletado_em: new Date().toISOString(),
               ativa: false
             })
-            .eq('id_conta', existente.id_conta);
+            .eq('id_conta', idExistente);
         }
-      }
+
+        return Promise.resolve();
+      });
+
+      await Promise.all([authPromise, ...operacoesBanco]);
     } catch (e) {
       console.warn('Erro ao sincronizar conta_bancaria:', e);
     }

@@ -36,23 +36,14 @@ ion-header ion-title {
 
 .tab2-content {
   --background: var(--page-bg);
-}
-
-.home__wrap {
-  max-width: 440px;
-  margin: 0 auto;
-  padding: 12px 16px 88px;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  box-sizing: border-box;
+  --padding-start: 16px;
+  --padding-end: 16px;
 }
 
 .avatar-wrapper {
   display: flex;
   justify-content: center;
   padding: 24px 0 20px 0;
-  width: 100%;
 }
 
 .tab2-avatar {
@@ -70,7 +61,6 @@ ion-header ion-title {
 .menu-list {
   background: transparent;
   padding: 0;
-  width: 100%;
 }
 
 .menu-item {
@@ -116,6 +106,7 @@ ion-header ion-title {
   --color: var(--botao);
   border: 2px solid var(--roxo);
   box-shadow: none;
+  margin-top: 14px !important;
 }
 
 .logout-item:hover {
@@ -138,9 +129,9 @@ ion-header ion-title {
 .perfil__item--danger {
   --background: rgba(193, 92, 92, 0.08);
   --color: var(--ecoa-erro, #c15c5c);
-  border: 1px dashed rgba(193, 92, 92, 0.4);
+  border: 2px dashed rgba(193, 92, 92, 0.4);
   border-radius: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 14px !important;
 
   ion-icon {
     color: var(--ecoa-erro, #c15c5c);
