@@ -40,6 +40,13 @@ ion-header ion-title {
   --padding-end: 16px;
 }
 
+.home__wrap {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding-bottom: 32px;
+}
+
 .avatar-wrapper {
   display: flex;
   justify-content: center;
@@ -106,7 +113,6 @@ ion-header ion-title {
   --color: var(--botao);
   border: 2px solid var(--roxo);
   box-shadow: none;
-  margin-top: 14px !important;
 }
 
 .logout-item:hover {
@@ -131,7 +137,6 @@ ion-header ion-title {
   --color: var(--ecoa-erro, #c15c5c);
   border: 2px dashed rgba(193, 92, 92, 0.4);
   border-radius: 12px;
-  margin-bottom: 14px !important;
 
   ion-icon {
     color: var(--ecoa-erro, #c15c5c);
