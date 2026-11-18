@@ -166,15 +166,58 @@ export class IntegracaoPage implements OnInit {
     this.erroConexao = '';
     this.cdr.detectChanges();
 
-    try {
-      if (this.bancoSelecionado) {
-        this.bancoSelecionado.conectado = true;
-        this.bancoSelecionado.saldo = Number(this.inputSaldo) || 1500.0;
-        this.bancoSelecionado.contaInfo = `Ag: 0001 • C/C: ${this.inputUsuario}`;
-        this.bancoSelecionado.atualizadoEm = 'Hoje às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const banco = this.bancoSelecionado;
+    if (banco) {
+      banco.conectado = true;
+      banco.saldo = Number(this.inputSaldo) || 1500.0;
+      banco.contaInfo = `Ag: 0001 • C/C: ${this.inputUsuario}`;
+      banco.atualizadoEm = 'Hoje às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
 
-        await this.salvarNoSupabase(this.bancoSelecionado);
+    try {
+      if (banco) {
+        const user = await this.supabaseService.getCurrentUser();
+        if (user) {
+          const { data: existente } = await this.supabaseService.client
+            .from('conta_bancaria')
+            .select('id_conta')
+            .eq('id_usuario', user.id)
+            .eq('banco', banco.nome)
+            .maybeSingle();
+
+          const salvarDb = existente
+            ? this.supabaseService.client
+                .from('conta_bancaria')
+                .update({
+                  saldo_atual: banco.saldo || 0,
+                  deletado_em: null,
+                  ativa: true,
+                  atualizado_em: new Date().toISOString()
+                })
+                .eq('id_conta', existente.id_conta)
+            : this.supabaseService.client
+                .from('conta_bancaria')
+                .insert({
+                  id_usuario: user.id,
+                  banco: banco.nome,
+                  tipo_conta: 'corrente',
+                  saldo_atual: banco.saldo || 0,
+                  saldo_inicial: banco.saldo || 0,
+                  cor: banco.cor,
+                  ativa: true
+                });
+
+          const salvarAuth = this.supabaseService.client.auth.updateUser({
+            data: {
+              bancos_conectados: this.bancos.filter(b => b.conectado),
+            },
+          });
+
+          await Promise.all([salvarDb, salvarAuth]);
+        }
       }
+    } catch (e) {
+      console.warn('Erro ao salvar conta:', e);
     } finally {
       this.carregando = false;
       this.fecharModal();
@@ -183,102 +226,64 @@ export class IntegracaoPage implements OnInit {
   }
 
   async desconectar(banco: Banco) {
-    this.carregando = true;
+    banco.conectado = false;
+    banco.saldo = undefined;
+    banco.contaInfo = undefined;
+    banco.atualizadoEm = undefined;
+    this.filtrar();
     this.cdr.detectChanges();
 
-    try {
-      banco.conectado = false;
-      banco.saldo = undefined;
-      banco.contaInfo = undefined;
-      banco.atualizadoEm = undefined;
-
-      await this.salvarNoSupabase(banco);
-    } finally {
-      this.carregando = false;
-      this.filtrar();
-    }
-  }
-
-  async sincronizar(banco: Banco) {
-    this.carregando = true;
-    this.cdr.detectChanges();
-
-    try {
-      banco.atualizadoEm = 'Agora mesmo';
-      await this.salvarNoSupabase(banco);
-    } finally {
-      this.carregando = false;
-      this.filtrar();
-    }
-  }
-
-  private async salvarNoSupabase(bancoAlvo?: Banco) {
     try {
       const user = await this.supabaseService.getCurrentUser();
       if (!user) return;
 
-      const conectados = this.bancos.filter(b => b.conectado);
+      const desconectarDb = this.supabaseService.client
+        .from('conta_bancaria')
+        .update({
+          deletado_em: new Date().toISOString(),
+          ativa: false
+        })
+        .eq('id_usuario', user.id)
+        .eq('banco', banco.nome);
 
-      const authPromise = this.supabaseService.client.auth.updateUser({
+      const atualizarAuth = this.supabaseService.client.auth.updateUser({
         data: {
-          bancos_conectados: conectados,
+          bancos_conectados: this.bancos.filter(b => b.conectado),
         },
       });
 
-      const bancosParaProcessar = bancoAlvo ? [bancoAlvo] : this.bancos;
+      await Promise.all([desconectarDb, atualizarAuth]);
+    } catch (e) {
+      console.warn('Erro ao desconectar conta:', e);
+    }
+  }
 
-      const { data: contasExistentes } = await this.supabaseService.client
+  async sincronizar(banco: Banco) {
+    banco.atualizadoEm = 'Agora mesmo';
+    this.filtrar();
+    this.cdr.detectChanges();
+
+    try {
+      const user = await this.supabaseService.getCurrentUser();
+      if (!user) return;
+
+      const sincronizarDb = this.supabaseService.client
         .from('conta_bancaria')
-        .select('id_conta, banco')
-        .eq('id_usuario', user.id);
+        .update({
+          atualizado_em: new Date().toISOString()
+        })
+        .eq('id_usuario', user.id)
+        .eq('banco', banco.nome);
 
-      const mapaExistentes = new Map(
-        (contasExistentes || []).map((c: any) => [c.banco.toLowerCase(), c.id_conta])
-      );
-
-      const operacoesBanco = bancosParaProcessar.map(b => {
-        const idExistente = mapaExistentes.get(b.nome.toLowerCase());
-
-        if (b.conectado) {
-          if (idExistente) {
-            return this.supabaseService.client
-              .from('conta_bancaria')
-              .update({
-                saldo_atual: b.saldo || 0,
-                deletado_em: null,
-                ativa: true,
-                atualizado_em: new Date().toISOString()
-              })
-              .eq('id_conta', idExistente);
-          } else {
-            return this.supabaseService.client
-              .from('conta_bancaria')
-              .insert({
-                id_usuario: user.id,
-                banco: b.nome,
-                tipo_conta: 'corrente',
-                saldo_atual: b.saldo || 0,
-                saldo_inicial: b.saldo || 0,
-                cor: b.cor,
-                ativa: true
-              });
-          }
-        } else if (idExistente) {
-          return this.supabaseService.client
-            .from('conta_bancaria')
-            .update({
-              deletado_em: new Date().toISOString(),
-              ativa: false
-            })
-            .eq('id_conta', idExistente);
-        }
-
-        return Promise.resolve();
+      const atualizarAuth = this.supabaseService.client.auth.updateUser({
+        data: {
+          bancos_conectados: this.bancos.filter(b => b.conectado),
+        },
       });
 
-      await Promise.all([authPromise, ...operacoesBanco]);
+      await Promise.all([sincronizarDb, atualizarAuth]);
     } catch (e) {
-      console.warn('Erro ao sincronizar conta_bancaria:', e);
+      console.warn('Erro ao sincronizar:', e);
     }
   }
 }
