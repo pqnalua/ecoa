@@ -41,7 +41,6 @@ export class IntegracaoPage implements OnInit {
   inputSenha = '';
   inputSaldo = 1500.0;
   erroConexao = '';
-  private carregandoDados = false;
 
   constructor(
     private router: Router,
@@ -60,23 +59,19 @@ export class IntegracaoPage implements OnInit {
   }
 
   async carregarEstadoSalvo() {
-    if (this.carregandoDados) return;
-    this.carregandoDados = true;
-
     try {
       const user = await this.supabaseService.getCurrentUser();
       if (!user) return;
 
-      const { data: contas } = await this.supabaseService.client
+      const { data: contas, error } = await this.supabaseService.client
         .from('conta_bancaria')
         .select('*')
         .eq('id_usuario', user.id)
         .is('deletado_em', null);
 
-      if (contas && contas.length > 0) {
-        const mapaContas = new Map(contas.map((c: any) => [c.banco.toLowerCase(), c]));
+      if (!error && contas && contas.length > 0) {
         this.bancos = this.bancos.map(b => {
-          const conta: any = mapaContas.get(b.nome.toLowerCase());
+          const conta = contas.find(c => (c.banco || '').toLowerCase() === b.nome.toLowerCase());
           if (conta) {
             return {
               ...b,
@@ -86,31 +81,41 @@ export class IntegracaoPage implements OnInit {
               atualizadoEm: 'Hoje às ' + new Date(conta.atualizado_em || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
             };
           }
-          return b;
+          return {
+            ...b,
+            conectado: false,
+            saldo: undefined,
+            contaInfo: undefined,
+            atualizadoEm: undefined,
+          };
         });
       } else {
         const salvos: Banco[] = user?.user_metadata?.['bancos_conectados'];
         if (salvos && Array.isArray(salvos) && salvos.length > 0) {
-          const mapaSalvos = new Map(salvos.map(s => [s.id, s]));
           this.bancos = this.bancos.map(b => {
-            const salvo = mapaSalvos.get(b.id);
-            if (salvo) {
+            const salvo = salvos.find(s => s.id === b.id);
+            if (salvo && salvo.conectado) {
               return {
                 ...b,
-                conectado: salvo.conectado,
+                conectado: true,
                 saldo: salvo.saldo,
                 contaInfo: salvo.contaInfo,
                 atualizadoEm: salvo.atualizadoEm,
               };
             }
-            return b;
+            return {
+              ...b,
+              conectado: false,
+              saldo: undefined,
+              contaInfo: undefined,
+              atualizadoEm: undefined,
+            };
           });
         }
       }
     } catch (e) {
-      console.warn('Erro ao carregar estado de contas:', e);
+      console.warn('Erro ao carregar contas:', e);
     } finally {
-      this.carregandoDados = false;
       this.filtrar();
     }
   }
@@ -178,12 +183,14 @@ export class IntegracaoPage implements OnInit {
       if (banco) {
         const user = await this.supabaseService.getCurrentUser();
         if (user) {
-          const { data: existente } = await this.supabaseService.client
+          const { data: contasExistentes } = await this.supabaseService.client
             .from('conta_bancaria')
             .select('id_conta')
             .eq('id_usuario', user.id)
-            .eq('banco', banco.nome)
-            .maybeSingle();
+            .ilike('banco', banco.nome)
+            .limit(1);
+
+          const existente = contasExistentes && contasExistentes.length > 0 ? contasExistentes[0] : null;
 
           const salvarDb = existente
             ? this.supabaseService.client
@@ -207,16 +214,16 @@ export class IntegracaoPage implements OnInit {
                   ativa: true
                 });
 
-          const salvarAuth = this.supabaseService.client.auth.updateUser({
+          await salvarDb;
+
+          this.supabaseService.client.auth.updateUser({
             data: {
               bancos_conectados: this.bancos.filter(b => b.conectado),
             },
-          });
-
-          await Promise.all([salvarDb, salvarAuth]);
+          }).then();
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Erro ao salvar conta:', e);
     } finally {
       this.carregando = false;
@@ -237,22 +244,20 @@ export class IntegracaoPage implements OnInit {
       const user = await this.supabaseService.getCurrentUser();
       if (!user) return;
 
-      const desconectarDb = this.supabaseService.client
+      await this.supabaseService.client
         .from('conta_bancaria')
         .update({
           deletado_em: new Date().toISOString(),
           ativa: false
         })
         .eq('id_usuario', user.id)
-        .eq('banco', banco.nome);
+        .ilike('banco', banco.nome);
 
-      const atualizarAuth = this.supabaseService.client.auth.updateUser({
+      this.supabaseService.client.auth.updateUser({
         data: {
           bancos_conectados: this.bancos.filter(b => b.conectado),
         },
-      });
-
-      await Promise.all([desconectarDb, atualizarAuth]);
+      }).then();
     } catch (e) {
       console.warn('Erro ao desconectar conta:', e);
     }
@@ -267,21 +272,19 @@ export class IntegracaoPage implements OnInit {
       const user = await this.supabaseService.getCurrentUser();
       if (!user) return;
 
-      const sincronizarDb = this.supabaseService.client
+      await this.supabaseService.client
         .from('conta_bancaria')
         .update({
           atualizado_em: new Date().toISOString()
         })
         .eq('id_usuario', user.id)
-        .eq('banco', banco.nome);
+        .ilike('banco', banco.nome);
 
-      const atualizarAuth = this.supabaseService.client.auth.updateUser({
+      this.supabaseService.client.auth.updateUser({
         data: {
           bancos_conectados: this.bancos.filter(b => b.conectado),
         },
-      });
-
-      await Promise.all([sincronizarDb, atualizarAuth]);
+      }).then();
     } catch (e) {
       console.warn('Erro ao sincronizar:', e);
     }
