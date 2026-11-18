@@ -40,10 +40,28 @@ ion-header ion-title {
   --padding-end: 16px;
 }
 
+.tab2-content::part(scroll) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tab2__wrap {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
 .avatar-wrapper {
   display: flex;
   justify-content: center;
   padding: 24px 0 20px 0;
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
 }
 
 .tab2-avatar {
@@ -61,6 +79,11 @@ ion-header ion-title {
 .menu-list {
   background: transparent;
   padding: 0;
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
 }
 
 .menu-item {
@@ -77,6 +100,7 @@ ion-header ion-title {
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(84, 67, 147, 0.08);
+  width: 100%;
 }
 
 .menu-item:hover {
@@ -131,6 +155,8 @@ ion-header ion-title {
   border: 1px dashed rgba(193, 92, 92, 0.4);
   border-radius: 12px;
   margin-bottom: 14px;
+  width: 100%;
+
   ion-icon {
     color: var(--ecoa-erro, #c15c5c);
   }
