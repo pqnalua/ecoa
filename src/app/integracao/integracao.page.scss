@@ -9,18 +9,29 @@
 }
 
 .integracao__toolbar {
-  --background: var(--ecoa-papel);
-  --color: var(--ecoa-tinta);
-  font-family: 'Red Hat Display', sans-serif;
-  font-weight: 700;
+  --background: #f5f2ee;
+  --color: #a594e0;
+  --border-width: 0 0 1px 0;
+  --border-color: #e4ded6;
+  text-align: center;
 
   ion-back-button {
     --color: var(--ecoa-roxo);
   }
+
+  ion-title {
+    font-family: 'Red Hat Display', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    color: #a594e0;
+  }
 }
 
 ion-content.integracao {
-  --background: var(--ecoa-papel);
+  --background: #f5f2ee;
 }
 
 .integracao__wrap {
